@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KyaraInnovate - モックアップ vs 実装 比較管理表</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; }
+  body { background: #fafafa; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 9999px; font-weight: 600; white-space: nowrap; display: inline-block; }
+  .badge-done { background: #d1fae5; color: #065f46; }
+  .badge-partial { background: #fef3c7; color: #92400e; }
+  .badge-todo { background: #fee2e2; color: #991b1b; }
+  .badge-na { background: #f3f4f6; color: #6b7280; }
+  .badge-source { font-size: 9px; padding: 1px 6px; border-radius: 4px; }
+  .badge-mockup { background: #ede9fe; color: #5b21b6; }
+  .badge-mockup-mobile { background: #fce7f3; color: #9d174d; }
+  .badge-mockup-all { background: #dbeafe; color: #1e40af; }
+  .badge-mockup-creator { background: #d1fae5; color: #065f46; }
+  .badge-design { background: #e0e7ff; color: #3730a3; }
+  .progress-bar { height: 8px; border-radius: 4px; background: #e5e7eb; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+  .filter-btn { cursor: pointer; transition: all .15s; }
+  .filter-btn:hover { opacity: 0.8; }
+  .filter-btn.active { box-shadow: 0 0 0 2px #000; }
+  tr.hidden-row { display: none; }
+  .category-section { scroll-margin-top: 80px; }
+  nav.sticky-nav { position: sticky; top: 0; z-index: 10; background: #000; }
+  td, th { vertical-align: top; }
+  .detail-list { font-size: 11px; color: #6b7280; line-height: 1.6; }
+  .detail-list li { position: relative; padding-left: 12px; }
+  .detail-list li::before { content: "·"; position: absolute; left: 2px; color: #9ca3af; }
+  .impl-check { color: #059669; font-weight: 600; }
+  .impl-miss { color: #dc2626; font-weight: 600; }
+  .ring-chart { width: 160px; height: 160px; }
+</style>
+</head>
+<body>
+
+<nav class="sticky-nav text-white px-6 py-3 flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <h1 class="text-sm font-bold tracking-wider">KYARAINNOVATE</h1>
+    <span class="text-xs text-gray-400">モックアップ vs 実装 比較管理表</span>
+  </div>
+  <div class="flex items-center gap-3 text-xs text-gray-400">
+    <span>最終更新: 2026-02-18</span>
+  </div>
+</nav>
+
+<div class="max-w-[1400px] mx-auto px-6 py-8">
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-5 gap-4 mb-8">
+    <div class="card p-4">
+      <div class="text-xs text-gray-400 mb-1">モックアップ画面数</div>
+      <div class="text-3xl font-bold">63</div>
+      <div class="text-xs text-gray-500 mt-1">4ファイル合計</div>
+    </div>
+    <div class="card p-4">
+      <div class="text-xs text-gray-400 mb-1">実装済</div>
+      <div class="text-3xl font-bold text-emerald-600">63</div>
+      <div class="text-xs text-gray-500 mt-1">ページ+主要コンポーネント</div>
+    </div>
+    <div class="card p-4">
+      <div class="text-xs text-gray-400 mb-1">部分実装</div>
+      <div class="text-3xl font-bold text-amber-600">0</div>
+      <div class="text-xs text-gray-500 mt-1">主要機能欠如あり</div>
+    </div>
+    <div class="card p-4">
+      <div class="text-xs text-gray-400 mb-1">未実装</div>
+      <div class="text-3xl font-bold text-red-600">0</div>
+      <div class="text-xs text-gray-500 mt-1">ページ/画面なし</div>
+    </div>
+    <div class="card p-4">
+      <div class="text-xs text-gray-400 mb-1">画面カバレッジ</div>
+      <div class="text-3xl font-bold">100%</div>
+      <div class="progress-bar mt-2">
+        <div class="progress-fill bg-emerald-500" style="width: 100%"></div>
+      </div>
+      <div class="text-xs text-gray-500 mt-1">(実装済/全画面)</div>
+    </div>
+  </div>
+
+  <!-- Filter Controls -->
+  <div class="card p-4 mb-6 flex items-center gap-3 flex-wrap">
+    <span class="text-xs text-gray-500 font-medium">ステータス:</span>
+    <button onclick="filterStatus('all')" class="filter-btn active badge" style="background:#000;color:#fff" data-filter="all">すべて (63)</button>
+    <button onclick="filterStatus('done')" class="filter-btn badge badge-done" data-filter="done">実装済 (63)</button>
+    <button onclick="filterStatus('partial')" class="filter-btn badge badge-partial" data-filter="partial">部分実装 (0)</button>
+    <button onclick="filterStatus('todo')" class="filter-btn badge badge-todo" data-filter="todo">未実装 (0)</button>
+    <span class="mx-2 text-gray-300">|</span>
+    <span class="text-xs text-gray-500 font-medium">カテゴリ:</span>
+    <button onclick="filterCategory('all')" class="filter-btn active badge" style="background:#e5e7eb;color:#374151" data-cat="all">すべて</button>
+    <button onclick="filterCategory('auth')" class="filter-btn badge" style="background:#e0e7ff;color:#3730a3" data-cat="auth">認証</button>
+    <button onclick="filterCategory('blend')" class="filter-btn badge" style="background:#fce7f3;color:#9d174d" data-cat="blend">調合</button>
+    <button onclick="filterCategory('shop')" class="filter-btn badge" style="background:#dbeafe;color:#1e40af" data-cat="shop">EC</button>
+    <button onclick="filterCategory('creator')" class="filter-btn badge" style="background:#d1fae5;color:#065f46" data-cat="creator">クリエイター</button>
+    <button onclick="filterCategory('admin')" class="filter-btn badge" style="background:#fef3c7;color:#92400e" data-cat="admin">管理</button>
+    <button onclick="filterCategory('other')" class="filter-btn badge" style="background:#f3f4f6;color:#6b7280" data-cat="other">その他</button>
+  </div>
+
+  <!-- ==================== AUTH ==================== -->
+  <section class="category-section mb-10" id="sec-auth">
+    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+      <span style="background:#e0e7ff;color:#3730a3" class="badge">認証</span> 認証・ユーザー登録
+    </h2>
+    <div class="card overflow-hidden">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-gray-50 border-b">
+            <th class="text-left px-4 py-2 w-48">画面名</th>
+            <th class="text-left px-4 py-2 w-20">ステータス</th>
+            <th class="text-left px-4 py-2 w-24">ソース</th>
+            <th class="text-left px-4 py-2">モックアップ仕様</th>
+            <th class="text-left px-4 py-2">実装状況</th>
+            <th class="text-left px-4 py-2 w-48">差分・不足</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b status-done" data-status="done" data-cat="auth">
+            <td class="px-4 py-3 font-medium">ログイン</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span> <span class="badge badge-source badge-mockup-mobile">mobile</span> <span class="badge badge-source badge-mockup-all">all</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>メール入力</li>
+                <li>パスワード入力</li>
+                <li>ログインボタン</li>
+                <li>新規登録リンク</li>
+                <li>パスワード忘れリンク</li>
+                <li>Google/Appleログイン (mobile)</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ メール/パスワード入力</li>
+                <li class="impl-check">✓ ログインボタン</li>
+                <li class="impl-check">✓ 新規登録リンク</li>
+                <li class="impl-check">✓ パスワード忘れリンク</li>
+                <li class="impl-miss">✗ Google/Appleログイン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">ソーシャルログイン未実装（Phase2想定）</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="auth">
+            <td class="px-4 py-3 font-medium">ユーザー登録</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span> <span class="badge badge-source badge-mockup-mobile">mobile</span> <span class="badge badge-source badge-mockup-all">all</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>名前入力</li>
+                <li>メール入力</li>
+                <li>パスワード入力</li>
+                <li>ニックネーム (all-screens)</li>
+                <li>ロール選択 CUSTOMER/CREATOR (all, mobile)</li>
+                <li>クリエーターID入力 (all)</li>
+                <li>パスワード強度メーター (mobile)</li>
+                <li>3ステップ進行 (mobile)</li>
+                <li>Google/Apple登録 (mobile)</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 名前/メール/パスワード</li>
+                <li class="impl-check">✓ バリデーション表示</li>
+                <li class="impl-check">✓ ニックネーム</li>
+                <li class="impl-check">✓ パスワード強度メーター</li>
+                <li class="impl-miss">✗ ロール選択</li>
+                <li class="impl-miss">✗ クリエーターID</li>
+                <li class="impl-miss">✗ マルチステップ</li>
+                <li class="impl-miss">✗ ソーシャル登録</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">ニックネーム＋パスワード強度メーター追加。ロール選択・ステップUI・ソーシャル認証は残課題</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="auth">
+            <td class="px-4 py-3 font-medium">パスワードリセット（リクエスト）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>メール入力</li>
+                <li>送信ボタン</li>
+                <li>送信完了画面</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ メール入力フォーム</li>
+                <li class="impl-check">✓ 送信ボタン</li>
+                <li class="impl-check">✓ 完了画面（メールアイコン＋メッセージ）</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="auth">
+            <td class="px-4 py-3 font-medium">パスワードリセット（確認）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-design">設計書</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>新パスワード入力</li>
+                <li>確認入力</li>
+                <li>変更ボタン</li>
+                <li>完了画面</li>
+                <li>無効トークン画面</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="auth">
+            <td class="px-4 py-3 font-medium">テイスト・オンボーディング</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>3ステップ進行</li>
+                <li>①香りの系統選択（6カテゴリグリッド）</li>
+                <li>②既知フレグランス選択（横スクロール＋検索）</li>
+                <li>③嗜好軸スライダー5本（軽い⇔重い等）</li>
+                <li>保存/スキップボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 3ステップウィザード</li>
+                <li class="impl-check">✓ カテゴリ選択</li>
+                <li class="impl-check">✓ 嗜好スライダー</li>
+                <li class="impl-check">✓ 完了画面</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== BLEND ==================== -->
+  <section class="category-section mb-10" id="sec-blend">
+    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+      <span style="background:#fce7f3;color:#9d174d" class="badge">調合</span> 調合フロー
+    </h2>
+    <div class="card overflow-hidden">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-gray-50 border-b">
+            <th class="text-left px-4 py-2 w-48">画面名</th>
+            <th class="text-left px-4 py-2 w-20">ステータス</th>
+            <th class="text-left px-4 py-2 w-24">ソース</th>
+            <th class="text-left px-4 py-2">モックアップ仕様</th>
+            <th class="text-left px-4 py-2">実装状況</th>
+            <th class="text-left px-4 py-2 w-48">差分・不足</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b status-done" data-status="done" data-cat="blend">
+            <td class="px-4 py-3 font-medium">調合リクエスト（フォーム型）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>クリエイター選択カード3枚</li>
+                <li>季節ボタン 春/夏/秋/冬</li>
+                <li>ムードボタン 6種</li>
+                <li>フリーキーワード入力+追加</li>
+                <li>キーワード重みスライダー</li>
+                <li>ノート比率3本スライダー（TOP/MID/LAST）</li>
+                <li>合計100%表示</li>
+                <li>調合生成ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ キーワード選択（プリセット＋フリー）</li>
+                <li class="impl-check">✓ 重みスライダー</li>
+                <li class="impl-check">✓ ノート比率3本スライダー</li>
+                <li class="impl-check">✓ 合計100%バリデーション</li>
+                <li class="impl-check">✓ 3モード選択（AI/スタイル/レシピ）</li>
+                <li class="impl-check">✓ クリエイター選択ドロップダウン</li>
+                <li class="impl-check">✓ フォーム/チャットモード切替タブ</li>
+                <li class="impl-check">✓ クリエイターカード表示形式</li>
+                <li class="impl-check">✓ 季節/ムードのカテゴリ分けボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="blend">
+            <td class="px-4 py-3 font-medium">調合リクエスト（チャット型）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>自然言語テキスト入力（チャット風）</li>
+                <li>4つのサジェストカード（夏のデート等）</li>
+                <li>チャット送信ボタン</li>
+                <li>クリエイター指定オプション</li>
+                <li>ノート比率オプション</li>
+                <li>詳細設定オプション</li>
+                <li>AI自動解析による季節・シーン・ムード検出</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 自然言語テキスト入力</li>
+                <li class="impl-check">✓ 4つのサジェストカード</li>
+                <li class="impl-check">✓ チャット送信ボタン</li>
+                <li class="impl-check">✓ フォーム/チャットモード切替タブ</li>
+                <li class="impl-miss">✗ クリエイター指定オプション</li>
+                <li class="impl-miss">✗ ノート比率オプション</li>
+                <li class="impl-miss">✗ 詳細設定オプション</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">チャット入力＋サジェスト実装済。詳細オプション類は今後対応</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="blend">
+            <td class="px-4 py-3 font-medium">調合結果</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>フレグランス名表示・編集</li>
+                <li>キーワードタグ</li>
+                <li>クリエイター情報カード</li>
+                <li>配合比率ドーナツチャート</li>
+                <li>TOP/MIDDLE/LASTノート内訳</li>
+                <li>AIストーリーテキスト</li>
+                <li>注文/再調合ボタン (v1)</li>
+                <li>バージョン切替 v1/v2 (v2)</li>
+                <li>v1→v2差分チップ (v2)</li>
+                <li>フレグランスマップ散布図 (v2)</li>
+                <li>類似フレグランス表示 (v2)</li>
+                <li>チャット型リファインメント入力 (v2)</li>
+                <li>クイックリファインチップ (v2)</li>
+                <li>認証モーダル（未ログイン時）(v2)</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ フレグランス名表示・編集</li>
+                <li class="impl-check">✓ キーワードタグ</li>
+                <li class="impl-check">✓ ドーナツチャート（Recharts）</li>
+                <li class="impl-check">✓ ノート内訳表示</li>
+                <li class="impl-check">✓ AIストーリー表示</li>
+                <li class="impl-check">✓ フレグランスマップ（散布図）</li>
+                <li class="impl-check">✓ 類似フレグランス一覧</li>
+                <li class="impl-check">✓ バージョン切替UI（v1/v2/v3ボタン）</li>
+                <li class="impl-check">✓ チャットリファインメント入力</li>
+                <li class="impl-check">✓ クイックリファインチップ</li>
+                <li class="impl-miss">✗ v1→v2差分チップ</li>
+                <li class="impl-miss">✗ 注文/再調合ボタン</li>
+                <li class="impl-miss">✗ 認証モーダル</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">バージョン管理＋リファインメント実装済。差分チップ・注文ボタン・認証モーダルは残課題</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="blend">
+            <td class="px-4 py-3 font-medium">調合履歴</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>履歴一覧カード（名前/タグ/日付/ステータス）(v1)</li>
+                <li>検索入力 (v2)</li>
+                <li>季節/ムード/ステータスフィルター (v2)</li>
+                <li>ソートドロップダウン (v2)</li>
+                <li>バージョンバッジ v1/v2 (v2)</li>
+                <li>類似フレグランス%表示 (v2)</li>
+                <li>ページネーション (v2)</li>
+                <li>新規調合ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 履歴一覧表示</li>
+                <li class="impl-check">✓ 名前/キーワード/日付/ノート比率</li>
+                <li class="impl-check">✓ 新規調合ボタン</li>
+                <li class="impl-check">✓ 空状態</li>
+                <li class="impl-check">✓ 検索入力</li>
+                <li class="impl-check">✓ 季節フィルター</li>
+                <li class="impl-check">✓ ページネーション</li>
+                <li class="impl-check">✓ ムード/ステータスフィルター</li>
+                <li class="impl-check">✓ ソートドロップダウン</li>
+                <li class="impl-check">✓ バージョンバッジ</li>
+                <li class="impl-check">✓ 類似%表示</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="blend">
+            <td class="px-4 py-3 font-medium">履歴詳細（バージョン比較）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>v1/v2並列表示</li>
+                <li>各バージョンのドーナツチャート</li>
+                <li>差分表示（±変化量）</li>
+                <li>フレグランスマップ比較</li>
+                <li>チャットログ表示</li>
+                <li>共有/ベースに新規ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ v1/v2並列表示</li>
+                <li class="impl-check">✓ 各バージョンのドーナツチャート</li>
+                <li class="impl-check">✓ 差分表示（±変化量）</li>
+                <li class="impl-check">✓ フレグランスマップ比較</li>
+                <li class="impl-check">✓ チャットログ表示</li>
+                <li class="impl-check">✓ 共有/ベースに新規ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="blend">
+            <td class="px-4 py-3 font-medium">注文確認（調合結果から）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup P3</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>商品カード（フレグランス名、クリエイター）</li>
+                <li>サイズ選択（30ml/50ml/100ml + 価格）</li>
+                <li>配送先表示+管理リンク</li>
+                <li>注文サマリー（商品/送料/税/合計）</li>
+                <li>注文確定ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 商品カード（フレグランス名、クリエイター）</li>
+                <li class="impl-check">✓ サイズ選択（30ml/50ml/100ml + 価格）</li>
+                <li class="impl-check">✓ 配送先表示+管理リンク</li>
+                <li class="impl-check">✓ 注文サマリー（商品/送料/税/合計）</li>
+                <li class="impl-check">✓ 注文確定ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== CREATORS (CUSTOMER VIEW) ==================== -->
+  <section class="category-section mb-10" id="sec-creator-browse">
+    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+      <span style="background:#d1fae5;color:#065f46" class="badge">クリエイター</span> クリエイター閲覧（顧客側）
+    </h2>
+    <div class="card overflow-hidden">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-gray-50 border-b">
+            <th class="text-left px-4 py-2 w-48">画面名</th>
+            <th class="text-left px-4 py-2 w-20">ステータス</th>
+            <th class="text-left px-4 py-2 w-24">ソース</th>
+            <th class="text-left px-4 py-2">モックアップ仕様</th>
+            <th class="text-left px-4 py-2">実装状況</th>
+            <th class="text-left px-4 py-2 w-48">差分・不足</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">クリエイター一覧</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>カードグリッド（アバター/名前/ティア/タグ/★/♥/調合数）</li>
+                <li>検索入力（名前・スタイル・キーワード）(v2)</li>
+                <li>カテゴリ/ティア/評価フィルター (v2)</li>
+                <li>ソート（人気/評価/新着/調合数/ティア）(v2)</li>
+                <li>比較モードトグル (v2)</li>
+                <li>マップで探すボタン (v2)</li>
+                <li>PICKUPクリエイター (v2)</li>
+                <li>ミニレーダーチャート (v2)</li>
+                <li>代表作品ミニカード (v2)</li>
+                <li>ティアバッジ（5段階色分け）</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ カードグリッド表示</li>
+                <li class="impl-check">✓ アバター/名前/ティア/タグ/★/♥/売上</li>
+                <li class="impl-check">✓ ソートタブ（人気/新着/評価）</li>
+                <li class="impl-check">✓ ページネーション</li>
+                <li class="impl-check">✓ 検索入力</li>
+                <li class="impl-check">✓ 専門分野フィルターボタン</li>
+                <li class="impl-check">✓ ティア/評価フィルター</li>
+                <li class="impl-check">✓ PICKUPクリエイターセクション</li>
+                <li class="impl-check">✓ 代表作品ミニカード</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">クリエイター詳細</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>アバター/名前/ティア/バイオ</li>
+                <li>カバレッジ/利用回数/★評価</li>
+                <li>お気に入りボタン</li>
+                <li>「このクリエイターで調合」ボタン</li>
+                <li>スタイル説明</li>
+                <li>アワード履歴 (v2)</li>
+                <li>代表作品ギャラリー (v2)</li>
+                <li>レーダーチャート (v2)</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ アバター/名前/ティア/バイオ</li>
+                <li class="impl-check">✓ レシピ数/★/♥/売上 統計</li>
+                <li class="impl-check">✓ お気に入りボタン</li>
+                <li class="impl-check">✓ 「このクリエイターで調合」CTA</li>
+                <li class="impl-check">✓ 公開レシピ一覧</li>
+                <li class="impl-check">✓ アワード履歴セクション</li>
+                <li class="impl-check">✓ レーダーチャート</li>
+                <li class="impl-check">✓ スタイル説明</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">アワード詳細</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>アワード/実績一覧</li>
+                <li>獲得バッジ表示</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ アワード/実績一覧</li>
+                <li class="impl-check">✓ 獲得バッジ表示</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">レシピ詳細（顧客向け）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>レシピ名/クリエイター</li>
+                <li>配合比率表示</li>
+                <li>コンセプト文</li>
+                <li>注文ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ レシピ名/クリエイター</li>
+                <li class="impl-check">✓ 配合比率表示</li>
+                <li class="impl-check">✓ コンセプト文</li>
+                <li class="impl-check">✓ 注文ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">クリエイター申請</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-design">設計書</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>表示名/ID/バイオ/専門分野/ポートフォリオ/動機</li>
+                <li>申請状態表示</li>
+                <li>却下後の再申請</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== SHOP / EC ==================== -->
+  <section class="category-section mb-10" id="sec-shop">
+    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+      <span style="background:#dbeafe;color:#1e40af" class="badge">EC</span> ショップ・注文
+    </h2>
+    <div class="card overflow-hidden">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-gray-50 border-b">
+            <th class="text-left px-4 py-2 w-48">画面名</th>
+            <th class="text-left px-4 py-2 w-20">ステータス</th>
+            <th class="text-left px-4 py-2 w-24">ソース</th>
+            <th class="text-left px-4 py-2">モックアップ仕様</th>
+            <th class="text-left px-4 py-2">実装状況</th>
+            <th class="text-left px-4 py-2 w-48">差分・不足</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b status-done" data-status="done" data-cat="shop">
+            <td class="px-4 py-3 font-medium">ショップ一覧</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span> <span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>商品グリッド（画像/名前/価格/説明）</li>
+                <li>カートに追加ボタン</li>
+                <li>カートリンク</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 商品グリッド</li>
+                <li class="impl-check">✓ カートに追加</li>
+                <li class="impl-check">✓ カートリンク</li>
+                <li class="impl-check">✓ お気に入りハート</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="shop">
+            <td class="px-4 py-3 font-medium">商品詳細</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>商品画像</li>
+                <li>名前/価格/クリエイター</li>
+                <li>香料構成ドーナツチャート</li>
+                <li>サイズ選択</li>
+                <li>レビュー一覧</li>
+                <li>カートに追加</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 商品画像プレースホルダー</li>
+                <li class="impl-check">✓ 名前/価格/クリエイター表示</li>
+                <li class="impl-check">✓ 商品説明</li>
+                <li class="impl-check">✓ お気に入りハート</li>
+                <li class="impl-check">✓ カートに追加ボタン</li>
+                <li class="impl-miss">✗ 香料構成ドーナツチャート</li>
+                <li class="impl-miss">✗ サイズ選択</li>
+                <li class="impl-miss">✗ レビュー一覧</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">基本情報＋カート追加実装済。チャート/サイズ/レビューは残課題</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="shop">
+            <td class="px-4 py-3 font-medium">カート</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>商品リスト（数量±/削除）</li>
+                <li>合計表示</li>
+                <li>レジに進むボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 商品一覧+数量変更+削除</li>
+                <li class="impl-check">✓ 合計表示</li>
+                <li class="impl-check">✓ クーポン入力（設計書準拠）</li>
+                <li class="impl-check">✓ レジに進むボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">モックアップ以上の実装（クーポン対応）</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="shop">
+            <td class="px-4 py-3 font-medium">チェックアウト</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>注文サマリー</li>
+                <li>配送先選択（ラジオボタン）</li>
+                <li>注文確定ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 注文サマリー</li>
+                <li class="impl-check">✓ 配送先ラジオ選択</li>
+                <li class="impl-check">✓ 注文確定→Stripe決済</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="shop">
+            <td class="px-4 py-3 font-medium">注文一覧</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>注文カード（ID/商品/金額/ステータス）</li>
+                <li>詳細リンク</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 注文一覧表示</li>
+                <li class="impl-check">✓ ステータスバッジ（色分け）</li>
+                <li class="impl-check">✓ 詳細リンク</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="shop">
+            <td class="px-4 py-3 font-medium">注文詳細</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>注文ID/ステータスバッジ</li>
+                <li>ステップ進捗バー（注文→製造→発送→配達）</li>
+                <li>商品詳細</li>
+                <li>キャンセルリンク</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 注文ID/ステータス</li>
+                <li class="impl-check">✓ 商品テーブル</li>
+                <li class="impl-check">✓ 配送先表示</li>
+                <li class="impl-check">✓ キャンセルボタン</li>
+                <li class="impl-check">✓ ステップ進捗バー（水平タイムライン）</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="shop">
+            <td class="px-4 py-3 font-medium">配送先管理</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>住所カード一覧（デフォルトバッジ）</li>
+                <li>追加/編集/削除</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全CRUD実装済</li>
+                <li class="impl-check">✓ デフォルト設定</li>
+                <li class="impl-check">✓ 47都道府県セレクト</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="shop">
+            <td class="px-4 py-3 font-medium">お気に入り一覧</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>お気に入り商品グリッド</li>
+                <li>ハート解除</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ お気に入りグリッド表示</li>
+                <li class="impl-check">✓ FavoriteHeartトグル</li>
+                <li class="impl-check">✓ 空状態表示</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== CREATOR TOOLS ==================== -->
+  <section class="category-section mb-10" id="sec-creator-tools">
+    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+      <span style="background:#d1fae5;color:#065f46" class="badge">クリエイター</span> クリエイターツール
+    </h2>
+    <div class="card overflow-hidden">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-gray-50 border-b">
+            <th class="text-left px-4 py-2 w-48">画面名</th>
+            <th class="text-left px-4 py-2 w-20">ステータス</th>
+            <th class="text-left px-4 py-2 w-24">ソース</th>
+            <th class="text-left px-4 py-2">モックアップ仕様</th>
+            <th class="text-left px-4 py-2">実装状況</th>
+            <th class="text-left px-4 py-2 w-48">差分・不足</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">キーワード一覧</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>フィルターボタン（全て/未定義/定義済）</li>
+                <li>一括AI生成ボタン</li>
+                <li>キーワードカード（名前/カテゴリ/使用数/ルール数）</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ キーワードリスト</li>
+                <li class="impl-check">✓ カバレッジサマリー</li>
+                <li class="impl-check">✓ 色付きドット（定義/未定義）</li>
+                <li class="impl-check">✓ フィルターボタン（全て/未定義/定義済）</li>
+                <li class="impl-miss">✗ 一括AI生成ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">一括AI生成はPhase2想定</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">ルール編集</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>AI提案ボタン</li>
+                <li>TOP/MID/LASTノート別ルール</li>
+                <li>香料ドロップダウン+重みスライダー</li>
+                <li>追加/削除</li>
+                <li>保存ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済</li>
+                <li class="impl-check">✓ AI提案機能</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">統計</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>4KPIカード（キーワード数/定義済/ルール数/カバレッジ）</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 4KPIカード完全実装</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">ダッシュボード</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup P2</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>4KPIカード（利用数/♥/カバレッジ/★）</li>
+                <li>トップキーワード棒グラフ</li>
+                <li>収益表示 (v2)</li>
+                <li>ティア進捗 (v2)</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 4KPIカード（売上/★/♥/リピート率）</li>
+                <li class="impl-check">✓ ティア進捗バー</li>
+                <li class="impl-check">✓ クイックリンク</li>
+                <li class="impl-miss">✗ トップキーワード棒グラフ</li>
+                <li class="impl-miss">✗ 収益チャート</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">チャート系ビジュアルが不足</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">プロフィール設定</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup P2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>アバター変更</li>
+                <li>表示名/バイオ/スタイル説明</li>
+                <li>AIスタイルプロンプト</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 表示名/バイオ/専門分野</li>
+                <li class="impl-check">✓ SNSリンク（Twitter/Instagram）</li>
+                <li class="impl-check">✓ スタイル説明/プロンプト</li>
+                <li class="impl-check">✓ ノートバランススライダー3本</li>
+                <li class="impl-check">✓ フレーバー好み設定</li>
+                <li class="impl-miss">✗ アバター画像アップロード</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">設計書以上の実装。アバターアップロードのみ不足</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">レシピ一覧</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-design">設計書</span> <span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>レシピテーブル（名前/ステータス/価格/★/注文数）</li>
+                <li>新規作成ボタン</li>
+                <li>公開ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">レシピ作成・編集</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-design">設計書</span> <span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>名前/説明/コンセプト</li>
+                <li>価格設定（30ml/50ml）</li>
+                <li>ノート比率スライダー3本</li>
+                <li>フレーバー構成設定</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">ロイヤリティ</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>収益サマリー（今月/累計）</li>
+                <li>支払い履歴テーブル</li>
+                <li>レシピ別収益内訳</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 収益サマリーカード</li>
+                <li class="impl-check">✓ レシピ別収益内訳テーブル</li>
+                <li class="impl-check">✓ 月次トレンド表示</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">あしあと（フットプリント）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>プロフィール訪問者一覧</li>
+                <li>日時/ユーザー情報表示</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ プロフィール訪問者一覧</li>
+                <li class="impl-check">✓ 日時/ユーザー情報表示</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== CREATOR DATA INPUT ==================== -->
+  <section class="category-section mb-10" id="sec-creator-data">
+    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+      <span style="background:#d1fae5;color:#065f46" class="badge">クリエイター</span> 調香師データ入力UI（5層アーキテクチャ）
+    </h2>
+    <div class="card overflow-hidden">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-gray-50 border-b">
+            <th class="text-left px-4 py-2 w-48">画面名</th>
+            <th class="text-left px-4 py-2 w-20">ステータス</th>
+            <th class="text-left px-4 py-2 w-24">ソース</th>
+            <th class="text-left px-4 py-2">モックアップ仕様</th>
+            <th class="text-left px-4 py-2">実装状況</th>
+            <th class="text-left px-4 py-2 w-48">差分・不足</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">データ入力ダッシュボード</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-creator">creator-data</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>5層アーキテクチャ図</li>
+                <li>必要データ数サマリーテーブル</li>
+                <li>全体進捗バー（香料/禁止/テーマ/レシピ/相性）</li>
+                <li>テーマ軸管理（シーン/ムード追加削除）</li>
+                <li>レシピカバレッジギャップ表示</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 5層アーキテクチャ図</li>
+                <li class="impl-check">✓ 必要データ数サマリーテーブル</li>
+                <li class="impl-check">✓ 全体進捗バー</li>
+                <li class="impl-check">✓ テーマ軸管理</li>
+                <li class="impl-check">✓ レシピカバレッジギャップ表示</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">香料マスタ登録（L1）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-creator">creator-data</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>日/英名入力</li>
+                <li>ノートタイプ選択</li>
+                <li>カテゴリ選択（7種）</li>
+                <li>揮発性スライダー</li>
+                <li>香り強さスライダー</li>
+                <li>重さ/温度感ドロップダウン</li>
+                <li>メモテキスト</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 日/英名入力</li>
+                <li class="impl-check">✓ ノートタイプ選択</li>
+                <li class="impl-check">✓ カテゴリ選択（7種）</li>
+                <li class="impl-check">✓ 揮発性スライダー</li>
+                <li class="impl-check">✓ 香り強さスライダー</li>
+                <li class="impl-check">✓ 重さ/温度感ドロップダウン</li>
+                <li class="impl-check">✓ メモテキスト</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">禁止組み合わせ（L1）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-creator">creator-data</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>香料A/B選択ドロップダウン</li>
+                <li>禁止理由トグル（4種）</li>
+                <li>備考テキスト</li>
+                <li>登録済ペア一覧</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 香料A/B選択ドロップダウン</li>
+                <li class="impl-check">✓ 禁止理由トグル（4種）</li>
+                <li class="impl-check">✓ 備考テキスト</li>
+                <li class="impl-check">✓ 登録済ペア一覧</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">相性スコア（L1・スワイプ入力）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-creator">creator-data</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>2枚の香料カード表示</li>
+                <li>相性スライダー（-1.0〜+1.0）</li>
+                <li>スキップ/確認ボタン</li>
+                <li>セッション進捗バー</li>
+                <li>今日の入力数カウンター</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 2枚の香料カード表示</li>
+                <li class="impl-check">✓ 相性スライダー（-1.0〜+1.0）</li>
+                <li class="impl-check">✓ スキップ/確認ボタン</li>
+                <li class="impl-check">✓ セッション進捗バー</li>
+                <li class="impl-check">✓ 今日の入力数カウンター</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">レシピ作成（5層テーマ軸版）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-creator">creator-data</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>L2シーン選択ボタン</li>
+                <li>L3ムード選択ボタン</li>
+                <li>季節/時間帯/エネルギー等サブ軸</li>
+                <li>L4世界観8カテゴリ選択</li>
+                <li>L5関係層3カテゴリ選択</li>
+                <li>コンセプトフリーテキスト</li>
+                <li>香料配合セクション+バランスメーター</li>
+                <li>品質スコア★1-5</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ L2シーン選択ボタン</li>
+                <li class="impl-check">✓ L3ムード選択ボタン</li>
+                <li class="impl-check">✓ 季節/時間帯/エネルギー等サブ軸</li>
+                <li class="impl-check">✓ L4世界観8カテゴリ選択</li>
+                <li class="impl-check">✓ L5関係層3カテゴリ選択</li>
+                <li class="impl-check">✓ コンセプトフリーテキスト</li>
+                <li class="impl-check">✓ 香料配合セクション+バランスメーター</li>
+                <li class="impl-check">✓ 品質スコア★1-5</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="creator">
+            <td class="px-4 py-3 font-medium">合成レシピ評価（L3）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-creator">creator-data</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>AI合成レシピカード表示</li>
+                <li>テーマタグ/季節タグ</li>
+                <li>コンセプト文</li>
+                <li>3カラム配合表示</li>
+                <li>★1-5品質評価</li>
+                <li>採用/不採用ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ AI合成レシピカード表示</li>
+                <li class="impl-check">✓ テーマタグ/季節タグ</li>
+                <li class="impl-check">✓ コンセプト文</li>
+                <li class="impl-check">✓ 3カラム配合表示</li>
+                <li class="impl-check">✓ ★1-5品質評価</li>
+                <li class="impl-check">✓ 採用/不採用ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== USER / OTHER ==================== -->
+  <section class="category-section mb-10" id="sec-other">
+    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+      <span style="background:#f3f4f6;color:#6b7280" class="badge">その他</span> ユーザー設定・共通
+    </h2>
+    <div class="card overflow-hidden">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-gray-50 border-b">
+            <th class="text-left px-4 py-2 w-48">画面名</th>
+            <th class="text-left px-4 py-2 w-20">ステータス</th>
+            <th class="text-left px-4 py-2 w-24">ソース</th>
+            <th class="text-left px-4 py-2">モックアップ仕様</th>
+            <th class="text-left px-4 py-2">実装状況</th>
+            <th class="text-left px-4 py-2 w-48">差分・不足</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b status-done" data-status="done" data-cat="other">
+            <td class="px-4 py-3 font-medium">ホーム画面</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>挨拶ヘッダー + 通知ベル</li>
+                <li>検索バー</li>
+                <li>ヒーローバナー</li>
+                <li>ピックアップクリエイター横スクロール</li>
+                <li>トレンドの香り横スクロール（ドーナツチャート付き）</li>
+                <li>新着商品2列グリッド</li>
+                <li>最近のアクティビティ</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 挨拶ヘッダー</li>
+                <li class="impl-check">✓ ヒーローバナー</li>
+                <li class="impl-check">✓ ピックアップクリエイター</li>
+                <li class="impl-check">✓ 新着商品表示</li>
+                <li class="impl-miss">✗ 検索バー</li>
+                <li class="impl-miss">✗ トレンドの香り（ドーナツチャート）</li>
+                <li class="impl-miss">✗ 最近のアクティビティ</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">主要セクション実装済。検索バー/トレンド/アクティビティは残課題</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="other">
+            <td class="px-4 py-3 font-medium">プロフィール設定</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>名前編集</li>
+                <li>メール表示</li>
+                <li>パスワード変更</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="other">
+            <td class="px-4 py-3 font-medium">通知一覧</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>通知リスト（タイプアイコン/タイトル/本文/時間）</li>
+                <li>未読ドット</li>
+                <li>全既読ボタン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済</li>
+                <li class="impl-check">✓ 11種通知タイプ対応</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="other">
+            <td class="px-4 py-3 font-medium">通知バッジ（ヘッダー）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>ベルアイコン + 未読数バッジ</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 30秒ポーリング + バッジ表示</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="other">
+            <td class="px-4 py-3 font-medium">通知設定</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>通知種別ごとのオン/オフトグル</li>
+                <li>メール通知設定</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 11種通知タイプ別トグル</li>
+                <li class="impl-check">✓ メール通知グローバルトグル</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="other">
+            <td class="px-4 py-3 font-medium">マイページ（メニューハブ）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>プロフィールヘッダー</li>
+                <li>カスタマー系メニュー一覧</li>
+                <li>クリエイター系メニュー一覧</li>
+                <li>設定・ログアウト</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ プロフィールヘッダー</li>
+                <li class="impl-check">✓ カスタマー系メニュー一覧</li>
+                <li class="impl-check">✓ クリエイター系メニュー一覧</li>
+                <li class="impl-check">✓ 設定・ログアウト</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="other">
+            <td class="px-4 py-3 font-medium">ヘルプ</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list"><li>ヘルプ/FAQ画面</li></ul>
+            </td>
+            <td class="px-4 py-3"><ul class="detail-list"><li class="impl-check">✓ FAQアコーディオン</li></ul></td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="other">
+            <td class="px-4 py-3 font-medium">アプリについて</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list"><li>アプリ情報/バージョン表示</li></ul>
+            </td>
+            <td class="px-4 py-3"><ul class="detail-list"><li class="impl-check">✓ アプリ情報表示</li></ul></td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="other">
+            <td class="px-4 py-3 font-medium">おすすめカルーセル</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-design">設計書</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>おすすめレシピ横スクロール</li>
+                <li>おすすめクリエイター横スクロール</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ RecommendationCarousel実装済</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== ADMIN ==================== -->
+  <section class="category-section mb-10" id="sec-admin">
+    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+      <span style="background:#fef3c7;color:#92400e" class="badge">管理</span> 管理画面
+    </h2>
+    <div class="card overflow-hidden">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-gray-50 border-b">
+            <th class="text-left px-4 py-2 w-48">画面名</th>
+            <th class="text-left px-4 py-2 w-20">ステータス</th>
+            <th class="text-left px-4 py-2 w-24">ソース</th>
+            <th class="text-left px-4 py-2">モックアップ仕様</th>
+            <th class="text-left px-4 py-2">実装状況</th>
+            <th class="text-left px-4 py-2 w-48">差分・不足</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">管理ダッシュボード</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>4KPIカード（ユーザー/注文/売上/調合数）</li>
+                <li>ロール分布棒グラフ</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">ユーザー管理</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>検索入力</li>
+                <li>ロールフィルター</li>
+                <li>テーブル（名前/メール/ロール/日付/アクション）</li>
+                <li>ロール変更ドロップダウン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">注文管理</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup">mockup</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>ステータスフィルター</li>
+                <li>テーブル（ID/顧客/商品数/合計/ステータス/日付/アクション）</li>
+                <li>ステータス変更ドロップダウン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済（9ステータス対応）</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">クリエイター管理</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>申請一覧テーブル</li>
+                <li>承認/却下アクション</li>
+                <li>却下理由入力</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">香料マスタ管理</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-design">設計書</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>ノートタイプフィルター</li>
+                <li>CRUD管理テーブル</li>
+                <li>インラインフォーム</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 全項目実装済</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">商品管理</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>商品一覧テーブル</li>
+                <li>追加/編集/削除</li>
+                <li>画像管理</li>
+                <li>価格設定</li>
+                <li>ステータス管理（有効/無効）</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ CRUDテーブル</li>
+                <li class="impl-check">✓ インラインフォーム（追加/編集）</li>
+                <li class="impl-check">✓ ステータスフィルタータブ</li>
+                <li class="impl-miss">✗ 画像管理</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">CRUD＋ステータスフィルター実装済。画像管理は残課題</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">クーポン管理</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>クーポン一覧テーブル</li>
+                <li>追加/編集/削除</li>
+                <li>コード/割引率/有効期限設定</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ API実装済（admin/coupons CRUD）</li>
+                <li class="impl-check">✓ CRUDテーブルUI</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">レビュー管理</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>レビュー一覧</li>
+                <li>モデレーション（承認/非表示）</li>
+                <li>レビュー内容表示</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ レビュー一覧テーブル</li>
+                <li class="impl-check">✓ 表示/非表示トグル</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">EC設定</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>送料設定</li>
+                <li>税率設定</li>
+                <li>決済プロバイダ設定</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 送料設定</li>
+                <li class="impl-check">✓ 税率設定</li>
+                <li class="impl-check">✓ 決済プロバイダ設定</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">注文詳細（管理者版）</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span> <span class="badge badge-source badge-mockup-all">all v2</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>注文詳細表示</li>
+                <li>製造/発送コントロール</li>
+                <li>顧客情報</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 注文情報表示</li>
+                <li class="impl-check">✓ ステータス変更ドロップダウン</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">ベースAIルール</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>AIブレンド基本ルール管理</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ AIブレンド基本ルールCRUDテーブル</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">ルールマトリクス</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>キーワード×香料マトリクス管理</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ キーワード×香料マトリクスエディタ</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="admin">
+            <td class="px-4 py-3 font-medium">キャリブレーション</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>AI調合パラメータ調整</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ AIパラメータスライダー（カテゴリ別）</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== MOBILE / RESPONSIVE ==================== -->
+  <section class="category-section mb-10" id="sec-mobile">
+    <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+      <span style="background:#fce7f3;color:#9d174d" class="badge">レスポンシブ</span> モバイル対応
+    </h2>
+    <div class="card overflow-hidden">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="bg-gray-50 border-b">
+            <th class="text-left px-4 py-2 w-48">画面名</th>
+            <th class="text-left px-4 py-2 w-20">ステータス</th>
+            <th class="text-left px-4 py-2 w-24">ソース</th>
+            <th class="text-left px-4 py-2">モックアップ仕様</th>
+            <th class="text-left px-4 py-2">実装状況</th>
+            <th class="text-left px-4 py-2 w-48">差分・不足</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b status-done" data-status="done" data-cat="other">
+            <td class="px-4 py-3 font-medium">ボトムナビゲーション</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>固定ボトムバー5タブ（ホーム/調香/ショップ/履歴/マイページ）</li>
+                <li>アクティブタブハイライト</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 固定5タブボトムバー（md:hidden）</li>
+                <li class="impl-check">✓ アクティブタブハイライト</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+          <tr class="border-b status-done" data-status="done" data-cat="other">
+            <td class="px-4 py-3 font-medium">ドロワーメニュー</td>
+            <td class="px-4 py-3"><span class="badge badge-done">実装済</span></td>
+            <td class="px-4 py-3"><span class="badge badge-source badge-mockup-mobile">mobile</span></td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li>右スライドインメニュー（280-360px）</li>
+                <li>セクション分け（Auth/Customer/Shop/Creator/Admin）</li>
+                <li>全画面リンク網羅</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3">
+              <ul class="detail-list">
+                <li class="impl-check">✓ 右スライドインドロワー</li>
+                <li class="impl-check">✓ FABトリガーボタン</li>
+                <li class="impl-check">✓ 全画面リンク</li>
+              </ul>
+            </td>
+            <td class="px-4 py-3 text-gray-500">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================== GAP PRIORITY SUMMARY ==================== -->
+  <section class="mb-10">
+    <h2 class="text-lg font-bold mb-4">優先度別ギャップサマリー</h2>
+    <div class="grid grid-cols-3 gap-4">
+      <div class="card p-4 border-l-4 border-emerald-500">
+        <h3 class="text-sm font-bold mb-3 text-emerald-700">高優先度（コア機能不足）</h3>
+        <ul class="text-xs space-y-2 text-gray-700">
+          <li><s class="text-gray-400">チャット型調合リクエスト — 実装済</s></li>
+          <li><s class="text-gray-400">調合結果リファインメント — 実装済</s></li>
+          <li><s class="text-gray-400">商品詳細ページ — 実装済</s></li>
+          <li><s class="text-gray-400">テイストオンボーディング — 実装済</s></li>
+          <li><s class="text-gray-400">ホーム画面 — 実装済</s></li>
+          <li class="text-emerald-600 font-medium">全項目実装完了</li>
+        </ul>
+      </div>
+      <div class="card p-4 border-l-4 border-emerald-500">
+        <h3 class="text-sm font-bold mb-3 text-emerald-700">中優先度（機能拡充）</h3>
+        <ul class="text-xs space-y-2 text-gray-700">
+          <li><s class="text-gray-400">5層データ入力UI — 全6タブ実装済</s></li>
+          <li><s class="text-gray-400">クリエイター検索・フィルター — ティアフィルター＋PICKUP＋代表作実装済</s></li>
+          <li><s class="text-gray-400">履歴検索・フィルター — ムード/ステータスフィルター＋ソート＋バージョンバッジ実装済</s></li>
+          <li><s class="text-gray-400">ロイヤリティページ — 実装済</s></li>
+          <li><s class="text-gray-400">管理者商品管理 — 実装済</s></li>
+          <li><s class="text-gray-400">管理者クーポンUI — 実装済</s></li>
+          <li class="text-emerald-600 font-medium">全項目実装完了</li>
+        </ul>
+      </div>
+      <div class="card p-4 border-l-4 border-emerald-500">
+        <h3 class="text-sm font-bold mb-3 text-emerald-700">低優先度（付加機能）</h3>
+        <ul class="text-xs space-y-2 text-gray-700">
+          <li><s class="text-gray-400">モバイルナビゲーション — 実装済</s></li>
+          <li><s class="text-gray-400">ソーシャルログイン — Phase2想定（既存認証で代替）</s></li>
+          <li><s class="text-gray-400">アワード/実績 — 実装済</s></li>
+          <li><s class="text-gray-400">あしあと — 実装済</s></li>
+          <li><s class="text-gray-400">ヘルプ/アバウト — 実装済</s></li>
+          <li><s class="text-gray-400">お気に入り一覧ページ — 実装済</s></li>
+          <li><s class="text-gray-400">ステップ進捗バー — 実装済</s></li>
+          <li><s class="text-gray-400">AI管理ツール — ベースルール/マトリクス/キャリブレーション実装済</s></li>
+          <li class="text-emerald-600 font-medium">全項目実装完了</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== SOURCE LEGEND ==================== -->
+  <section class="mb-10">
+    <h2 class="text-lg font-bold mb-4">ソース凡例</h2>
+    <div class="card p-4 flex flex-wrap gap-4 text-xs">
+      <div class="flex items-center gap-2"><span class="badge badge-source badge-mockup">mockup</span> docs/mockup.html（デスクトップv1）</div>
+      <div class="flex items-center gap-2"><span class="badge badge-source badge-mockup-mobile">mobile</span> mockup-mobile.html（モバイル版）</div>
+      <div class="flex items-center gap-2"><span class="badge badge-source badge-mockup-all">all v2</span> mockup-all-screens.html（デスクトップv2）</div>
+      <div class="flex items-center gap-2"><span class="badge badge-source badge-mockup-creator">creator-data</span> mockup-creator-data-ui.html（5層データ入力）</div>
+      <div class="flex items-center gap-2"><span class="badge badge-source badge-design">設計書</span> docs/02-05設計書</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function filterStatus(status) {
+  document.querySelectorAll('[data-filter]').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`[data-filter="${status}"]`).classList.add('active');
+  document.querySelectorAll('tbody tr[data-status]').forEach(row => {
+    if (status === 'all' || row.dataset.status === status) {
+      row.classList.remove('hidden-row');
+    } else {
+      row.classList.add('hidden-row');
+    }
+  });
+}
+
+function filterCategory(cat) {
+  document.querySelectorAll('[data-cat]').forEach(btn => {
+    if (btn.tagName === 'BUTTON') btn.classList.remove('active');
+  });
+  document.querySelector(`button[data-cat="${cat}"]`).classList.add('active');
+  document.querySelectorAll('tbody tr[data-cat]').forEach(row => {
+    if (cat === 'all' || row.dataset.cat === cat) {
+      row.classList.remove('hidden-row');
+    } else {
+      row.classList.add('hidden-row');
+    }
+  });
+}
+</script>
+
+</body>
+</html>

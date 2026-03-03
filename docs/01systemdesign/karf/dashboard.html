@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KARF ダッシュボード</title>
+<style>
+  :root {
+    --color-bg: #f8f8f8;
+    --color-surface: #ffffff;
+    --color-border: #f0f0f0;
+    --color-text: #111111;
+    --color-text-secondary: #666666;
+    --color-text-tertiary: #999999;
+    --color-primary: #000000;
+    --color-primary-light: #333333;
+
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+
+    --text-xs: 10px;
+    --text-sm: 12px;
+    --text-base: 14px;
+    --text-md: 15px;
+    --text-lg: 18px;
+    --text-xl: 22px;
+    --text-2xl: 28px;
+
+    --color-critical: #dc2626;
+    --color-high: #d97706;
+    --color-medium: #2563eb;
+    --color-low: #16a34a;
+
+    --color-pass-bg: #f0fdf4;
+    --color-pass-fg: #166534;
+    --color-warn-bg: #fefce8;
+    --color-warn-fg: #854d0e;
+    --color-fail-bg: #fef2f2;
+    --color-fail-fg: #7f1d1d;
+  }
+
+  * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: var(--space-lg); }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-lg); }
+  .header h1 { font-size: var(--text-2xl); font-weight: 700; color: var(--color-primary); letter-spacing: -0.02em; }
+  .header-right { display: flex; align-items: center; gap: var(--space-md); }
+  .header select { height: 40px; padding: 0 var(--space-md); border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); font-size: var(--text-base); background: var(--color-surface); color: var(--color-text); cursor: pointer; outline: none; }
+  .header select:focus { border-color: var(--color-primary); }
+  .review-meta { font-size: var(--text-xs); color: var(--color-text-tertiary); text-align: right; line-height: 1.6; }
+
+  /* KPI Cards */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg); }
+  .kpi-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-lg); box-shadow: var(--shadow-sm); text-align: center; transition: box-shadow 0.2s; }
+  .kpi-card:hover { box-shadow: var(--shadow-md); }
+  .kpi-card .kpi-value { font-size: 36px; font-weight: 700; line-height: 1.2; }
+  .kpi-card .kpi-label { font-size: var(--text-sm); color: var(--color-text-secondary); margin-top: var(--space-xs); }
+  .kpi-card .kpi-sub { font-size: var(--text-xs); color: var(--color-text-tertiary); margin-top: 2px; }
+  .kpi-total .kpi-value { color: var(--color-primary); }
+  .kpi-critical .kpi-value { color: var(--color-critical); }
+  .kpi-resolved .kpi-value { color: var(--color-low); }
+  .kpi-rate .kpi-value { color: var(--color-medium); }
+
+  /* Section */
+  .section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-lg); box-shadow: var(--shadow-sm); margin-bottom: var(--space-lg); }
+  .section-title { font-size: var(--text-lg); font-weight: 700; color: var(--color-primary); margin-bottom: var(--space-md); }
+
+  /* Trend Chart */
+  .trend-container { position: relative; width: 100%; height: 280px; }
+  .trend-container svg { width: 100%; height: 100%; }
+  .trend-legend { display: flex; gap: var(--space-lg); margin-top: var(--space-md); flex-wrap: wrap; }
+  .trend-legend-item { display: flex; align-items: center; gap: var(--space-xs); font-size: var(--text-sm); color: var(--color-text-secondary); }
+  .trend-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* Charts grid */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); margin-bottom: var(--space-lg); }
+
+  /* Bar chart */
+  .bar-chart { display: flex; flex-direction: column; gap: var(--space-sm); }
+  .bar-row { display: flex; align-items: center; gap: var(--space-sm); }
+  .bar-label { width: 100px; font-size: var(--text-sm); color: var(--color-text-secondary); text-align: right; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 24px; background: #f3f4f6; border-radius: 4px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; display: flex; align-items: center; justify-content: flex-end; padding-right: var(--space-sm); }
+  .bar-value { font-size: var(--text-xs); font-weight: 600; color: white; }
+  .bar-value-outside { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-secondary); margin-left: var(--space-xs); flex-shrink: 0; }
+
+  /* Stacked bar */
+  .stacked-chart { display: flex; flex-direction: column; gap: var(--space-md); }
+  .stacked-group-label { font-size: var(--text-xs); color: var(--color-text-tertiary); font-weight: 600; margin-bottom: 2px; margin-top: var(--space-sm); }
+  .stacked-group-label:first-child { margin-top: 0; }
+  .stacked-row { display: flex; align-items: center; gap: var(--space-sm); }
+  .stacked-label { width: 80px; font-size: var(--text-sm); font-weight: 500; color: var(--color-text-secondary); flex-shrink: 0; }
+  .stacked-track { flex: 1; height: 28px; display: flex; border-radius: 4px; overflow: hidden; }
+  .stacked-seg { display: flex; align-items: center; justify-content: center; font-size: var(--text-xs); font-weight: 600; transition: width 0.5s ease; min-width: 0; }
+  .stacked-seg-p { background: var(--color-pass-bg); color: var(--color-pass-fg); }
+  .stacked-seg-w { background: var(--color-warn-bg); color: var(--color-warn-fg); }
+  .stacked-seg-f { background: var(--color-fail-bg); color: var(--color-fail-fg); }
+  .stacked-counts { font-size: var(--text-xs); color: var(--color-text-tertiary); margin-left: var(--space-sm); flex-shrink: 0; white-space: nowrap; }
+
+  /* Heatmap */
+  .heatmap-container { overflow-x: auto; }
+  .heatmap-table { width: 100%; border-collapse: collapse; }
+  .heatmap-table th { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-tertiary); padding: var(--space-sm) var(--space-md); text-align: center; border-bottom: 2px solid var(--color-border); }
+  .heatmap-table th:first-child { text-align: left; }
+  .heatmap-table td { padding: var(--space-sm) var(--space-md); text-align: center; border-bottom: 1px solid var(--color-border); }
+  .heatmap-table td:first-child { text-align: left; font-size: var(--text-sm); font-weight: 500; }
+  .heatmap-cell { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: var(--text-xs); font-weight: 600; min-width: 32px; }
+  .heatmap-P { background: var(--color-pass-bg); color: var(--color-pass-fg); }
+  .heatmap-W { background: var(--color-warn-bg); color: var(--color-warn-fg); }
+  .heatmap-F { background: var(--color-fail-bg); color: var(--color-fail-fg); }
+
+  /* FMEA Table */
+  .fmea-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-md); }
+  .fmea-count { font-size: var(--text-sm); color: var(--color-text-tertiary); }
+  .fmea-controls { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
+  .fmea-controls select { height: 32px; padding: 0 var(--space-sm); border: 1.5px solid var(--color-border); border-radius: 6px; font-size: var(--text-xs); background: var(--color-surface); outline: none; cursor: pointer; }
+  .fmea-controls select:focus { border-color: var(--color-primary); }
+  .fmea-table-wrap { overflow-x: auto; }
+  .fmea-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+  .fmea-table th { background: #f9fafb; border-bottom: 2px solid var(--color-border); padding: var(--space-sm) var(--space-md); text-align: left; font-weight: 600; color: var(--color-text-secondary); cursor: pointer; white-space: nowrap; user-select: none; transition: color 0.15s; }
+  .fmea-table th:hover { color: var(--color-primary); }
+  .fmea-table th .sort-arrow { font-size: 10px; margin-left: 2px; opacity: 0.5; }
+  .fmea-table th .sort-arrow.active { opacity: 1; }
+  .fmea-table td { border-bottom: 1px solid var(--color-border); padding: var(--space-sm) var(--space-md); }
+  .fmea-table tbody tr { transition: background 0.15s; }
+  .fmea-table tbody tr:hover { background: #f9fafb; }
+  .severity-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: var(--text-xs); font-weight: 600; }
+  .severity-Critical { background: #fef2f2; color: var(--color-critical); }
+  .severity-High { background: #fffbeb; color: var(--color-high); }
+  .severity-Medium { background: #eff6ff; color: var(--color-medium); }
+  .severity-Low { background: #f0fdf4; color: var(--color-low); }
+  .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: var(--text-xs); font-weight: 600; }
+  .status-open { background: #f3f4f6; color: #6b7280; }
+  .status-in_progress { background: #fefce8; color: #854d0e; }
+  .status-design_documented { background: #eff6ff; color: #1d4ed8; }
+  .status-resolved { background: #f0fdf4; color: #166534; }
+  .rpn-cell { font-variant-numeric: tabular-nums; }
+
+  /* Footer */
+  .footer { text-align: center; padding: var(--space-lg) 0; font-size: var(--text-xs); color: var(--color-text-tertiary); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .bar-label { width: 80px; }
+    .stacked-label { width: 60px; }
+    .header { flex-direction: column; align-items: flex-start; }
+    .review-meta { text-align: left; }
+  }
+  @media (max-width: 480px) {
+    .container { padding: var(--space-md); }
+    .kpi-card .kpi-value { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>KARF ダッシュボード</h1>
+    <div class="header-right">
+      <div class="review-meta" id="reviewMeta"></div>
+      <select id="reviewSelector" onchange="selectReview(this.value)"></select>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-total">
+      <div class="kpi-value" id="kpiTotal">-</div>
+      <div class="kpi-label">総件数</div>
+      <div class="kpi-sub" id="kpiTotalSub"></div>
+    </div>
+    <div class="kpi-card kpi-critical">
+      <div class="kpi-value" id="kpiCritical">-</div>
+      <div class="kpi-label">Critical</div>
+      <div class="kpi-sub" id="kpiCriticalSub"></div>
+    </div>
+    <div class="kpi-card kpi-resolved">
+      <div class="kpi-value" id="kpiResolved">-</div>
+      <div class="kpi-label">解決済</div>
+      <div class="kpi-sub" id="kpiResolvedSub"></div>
+    </div>
+    <div class="kpi-card kpi-rate">
+      <div class="kpi-value" id="kpiRate">-</div>
+      <div class="kpi-label">改善率</div>
+      <div class="kpi-sub" id="kpiRateSub"></div>
+    </div>
+  </div>
+
+  <!-- Severity Trend -->
+  <div class="section">
+    <div class="section-title">重大度別トレンド</div>
+    <div class="trend-container" id="trendChart"></div>
+    <div class="trend-legend">
+      <div class="trend-legend-item"><div class="trend-legend-dot" style="background:var(--color-critical)"></div>Critical</div>
+      <div class="trend-legend-item"><div class="trend-legend-dot" style="background:var(--color-high)"></div>High</div>
+      <div class="trend-legend-item"><div class="trend-legend-dot" style="background:var(--color-medium)"></div>Medium</div>
+      <div class="trend-legend-item"><div class="trend-legend-dot" style="background:var(--color-low)"></div>Low</div>
+    </div>
+  </div>
+
+  <!-- Charts Grid -->
+  <div class="charts-grid">
+    <div class="section">
+      <div class="section-title">カテゴリ別平均RPN</div>
+      <div id="categoryChart" class="bar-chart"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">C4レベル別 P/W/F</div>
+      <div id="c4Chart" class="stacked-chart"></div>
+    </div>
+  </div>
+
+  <!-- ISO 25010 Heatmap -->
+  <div class="section">
+    <div class="section-title">ISO 25010 品質特性ヒートマップ</div>
+    <div class="heatmap-container">
+      <table class="heatmap-table" id="isoHeatmap"></table>
+    </div>
+  </div>
+
+  <!-- FMEA Detail Table -->
+  <div class="section">
+    <div class="fmea-header">
+      <div class="section-title" style="margin-bottom:0">FMEA 詳細テーブル</div>
+      <div class="fmea-count" id="fmeaCount"></div>
+    </div>
+    <div class="fmea-controls" style="margin-bottom:var(--space-md)">
+      <select id="filterCategory" onchange="renderFmeaTable()">
+        <option value="">全カテゴリ</option>
+      </select>
+      <select id="filterSeverity" onchange="renderFmeaTable()">
+        <option value="">全重大度</option>
+        <option value="Critical">Critical</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+      <select id="filterStatus" onchange="renderFmeaTable()">
+        <option value="">全ステータス</option>
+        <option value="open">Open</option>
+        <option value="design_documented">Design Documented</option>
+        <option value="in_progress">In Progress</option>
+        <option value="resolved">Resolved</option>
+      </select>
+    </div>
+    <div class="fmea-table-wrap">
+      <table class="fmea-table" id="fmeaTable">
+        <thead>
+          <tr>
+            <th onclick="sortFmea('id')">ID <span class="sort-arrow"></span></th>
+            <th onclick="sortFmea('description')">故障モード <span class="sort-arrow"></span></th>
+            <th onclick="sortFmea('category')">カテゴリ <span class="sort-arrow"></span></th>
+            <th onclick="sortFmea('S')">S <span class="sort-arrow"></span></th>
+            <th onclick="sortFmea('O')">O <span class="sort-arrow"></span></th>
+            <th onclick="sortFmea('D')">D <span class="sort-arrow"></span></th>
+            <th onclick="sortFmea('RPN')">RPN <span class="sort-arrow"></span></th>
+            <th onclick="sortFmea('severity')">重大度 <span class="sort-arrow"></span></th>
+            <th onclick="sortFmea('status')">ステータス <span class="sort-arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="fmeaBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">KARF v1.0 — KyaraInnovate Architecture Review Framework</div>
+</div>
+
+<script>
+// ============================================================
+// REVIEW_DATA: レビュー結果を追加するときはこの配列にpushする
+// 新しいレビュー結果のJSONをそのまま追加してください
+// ============================================================
+const REVIEW_DATA = [
+  {
+    "reviewId": "KARF-2026-001",
+    "reviewDate": "2026-02-17",
+    "targetVersion": "v3.0",
+    "reviewerInfo": {
+      "type": "KARF Automated Architecture Reviewer",
+      "agentCount": 14,
+      "filesRead": 50,
+      "durationMinutes": 20
+    },
+    "c4Results": {
+      "L1": {
+        "label": "Context",
+        "pass": 3, "warn": 2, "fail": 0,
+        "items": [
+          {"id":"C1.1","label":"外部システム一覧","result":"W","note":"7外部システム中、Sentryがコア設計書に未記載。Vercelは部分的のみ"},
+          {"id":"C1.2","label":"通信プロトコル","result":"W","note":"AI Service/Stripeは明記済。Redis/PostgreSQL/Resend/Sentryは暗黙的"},
+          {"id":"C1.3","label":"ユーザー種別","result":"P","note":"CUSTOMER/CREATOR/ADMIN — 要件定義書とコード一致"},
+          {"id":"C1.4","label":"データフロー","result":"P","note":"調合・注文・認証・AIの全フロー文書化済"},
+          {"id":"C1.5","label":"フォールバック","result":"P","note":"5障害シナリオ（App/DB/Region/Stripe/Redis）全てに対応策定義"}
+        ]
+      },
+      "L2": {
+        "label": "Container",
+        "pass": 1, "warn": 4, "fail": 0,
+        "items": [
+          {"id":"C2.1","label":"コンテナ一覧","result":"W","note":"4コンテナ定義済だがPython AI Service廃止通知とdocker-composeが矛盾"},
+          {"id":"C2.2","label":"コンテナ間通信","result":"W","note":"DB/AI接続は正常。REDIS_URLがwebサービスに未設定"},
+          {"id":"C2.3","label":"スケーリング戦略","result":"P","note":"Vercel serverless + pgBouncer + Redis 3層キャッシュ、包括的"},
+          {"id":"C2.4","label":"コンテナ間認証","result":"W","note":"INTERNAL_SERVICE_TOKENがenv.tsでoptional。Redis認証なし"},
+          {"id":"C2.5","label":"環境別設定","result":"W","note":"preview/staging CI有。production deployジョブなし"}
+        ]
+      },
+      "L3": {
+        "label": "Component",
+        "pass": 2, "warn": 2, "fail": 2,
+        "items": [
+          {"id":"C3.1","label":"サービス層責務分離","result":"P","note":"7サービスファイル、各1ドメイン、相互インポートゼロ"},
+          {"id":"C3.2","label":"スキーマ→APIカバレッジ","result":"F","note":"recipe-service(8関数)とreview-service(4関数)がAPIルートゼロ。creator_profiles等3テーブルもサービス層なし"},
+          {"id":"C3.3","label":"共有ユーティリティ重複","result":"W","note":"IP抽出ロジックが2ファイルで重複。ページネーション計算が8箇所で繰返し"},
+          {"id":"C3.4","label":"画面→APIトレーサビリティ","result":"F","note":"16+モックアップ画面にAPIバッキングなし（creators, recipe-detail, write-review, admin-products等）"},
+          {"id":"C3.5","label":"循環依存","result":"P","note":"全サービス・スキーマともDAG構造。循環なし"},
+          {"id":"C3.6","label":"ミドルウェア適用","result":"W","note":"requireAuthは適切だがrate-limiter/audit-logger/security-headersは全てスタブ/未接続"}
+        ]
+      },
+      "L4": {
+        "label": "Code",
+        "pass": 3, "warn": 3, "fail": 0,
+        "items": [
+          {"id":"C4.1","label":"型定義とDB整合","result":"P","note":"全サービスの型がDBスキーマと一致"},
+          {"id":"C4.2","label":"Zodバリデーション","result":"W","note":"blend weight Zod max(10) vs DB decimal(3,0)不整合。review Zod max(1000) vs DB text制約なし"},
+          {"id":"C4.3","label":"エクスポート完全性","result":"W","note":"index.ts再エクスポートは完全。users/flavors/keywordsに$inferSelect/Insert型なし"},
+          {"id":"C4.4","label":"命名規則","result":"P","note":"snake_case(DB) / camelCase(TS) / 動詞+名詞(関数) 全て一貫"},
+          {"id":"C4.5","label":"デッドコード","result":"W","note":"review-service.ts/recipe-service.ts/audit-logger.ts/rate-limiter.ts/security-headers.ts全体がデッドコード"},
+          {"id":"C4.6","label":"エラーハンドリング","result":"P","note":"safeHandler + apiSuccess/apiErrorパターンが全26ルートで一貫"}
+        ]
+      }
+    },
+    "iso25010Results": {
+      "機能適合性": {"result":"F","subcharacteristics":[{"name":"完全性","result":"W"},{"name":"正確性","result":"P"},{"name":"適切性","result":"P"}]},
+      "性能効率性": {"result":"W","subcharacteristics":[{"name":"時間効率","result":"W"},{"name":"資源効率","result":"P"},{"name":"容量","result":"P"}]},
+      "互換性":     {"result":"W","subcharacteristics":[{"name":"共存性","result":"P"},{"name":"相互運用性","result":"W"}]},
+      "使用性":     {"result":"W","subcharacteristics":[{"name":"認識容易性","result":"P"},{"name":"学習容易性","result":"P"},{"name":"操作容易性","result":"W"},{"name":"アクセシビリティ","result":"F"}]},
+      "信頼性":     {"result":"W","subcharacteristics":[{"name":"成熟度","result":"W"},{"name":"可用性","result":"P"},{"name":"障害許容","result":"W"},{"name":"回復性","result":"P"}]},
+      "セキュリティ": {"result":"W","subcharacteristics":[{"name":"機密性","result":"W"},{"name":"完全性","result":"W"},{"name":"否認防止","result":"W"},{"name":"認証","result":"P"},{"name":"認可","result":"P"}]},
+      "保守性":     {"result":"F","subcharacteristics":[{"name":"モジュール性","result":"P"},{"name":"再利用性","result":"P"},{"name":"テスト容易性","result":"F"},{"name":"変更容易性","result":"W"}]},
+      "移植性":     {"result":"W","subcharacteristics":[{"name":"適応性","result":"P"},{"name":"設置性","result":"W"},{"name":"置換容易性","result":"W"}]}
+    },
+    "fmeaItems": [
+      {"id":"FM-001","description":"Sentryがコア設計書に未記載","category":"ドキュメント","S":3,"O":6,"D":4,"RPN":72,"severity":"Medium","status":"design_documented"},
+      {"id":"FM-002","description":"4外部システムの通信プロトコル未文書化","category":"ドキュメント","S":4,"O":5,"D":5,"RPN":100,"severity":"High","status":"design_documented"},
+      {"id":"FM-003","description":"AI設計書claude-sonnet-4.5 vsコードgpt-4","category":"互換性","S":4,"O":8,"D":5,"RPN":160,"severity":"High","status":"design_documented"},
+      {"id":"FM-004","description":"REDIS_URL docker-compose web未設定","category":"互換性","S":5,"O":7,"D":5,"RPN":175,"severity":"High","status":"design_documented"},
+      {"id":"FM-005","description":"INTERNAL_SERVICE_TOKENがoptional","category":"セキュリティ","S":8,"O":5,"D":7,"RPN":280,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-006","description":"CIにproduction deployジョブなし","category":"保守性","S":7,"O":8,"D":5,"RPN":280,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-007","description":"recipe-service 8関数APIルート0","category":"機能性","S":8,"O":7,"D":6,"RPN":336,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-008","description":"review-service 4関数APIルート0","category":"機能性","S":7,"O":7,"D":6,"RPN":294,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-009","description":"creator_profiles/stylesサービス層なし","category":"機能性","S":5,"O":7,"D":5,"RPN":175,"severity":"High","status":"design_documented"},
+      {"id":"FM-010","description":"password_reset_tokensサービス/APIなし","category":"機能性","S":6,"O":8,"D":4,"RPN":192,"severity":"High","status":"design_documented","docRef":"auth-user-management.md §12"},
+      {"id":"FM-011","description":"16+画面にAPIバッキングなし","category":"機能性","S":7,"O":7,"D":5,"RPN":245,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-012","description":"レート制限スタブ(always allows)","category":"セキュリティ","S":9,"O":10,"D":9,"RPN":810,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-013","description":"監査ログDB INSERT TODO","category":"セキュリティ","S":8,"O":10,"D":8,"RPN":640,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-014","description":"セキュリティヘッダー未接続","category":"セキュリティ","S":9,"O":10,"D":7,"RPN":630,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-015","description":"IP抽出ロジック2ファイル重複","category":"保守性","S":2,"O":6,"D":3,"RPN":36,"severity":"Low","status":"design_documented","docRef":"operations-infrastructure.md §15"},
+      {"id":"FM-016","description":"recipe/reviewサービスが完全デッドコード","category":"保守性","S":5,"O":10,"D":5,"RPN":250,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-017","description":"Zod float vs DB integer不整合","category":"信頼性","S":5,"O":5,"D":7,"RPN":175,"severity":"High","status":"design_documented","docRef":"blend-system.md §12"},
+      {"id":"FM-018","description":"order-service.ts未使用import inArray","category":"保守性","S":1,"O":8,"D":2,"RPN":16,"severity":"Low","status":"design_documented","docRef":"operations-infrastructure.md §16"},
+      {"id":"FM-019","description":"5 DBテーブルにサービス層なし","category":"機能性","S":6,"O":7,"D":6,"RPN":252,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-020","description":"Products管理者CRUDなし","category":"機能性","S":6,"O":6,"D":5,"RPN":180,"severity":"High","status":"design_documented"},
+      {"id":"FM-021","description":"blend_request_flavorsテーブル未使用","category":"保守性","S":4,"O":7,"D":5,"RPN":140,"severity":"High","status":"design_documented","docRef":"blend-system.md §13"},
+      {"id":"FM-022","description":"注文ステータス遷移バリデーションなし","category":"信頼性","S":8,"O":6,"D":7,"RPN":336,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-023","description":"executeBlend() N+1キーワードループ","category":"性能","S":5,"O":7,"D":6,"RPN":210,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-024","description":"getRecipeDetail() 4直列クエリ","category":"性能","S":4,"O":7,"D":5,"RPN":140,"severity":"High","status":"design_documented"},
+      {"id":"FM-025","description":"レシピ一覧AVG(rating)相関サブクエリ","category":"性能","S":5,"O":6,"D":7,"RPN":210,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-026","description":"3+ FKカラムにインデックスなし","category":"性能","S":5,"O":6,"D":6,"RPN":180,"severity":"High","status":"design_documented"},
+      {"id":"FM-027","description":"APIバージョン管理戦略未定義","category":"互換性","S":5,"O":5,"D":6,"RPN":150,"severity":"High","status":"design_documented"},
+      {"id":"FM-028","description":"全画面で空状態未定義","category":"使用性","S":4,"O":8,"D":4,"RPN":128,"severity":"High","status":"design_documented","docRef":"ux-patterns.md §2"},
+      {"id":"FM-029","description":"ローディング状態未定義","category":"使用性","S":3,"O":8,"D":4,"RPN":96,"severity":"Medium","status":"design_documented","docRef":"ux-patterns.md §3"},
+      {"id":"FM-030","description":"write-review-pro孤立画面","category":"使用性","S":2,"O":5,"D":4,"RPN":40,"severity":"Low","status":"design_documented","docRef":"review-system.md §15"},
+      {"id":"FM-031","description":"executeBlend()トランザクションなし","category":"信頼性","S":7,"O":8,"D":7,"RPN":392,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-032","description":"saveRulesForKeyword()トランザクションなし","category":"信頼性","S":7,"O":5,"D":8,"RPN":280,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-033","description":"createOrder()トランザクションなし(10ステップ)","category":"信頼性","S":9,"O":8,"D":6,"RPN":432,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-034","description":"Stripe Webhook冪等性チェックなし","category":"信頼性","S":8,"O":8,"D":7,"RPN":448,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-035","description":"AI APIリトライ/タイムアウトなし","category":"信頼性","S":5,"O":6,"D":7,"RPN":210,"severity":"Critical","status":"design_documented","docRef":"blend-system.md §11"},
+      {"id":"FM-036","description":"レート制限スタブ(always allowed)+未接続","category":"セキュリティ","S":9,"O":10,"D":9,"RPN":810,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-037","description":"セキュリティヘッダー未適用(CSP/HSTS/X-Frame)","category":"セキュリティ","S":9,"O":10,"D":7,"RPN":630,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-038","description":"監査ログDB INSERT TODO+未接続","category":"セキュリティ","S":8,"O":10,"D":8,"RPN":640,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-039","description":"脅威モデル文書なし(STRIDE/OWASP)","category":"セキュリティ","S":6,"O":10,"D":7,"RPN":420,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-040","description":"パスワードリセット未実装(スキーマのみ)","category":"機能性","S":6,"O":8,"D":5,"RPN":240,"severity":"Critical","status":"design_documented","docRef":"auth-user-management.md §12"},
+      {"id":"FM-041","description":"DOMPurify未インストール/未使用","category":"セキュリティ","S":8,"O":5,"D":7,"RPN":280,"severity":"Critical","status":"design_documented","docRef":"auth-user-management.md §13"},
+      {"id":"FM-042","description":"JWT maxAge 30日即時無効化なし","category":"セキュリティ","S":8,"O":4,"D":8,"RPN":256,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-043","description":"テストカバレッジ~5%(2ファイルのみ)","category":"保守性","S":8,"O":10,"D":9,"RPN":720,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-044","description":"設計書claude-sonnet-4.5 vsコードgpt-4(保守性観点)","category":"保守性","S":4,"O":8,"D":5,"RPN":160,"severity":"High","status":"design_documented"},
+      {"id":"FM-045","description":"biome.json設定ファイルなし","category":"保守性","S":3,"O":8,"D":3,"RPN":72,"severity":"Medium","status":"design_documented"},
+      {"id":"FM-046","description":"CI production deployジョブなし(保守性観点)","category":"保守性","S":7,"O":8,"D":5,"RPN":280,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-047","description":"env.tsバイパス(stripe.ts/dbがprocess.env直接)","category":"移植性","S":6,"O":7,"D":5,"RPN":210,"severity":"Critical","status":"design_documented"},
+      {"id":"FM-048","description":"Stripe SDK密結合","category":"移植性","S":4,"O":7,"D":5,"RPN":140,"severity":"High","status":"design_documented","docRef":"cart-checkout-orders.md §13"},
+      {"id":"FM-049","description":"AI client openai('gpt-4')ハードコード","category":"移植性","S":4,"O":7,"D":5,"RPN":140,"severity":"High","status":"design_documented"},
+      {"id":"FM-050","description":"NEXT_PUBLIC_BASE_URL env.ts未登録","category":"移植性","S":7,"O":5,"D":6,"RPN":210,"severity":"Critical","status":"design_documented","docRef":"operations-infrastructure.md §14"}
+    ],
+    "atamResults": {
+      "scenarios": [
+        {"id":"AS-001","description":"調合リアルタイム計算 vs キュー","qualityAttributes":["性能","UX"],"evaluation":"要注意"},
+        {"id":"AS-002","description":"セッション管理 JWT vs Server Session","qualityAttributes":["セキュリティ","スケーラビリティ"],"evaluation":"要注意"},
+        {"id":"AS-003","description":"レシピ配合 正規化 vs 非正規化","qualityAttributes":["整合性","クエリ性能"],"evaluation":"適切"},
+        {"id":"AS-004","description":"通知 ポーリング vs SSE/WebSocket","qualityAttributes":["UX","実装複雑性"],"evaluation":"要注意"},
+        {"id":"AS-005","description":"検索 PostgreSQL vs Elasticsearch","qualityAttributes":["検索性能","運用コスト"],"evaluation":"適切"},
+        {"id":"AS-006","description":"画像 Vercel Blob vs S3","qualityAttributes":["開発速度","ベンダーロックイン"],"evaluation":"要注意"},
+        {"id":"AS-007","description":"モノレポ構成の妥当性","qualityAttributes":["開発効率","ビルド複雑性"],"evaluation":"適切"},
+        {"id":"AS-008","description":"AI Service 分離の妥当性","qualityAttributes":["可用性","実装複雑性"],"evaluation":"要注意"}
+      ],
+      "sensitivityPoints": [
+        {"id":"SP-1","description":"AI API (claude-sonnet-4.5) のレスポンスタイム","qualityAttributes":["性能","UX"]},
+        {"id":"SP-2","description":"DB 接続プール最大数 (max: 10)","qualityAttributes":["性能","可用性"]},
+        {"id":"SP-3","description":"JWT maxAge (30日)","qualityAttributes":["セキュリティ"]},
+        {"id":"SP-4","description":"レシピ数の増加速度","qualityAttributes":["検索性能"]},
+        {"id":"SP-5","description":"Vercel Serverless Functionの同時実行数制限","qualityAttributes":["スケーラビリティ"]},
+        {"id":"SP-6","description":"Redisの可用性","qualityAttributes":["レート制限","キャッシュ","分散ロック"]}
+      ],
+      "tradeoffPoints": [
+        {"id":"TP-1","description":"リアルタイム計算 vs キュー","qualityAttributeA":"UX (即時応答)","qualityAttributeB":"スケーラビリティ"},
+        {"id":"TP-2","description":"JWT vs Server Session","qualityAttributeA":"スケーラビリティ","qualityAttributeB":"セキュリティ (即時無効化)"},
+        {"id":"TP-3","description":"Vercel Blob vs S3","qualityAttributeA":"開発速度","qualityAttributeB":"ベンダー非依存"},
+        {"id":"TP-4","description":"ポーリング vs SSE","qualityAttributeA":"実装複雑性","qualityAttributeB":"UX (リアルタイム性)"},
+        {"id":"TP-5","description":"PostgreSQL直接 vs Elasticsearch","qualityAttributeA":"運用コスト","qualityAttributeB":"検索品質"},
+        {"id":"TP-6","description":"Vercel AI SDK統合 vs サービス分離","qualityAttributeA":"運用単純性","qualityAttributeB":"障害分離"}
+      ],
+      "nonRisks": [
+        {"id":"NR-1","description":"配合計算の精度","reason":"Decimal.js (precision:10, ROUND_HALF_UP) + Zod refine"},
+        {"id":"NR-2","description":"決済セキュリティ","reason":"Stripe Checkout Session委譲 + Webhook署名検証"},
+        {"id":"NR-3","description":"パスワードセキュリティ","reason":"bcryptjs (saltRounds:12) + SHA-256トークンハッシュ"},
+        {"id":"NR-4","description":"Redis障害時継続","reason":"cached()ユーティリティのグレースフルデグレード"},
+        {"id":"NR-5","description":"ヘルスチェック","reason":"Liveness/Readiness分離、DB必須/Redis・Stripeオプショナル"},
+        {"id":"NR-6","description":"環境変数バリデーション","reason":"Zod起動時検証 + Stripeキープレフィックス検証"},
+        {"id":"NR-7","description":"CSP/XSS対策（設計面）","reason":"CSPヘッダー設計済（ただし未適用 → FM-037）"}
+      ]
+    },
+    "summary": {
+      "totalFmeaItems": 50,
+      "bySeverity": {"Critical":29,"High":15,"Medium":3,"Low":3},
+      "byCategory": {
+        "セキュリティ":{"count":10,"avgRPN":540},
+        "信頼性":{"count":7,"avgRPN":325},
+        "機能性":{"count":8,"avgRPN":239},
+        "保守性":{"count":9,"avgRPN":217},
+        "性能":{"count":4,"avgRPN":185},
+        "移植性":{"count":4,"avgRPN":175},
+        "互換性":{"count":3,"avgRPN":162},
+        "使用性":{"count":3,"avgRPN":88},
+        "ドキュメント":{"count":2,"avgRPN":86}
+      },
+      "resolvedCount": 0,
+      "designDocumentedCount": 50,
+      "openCount": 0,
+      "c4Summary": {"totalPass":9,"totalWarn":11,"totalFail":2},
+      "iso25010Summary": {"pass":0,"warn":6,"fail":2},
+      "atamSummary": {"appropriate":3,"needsAttention":5,"totalScenarios":8,"sensitivityPoints":6,"tradeoffPoints":6,"nonRisks":7}
+    }
+  }
+];
+
+// ============================================================
+// State
+// ============================================================
+let currentReviewIndex = REVIEW_DATA.length - 1;
+let fmeaSortKey = 'RPN';
+let fmeaSortAsc = false;
+
+// ============================================================
+// Initialization
+// ============================================================
+function init() {
+  populateSelector();
+  render();
+}
+
+function populateSelector() {
+  var sel = document.getElementById('reviewSelector');
+  sel.innerHTML = '';
+  REVIEW_DATA.forEach(function(r, i) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = r.reviewDate + ' (' + r.targetVersion + ')';
+    sel.appendChild(opt);
+  });
+  sel.value = currentReviewIndex;
+}
+
+function selectReview(index) {
+  currentReviewIndex = parseInt(index);
+  render();
+}
+
+function render() {
+  var data = REVIEW_DATA[currentReviewIndex];
+  renderMeta(data);
+  renderKPI(data);
+  renderTrend();
+  renderCategoryChart(data);
+  renderC4Chart();
+  renderISOHeatmap();
+  populateCategoryFilter(data);
+  renderFmeaTable();
+}
+
+// ============================================================
+// Review Metadata
+// ============================================================
+function renderMeta(data) {
+  var ri = data.reviewerInfo;
+  document.getElementById('reviewMeta').innerHTML =
+    ri.agentCount + ' agents / ' + ri.filesRead + ' files / ' + ri.durationMinutes + ' min';
+}
+
+// ============================================================
+// KPI Cards
+// ============================================================
+function renderKPI(data) {
+  var s = data.summary;
+  var total = s.totalFmeaItems;
+  var critical = s.bySeverity.Critical || 0;
+  var resolved = s.resolvedCount;
+  var documented = s.designDocumentedCount || 0;
+  var baseTotal = REVIEW_DATA[0].summary.totalFmeaItems;
+  var addressed = resolved + documented;
+  var rate = baseTotal > 0 ? Math.round((addressed / baseTotal) * 100) : 0;
+
+  document.getElementById('kpiTotal').textContent = total;
+  document.getElementById('kpiCritical').textContent = critical;
+  document.getElementById('kpiResolved').textContent = addressed;
+  document.getElementById('kpiRate').textContent = rate + '%';
+
+  var h = s.bySeverity.High || 0;
+  var m = s.bySeverity.Medium || 0;
+  var l = s.bySeverity.Low || 0;
+  document.getElementById('kpiTotalSub').textContent = 'H:' + h + ' M:' + m + ' L:' + l;
+  document.getElementById('kpiCriticalSub').textContent = s.openCount + ' open';
+  document.getElementById('kpiResolvedSub').textContent = documented + ' documented / ' + resolved + ' resolved';
+  document.getElementById('kpiRateSub').textContent = addressed + ' / ' + baseTotal + ' (\u5bfe\u5fdc\u6e08)';
+}
+
+// ============================================================
+// Severity Trend (SVG) — dynamic Y-axis
+// ============================================================
+function renderTrend() {
+  var container = document.getElementById('trendChart');
+  var padL = 60, padR = 20, padT = 25, padB = 35;
+  var w = 600, h = 280;
+  var chartW = w - padL - padR;
+  var chartH = h - padT - padB;
+
+  // Calculate dynamic Y max across all reviews
+  var globalMax = 0;
+  REVIEW_DATA.forEach(function(r) {
+    var b = r.summary.bySeverity;
+    globalMax = Math.max(globalMax, b.Critical||0, b.High||0, b.Medium||0, b.Low||0);
+  });
+  var yMax = Math.ceil(globalMax / 5) * 5 + 5;
+  if (yMax < 10) yMax = 10;
+
+  function yPos(v) { return padT + chartH - (v / yMax) * chartH; }
+
+  // Grid lines + Y labels
+  function drawGrid() {
+    var out = '';
+    var step = yMax <= 20 ? 5 : 10;
+    for (var v = 0; v <= yMax; v += step) {
+      var yy = yPos(v);
+      out += '<line x1="' + padL + '" y1="' + yy + '" x2="' + (w - padR) + '" y2="' + yy + '" stroke="#f3f4f6" stroke-width="1"/>';
+      out += '<text x="' + (padL - 8) + '" y="' + (yy + 4) + '" text-anchor="end" fill="#9ca3af" font-size="10">' + v + '</text>';
+    }
+    return out;
+  }
+
+  var severities = [
+    { key: 'Critical', color: 'var(--color-critical)' },
+    { key: 'High', color: 'var(--color-high)' },
+    { key: 'Medium', color: 'var(--color-medium)' },
+    { key: 'Low', color: 'var(--color-low)' }
+  ];
+
+  if (REVIEW_DATA.length < 2) {
+    // Single data point
+    var sev = REVIEW_DATA[0].summary.bySeverity;
+    var svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="xMidYMid meet">';
+    svg += '<rect x="' + padL + '" y="' + padT + '" width="' + chartW + '" height="' + chartH + '" fill="none" stroke="#e5e7eb" stroke-width="1" rx="4"/>';
+    svg += drawGrid();
+
+    var cx = padL + chartW / 2;
+    severities.forEach(function(s) {
+      var val = sev[s.key] || 0;
+      var cy = yPos(val);
+      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="5" fill="' + s.color + '" stroke="white" stroke-width="2"/>';
+      svg += '<text x="' + (cx + 10) + '" y="' + (cy + 4) + '" fill="' + s.color + '" font-size="11" font-weight="600">' + val + '</text>';
+    });
+    svg += '<text x="' + cx + '" y="' + (h - 8) + '" text-anchor="middle" fill="#9ca3af" font-size="10">' + REVIEW_DATA[0].reviewDate + '</text>';
+    svg += '<text x="' + cx + '" y="' + (padT + chartH / 2) + '" text-anchor="middle" fill="#d1d5db" font-size="12">\u6B21\u306E\u30EC\u30D3\u30E5\u30FC\u5F8C\u306B\u30C8\u30EC\u30F3\u30C9\u304C\u8868\u793A\u3055\u308C\u307E\u3059</text>';
+    svg += '</svg>';
+    container.innerHTML = svg;
+    return;
+  }
+
+  // Multiple data points
+  function xPos(i) { return padL + (i / (REVIEW_DATA.length - 1)) * chartW; }
+
+  var svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="xMidYMid meet">';
+  svg += '<rect x="' + padL + '" y="' + padT + '" width="' + chartW + '" height="' + chartH + '" fill="none" stroke="#e5e7eb" stroke-width="1" rx="4"/>';
+  svg += drawGrid();
+
+  // X labels
+  REVIEW_DATA.forEach(function(r, i) {
+    svg += '<text x="' + xPos(i) + '" y="' + (h - 8) + '" text-anchor="middle" fill="#9ca3af" font-size="10">' + r.reviewDate.slice(5) + '</text>';
+  });
+
+  // Lines + dots
+  severities.forEach(function(s) {
+    var points = REVIEW_DATA.map(function(r, i) {
+      return xPos(i) + ',' + yPos(r.summary.bySeverity[s.key] || 0);
+    });
+    svg += '<polyline points="' + points.join(' ') + '" fill="none" stroke="' + s.color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+    REVIEW_DATA.forEach(function(r, i) {
+      var val = r.summary.bySeverity[s.key] || 0;
+      svg += '<circle cx="' + xPos(i) + '" cy="' + yPos(val) + '" r="4" fill="' + s.color + '" stroke="white" stroke-width="1.5"/>';
+    });
+  });
+
+  svg += '</svg>';
+  container.innerHTML = svg;
+}
+
+// ============================================================
+// Category Average RPN (Horizontal Bar)
+// ============================================================
+function renderCategoryChart(data) {
+  var container = document.getElementById('categoryChart');
+  var cats = data.summary.byCategory;
+  var sorted = Object.entries(cats).sort(function(a, b) { return b[1].avgRPN - a[1].avgRPN; });
+  var maxRPN = sorted.length > 0 ? sorted[0][1].avgRPN : 1;
+
+  var categoryColors = {
+    '\u30BB\u30AD\u30E5\u30EA\u30C6\u30A3': 'var(--color-critical)',
+    '\u4FE1\u983C\u6027': '#ef4444',
+    '\u6A5F\u80FD\u6027': '#f97316',
+    '\u4FDD\u5B88\u6027': 'var(--color-high)',
+    '\u6027\u80FD': '#eab308',
+    '\u79FB\u690D\u6027': 'var(--color-medium)',
+    '\u4E92\u63DB\u6027': '#8b5cf6',
+    '\u4F7F\u7528\u6027': '#06b6d4',
+    '\u30C9\u30AD\u30E5\u30E1\u30F3\u30C8': '#64748b'
+  };
+
+  container.innerHTML = sorted.map(function(entry) {
+    var cat = entry[0], info = entry[1];
+    var pct = (info.avgRPN / maxRPN) * 100;
+    var color = categoryColors[cat] || '#6b7280';
+    var showInside = pct > 15;
+    return '<div class="bar-row">' +
+      '<div class="bar-label">' + cat + ' <span style="opacity:0.5">(' + info.count + ')</span></div>' +
+      '<div class="bar-track">' +
+      '<div class="bar-fill" style="width:' + pct + '%;background:' + color + '">' +
+      (showInside ? '<span class="bar-value">' + info.avgRPN + '</span>' : '') +
+      '</div>' +
+      '</div>' +
+      (!showInside ? '<span class="bar-value-outside">' + info.avgRPN + '</span>' : '') +
+      '</div>';
+  }).join('');
+}
+
+// ============================================================
+// C4 Stacked Bar — shows all reviews side by side
+// ============================================================
+function renderC4Chart() {
+  var container = document.getElementById('c4Chart');
+  var levels = ['L1', 'L2', 'L3', 'L4'];
+  var html = '';
+
+  levels.forEach(function(level) {
+    REVIEW_DATA.forEach(function(r, ri) {
+      var d = r.c4Results[level];
+      var total = d.pass + d.warn + d.fail;
+      if (total === 0) return;
+      var pP = (d.pass / total) * 100;
+      var pW = (d.warn / total) * 100;
+      var pF = (d.fail / total) * 100;
+      var label = REVIEW_DATA.length > 1
+        ? level + ' ' + d.label + ' (' + r.reviewDate.slice(5) + ')'
+        : level + ' ' + d.label;
+
+      html += '<div class="stacked-row">' +
+        '<div class="stacked-label">' + label + '</div>' +
+        '<div class="stacked-track">' +
+        (d.pass > 0 ? '<div class="stacked-seg stacked-seg-p" style="width:' + pP + '%">P:' + d.pass + '</div>' : '') +
+        (d.warn > 0 ? '<div class="stacked-seg stacked-seg-w" style="width:' + pW + '%">W:' + d.warn + '</div>' : '') +
+        (d.fail > 0 ? '<div class="stacked-seg stacked-seg-f" style="width:' + pF + '%">F:' + d.fail + '</div>' : '') +
+        '</div>' +
+        '</div>';
+    });
+  });
+
+  container.innerHTML = html;
+}
+
+// ============================================================
+// ISO 25010 Heatmap — all reviews as columns
+// ============================================================
+function renderISOHeatmap() {
+  var table = document.getElementById('isoHeatmap');
+  var chars = ['\u6A5F\u80FD\u9069\u5408\u6027', '\u6027\u80FD\u52B9\u7387\u6027', '\u4E92\u63DB\u6027', '\u4F7F\u7528\u6027', '\u4FE1\u983C\u6027', '\u30BB\u30AD\u30E5\u30EA\u30C6\u30A3', '\u4FDD\u5B88\u6027', '\u79FB\u690D\u6027'];
+
+  var thead = '<thead><tr><th>\u54C1\u8CEA\u7279\u6027</th>';
+  REVIEW_DATA.forEach(function(r) {
+    thead += '<th>' + r.reviewDate.slice(5) + '</th>';
+  });
+  thead += '</tr></thead>';
+
+  var tbody = '<tbody>';
+  chars.forEach(function(ch) {
+    tbody += '<tr><td>' + ch + '</td>';
+    REVIEW_DATA.forEach(function(r) {
+      var res = r.iso25010Results[ch];
+      if (res) {
+        tbody += '<td><span class="heatmap-cell heatmap-' + res.result + '">' + res.result + '</span></td>';
+      } else {
+        tbody += '<td>-</td>';
+      }
+    });
+    tbody += '</tr>';
+  });
+  tbody += '</tbody>';
+
+  table.innerHTML = thead + tbody;
+}
+
+// ============================================================
+// FMEA Table
+// ============================================================
+function populateCategoryFilter(data) {
+  var sel = document.getElementById('filterCategory');
+  var current = sel.value;
+  var categories = [];
+  var seen = {};
+  data.fmeaItems.forEach(function(f) {
+    if (!seen[f.category]) { seen[f.category] = true; categories.push(f.category); }
+  });
+  categories.sort();
+  sel.innerHTML = '<option value="">\u5168\u30AB\u30C6\u30B4\u30EA</option>' +
+    categories.map(function(c) {
+      return '<option value="' + c + '"' + (c === current ? ' selected' : '') + '>' + c + '</option>';
+    }).join('');
+}
+
+function sortFmea(key) {
+  if (fmeaSortKey === key) {
+    fmeaSortAsc = !fmeaSortAsc;
+  } else {
+    fmeaSortKey = key;
+    fmeaSortAsc = key === 'id' || key === 'description' || key === 'category';
+  }
+  renderFmeaTable();
+}
+
+function renderFmeaTable() {
+  var data = REVIEW_DATA[currentReviewIndex];
+  var catFilter = document.getElementById('filterCategory').value;
+  var sevFilter = document.getElementById('filterSeverity').value;
+  var statusFilter = document.getElementById('filterStatus').value;
+
+  var items = data.fmeaItems.slice();
+  if (catFilter) items = items.filter(function(f) { return f.category === catFilter; });
+  if (sevFilter) items = items.filter(function(f) { return f.severity === sevFilter; });
+  if (statusFilter) items = items.filter(function(f) { return f.status === statusFilter; });
+
+  var sevOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+
+  items.sort(function(a, b) {
+    var va = a[fmeaSortKey], vb = b[fmeaSortKey];
+    if (fmeaSortKey === 'severity') { va = sevOrder[va]; vb = sevOrder[vb]; }
+    if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+    if (va < vb) return fmeaSortAsc ? -1 : 1;
+    if (va > vb) return fmeaSortAsc ? 1 : -1;
+    return 0;
+  });
+
+  // Update count display
+  var totalItems = data.fmeaItems.length;
+  var countEl = document.getElementById('fmeaCount');
+  if (items.length === totalItems) {
+    countEl.textContent = totalItems + ' \u4EF6';
+  } else {
+    countEl.textContent = items.length + ' / ' + totalItems + ' \u4EF6';
+  }
+
+  var tbody = document.getElementById('fmeaBody');
+  tbody.innerHTML = items.map(function(f) {
+    return '<tr>' +
+      '<td><strong>' + f.id + '</strong></td>' +
+      '<td>' + f.description + '</td>' +
+      '<td>' + f.category + '</td>' +
+      '<td class="rpn-cell">' + f.S + '</td>' +
+      '<td class="rpn-cell">' + f.O + '</td>' +
+      '<td class="rpn-cell">' + f.D + '</td>' +
+      '<td class="rpn-cell"><strong>' + f.RPN + '</strong></td>' +
+      '<td><span class="severity-badge severity-' + f.severity + '">' + f.severity + '</span></td>' +
+      '<td><span class="status-badge status-' + f.status + '">' + f.status.replace('_', ' ') + '</span></td>' +
+      '</tr>';
+  }).join('');
+
+  // Update sort arrows
+  document.querySelectorAll('.fmea-table th').forEach(function(th) {
+    var arrow = th.querySelector('.sort-arrow');
+    if (!arrow) return;
+    var match = th.getAttribute('onclick');
+    if (!match) return;
+    var keyMatch = match.match(/sortFmea\('(.+?)'\)/);
+    if (!keyMatch) return;
+    var key = keyMatch[1];
+    if (key === fmeaSortKey) {
+      arrow.textContent = fmeaSortAsc ? ' \u25B2' : ' \u25BC';
+      arrow.classList.add('active');
+    } else {
+      arrow.textContent = '';
+      arrow.classList.remove('active');
+    }
+  });
+}
+
+// ============================================================
+// Boot
+// ============================================================
+init();
+</script>
+</body>
+</html>

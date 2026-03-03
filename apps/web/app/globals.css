@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@layer components {
+  .card {
+    @apply bg-white border border-gray-200;
+    border-radius: 4px;
+  }
+  .btn-primary {
+    @apply bg-black text-white;
+  }
+  .btn-primary:hover {
+    @apply bg-gray-800;
+  }
+  .btn-secondary {
+    @apply bg-white text-gray-700 border border-gray-300;
+  }
+  .btn-secondary:hover {
+    @apply bg-gray-50;
+  }
+  .badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-weight: 500;
+  }
+  .donut {
+    position: relative;
+    border-radius: 50%;
+  }
+  .donut-hole {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>設計レビュー タスク管理</title>
+<style>
+  :root {
+    --color-bg: #f8f8f8;
+    --color-surface: #ffffff;
+    --color-border: #f0f0f0;
+    --color-border-strong: #e0e0e0;
+    --color-text: #111111;
+    --color-text-secondary: #666666;
+    --color-text-tertiary: #999999;
+    --color-primary: #000000;
+
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+
+    --text-xs: 10px;
+    --text-sm: 12px;
+    --text-base: 14px;
+    --text-lg: 18px;
+    --text-xl: 22px;
+    --text-2xl: 28px;
+  }
+
+  * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--color-bg); color: var(--color-text); min-height: 100vh; }
+  .container { max-width: 1400px; margin: 0 auto; padding: var(--space-lg); }
+
+  /* Header */
+  .header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-lg); }
+  .header h1 { font-size: var(--text-2xl); font-weight: 700; letter-spacing: -0.02em; }
+  .header-sub { font-size: var(--text-sm); color: var(--color-text-tertiary); }
+  .header-meta { font-size: var(--text-xs); color: var(--color-text-tertiary); text-align: right; line-height: 1.6; }
+
+  /* Verdict Banner */
+  .verdict-banner { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-lg); margin-bottom: var(--space-lg); box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: var(--space-lg); }
+  .verdict-icon { font-size: 48px; flex-shrink: 0; }
+  .verdict-body { flex: 1; }
+  .verdict-title { font-size: var(--text-xl); font-weight: 700; margin-bottom: var(--space-xs); }
+  .verdict-desc { font-size: var(--text-base); color: var(--color-text-secondary); line-height: 1.6; }
+  .verdict-scores { display: flex; gap: var(--space-lg); flex-shrink: 0; }
+  .verdict-score { text-align: center; }
+  .verdict-score-value { font-size: 24px; font-weight: 700; }
+  .verdict-score-label { font-size: var(--text-xs); color: var(--color-text-tertiary); margin-top: 2px; }
+  .score-low { color: #dc2626; }
+  .score-mid { color: #d97706; }
+  .score-ok { color: #16a34a; }
+
+  /* KPI Grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg); }
+  .kpi-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-lg); box-shadow: var(--shadow-sm); text-align: center; transition: box-shadow 0.2s; }
+  .kpi-card:hover { box-shadow: var(--shadow-md); }
+  .kpi-value { font-size: 36px; font-weight: 700; line-height: 1.2; }
+  .kpi-label { font-size: var(--text-sm); color: var(--color-text-secondary); margin-top: var(--space-xs); }
+  .kpi-sub { font-size: var(--text-xs); color: var(--color-text-tertiary); margin-top: 2px; }
+  .kpi-blocker .kpi-value { color: #dc2626; }
+  .kpi-supplement .kpi-value { color: #d97706; }
+  .kpi-total .kpi-value { color: var(--color-primary); }
+  .kpi-done .kpi-value { color: #16a34a; }
+  .kpi-rate .kpi-value { color: #2563eb; }
+
+  /* Progress Bar */
+  .progress-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-lg); box-shadow: var(--shadow-sm); margin-bottom: var(--space-lg); }
+  .progress-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-sm); }
+  .progress-title { font-size: var(--text-lg); font-weight: 700; }
+  .progress-pct { font-size: var(--text-xl); font-weight: 700; color: #2563eb; }
+  .progress-track { width: 100%; height: 12px; background: #f3f4f6; border-radius: 6px; overflow: hidden; margin-bottom: var(--space-md); }
+  .progress-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+  .progress-fill-blocker { background: linear-gradient(90deg, #dc2626, #ef4444); }
+  .progress-fill-supplement { background: linear-gradient(90deg, #d97706, #f59e0b); }
+  .progress-bars { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); }
+  .progress-item-label { font-size: var(--text-sm); color: var(--color-text-secondary); margin-bottom: var(--space-xs); display: flex; justify-content: space-between; }
+  .progress-mini-track { width: 100%; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden; }
+
+  /* Filter Bar */
+  .filter-bar { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-md) var(--space-lg); box-shadow: var(--shadow-sm); margin-bottom: var(--space-md); display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
+  .filter-bar label { font-size: var(--text-sm); font-weight: 600; color: var(--color-text-secondary); }
+  .filter-bar select, .filter-bar input { height: 36px; padding: 0 var(--space-md); border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); font-size: var(--text-sm); background: var(--color-surface); color: var(--color-text); cursor: pointer; outline: none; }
+  .filter-bar select:focus, .filter-bar input:focus { border-color: var(--color-primary); }
+  .filter-bar input { width: 200px; cursor: text; }
+  .filter-count { margin-left: auto; font-size: var(--text-xs); color: var(--color-text-tertiary); }
+
+  /* Section */
+  .section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: var(--space-lg); overflow: hidden; }
+  .section-header { padding: var(--space-md) var(--space-lg); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; }
+  .section-title { font-size: var(--text-lg); font-weight: 700; }
+  .section-badge { font-size: var(--text-xs); font-weight: 600; padding: 2px 10px; border-radius: 12px; }
+
+  /* Table */
+  .task-table { width: 100%; border-collapse: collapse; }
+  .task-table th { font-size: var(--text-xs); font-weight: 600; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; padding: var(--space-sm) var(--space-md); text-align: left; border-bottom: 2px solid var(--color-border); background: #fafafa; cursor: pointer; user-select: none; white-space: nowrap; }
+  .task-table th:hover { color: var(--color-text); }
+  .task-table th .sort-arrow { margin-left: 4px; font-size: 9px; }
+  .task-table td { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); vertical-align: top; line-height: 1.5; }
+  .task-table tr:last-child td { border-bottom: none; }
+  .task-table tr:hover td { background: #fafafa; }
+  .task-table tr.row-completed td { opacity: 0.5; }
+
+  /* Status badges */
+  .status { display: inline-block; font-size: var(--text-xs); font-weight: 600; padding: 2px 10px; border-radius: 12px; white-space: nowrap; }
+  .status-open { background: #fef2f2; color: #991b1b; }
+  .status-in_progress { background: #eff6ff; color: #1d4ed8; }
+  .status-completed { background: #f0fdf4; color: #166534; }
+  .status-deferred { background: #f5f5f5; color: #737373; }
+
+  /* Priority badges */
+  .priority { display: inline-block; font-size: var(--text-xs); font-weight: 700; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+  .priority-blocker { background: #dc2626; color: white; }
+  .priority-high { background: #d97706; color: white; }
+  .priority-medium { background: #2563eb; color: white; }
+  .priority-low { background: #16a34a; color: white; }
+
+  /* Category badges */
+  .category { display: inline-block; font-size: var(--text-xs); padding: 2px 8px; border-radius: 4px; white-space: nowrap; border: 1px solid; }
+  .cat-consistency { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+  .cat-schema { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+  .cat-api { background: #e0e7ff; color: #3730a3; border-color: #a5b4fc; }
+  .cat-validation { background: #fce7f3; color: #9d174d; border-color: #f9a8d4; }
+  .cat-security { background: #fef2f2; color: #991b1b; border-color: #fca5a5; }
+  .cat-ux { background: #f0fdf4; color: #166534; border-color: #86efac; }
+  .cat-testing { background: #f5f3ff; color: #5b21b6; border-color: #c4b5fd; }
+  .cat-infra { background: #ecfdf5; color: #065f46; border-color: #6ee7b7; }
+  .cat-docs { background: #f8fafc; color: #475569; border-color: #cbd5e1; }
+
+  /* ID link */
+  .task-id { font-family: 'SF Mono', 'Fira Code', monospace; font-size: var(--text-xs); font-weight: 600; color: var(--color-text-secondary); }
+  .task-id-blocker { color: #dc2626; }
+  .task-id-supplement { color: #d97706; }
+
+  /* Doc ref */
+  .doc-ref { font-size: var(--text-xs); color: var(--color-text-tertiary); font-family: 'SF Mono', 'Fira Code', monospace; }
+
+  /* Effort */
+  .effort { font-size: var(--text-xs); color: var(--color-text-secondary); white-space: nowrap; }
+
+  /* Checkbox */
+  .task-check { width: 18px; height: 18px; cursor: pointer; accent-color: #16a34a; }
+
+  /* Good points section */
+  .good-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-md); padding: var(--space-lg); }
+  .good-card { padding: var(--space-md); border: 1px solid #d1fae5; background: #f0fdf4; border-radius: var(--radius-sm); }
+  .good-card-id { font-size: var(--text-xs); font-weight: 700; color: #166534; margin-bottom: var(--space-xs); }
+  .good-card-text { font-size: var(--text-sm); color: #065f46; line-height: 1.5; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .progress-bars { grid-template-columns: 1fr; }
+    .verdict-banner { flex-direction: column; align-items: flex-start; }
+    .verdict-scores { width: 100%; justify-content: space-around; }
+    .good-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    .filter-bar input { width: 100%; }
+    .filter-count { margin-left: 0; }
+    .task-table { font-size: var(--text-xs); }
+    .task-table td, .task-table th { padding: var(--space-xs) var(--space-sm); }
+  }
+
+  /* Print */
+  @media print {
+    body { background: white; }
+    .filter-bar, .task-check { display: none; }
+    .section, .kpi-card, .verdict-banner, .progress-section { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h1>設計レビュー タスク管理</h1>
+      <div class="header-sub">KyaraInnovate — 実装着手判定レビュー結果</div>
+    </div>
+    <div class="header-meta">
+      レビュー日: 2026-02-17<br>
+      対象: 22 設計ドキュメント<br>
+      レビュアー: シニアソフトウェアアーキテクト
+    </div>
+  </div>
+
+  <!-- Verdict Banner -->
+  <div class="verdict-banner" id="verdictBanner">
+    <div class="verdict-icon" id="verdictIcon">🔴</div>
+    <div class="verdict-body">
+      <div class="verdict-title" id="verdictTitle">設計の追加作業が必要</div>
+      <div class="verdict-desc" id="verdictDesc">9件のブロッカーと30件の要補完事項が検出されました。ブロッカー解消後に 🟡 軽微な補完で着手可 に昇格します。</div>
+    </div>
+    <div class="verdict-scores">
+      <div class="verdict-score">
+        <div class="verdict-score-value score-low">2.5<span style="font-size:14px;color:#999">/5</span></div>
+        <div class="verdict-score-label">情報の十分性</div>
+      </div>
+      <div class="verdict-score">
+        <div class="verdict-score-value score-low">2.0<span style="font-size:14px;color:#999">/5</span></div>
+        <div class="verdict-score-label">曖昧さの検出</div>
+      </div>
+      <div class="verdict-score">
+        <div class="verdict-score-value score-low">2.5<span style="font-size:14px;color:#999">/5</span></div>
+        <div class="verdict-score-label">テスト可能性</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpiGrid">
+    <!-- populated by JS -->
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-section" id="progressSection">
+    <!-- populated by JS -->
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <label>ステータス</label>
+    <select id="filterStatus">
+      <option value="all">すべて</option>
+      <option value="open">Open</option>
+      <option value="in_progress">In Progress</option>
+      <option value="completed">Completed</option>
+    </select>
+    <label>優先度</label>
+    <select id="filterPriority">
+      <option value="all">すべて</option>
+      <option value="blocker">Blocker</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+    <label>カテゴリ</label>
+    <select id="filterCategory">
+      <option value="all">すべて</option>
+    </select>
+    <input type="text" id="filterSearch" placeholder="ID or キーワード検索...">
+    <div class="filter-count" id="filterCount"></div>
+  </div>
+
+  <!-- Blocker Section -->
+  <div class="section" id="blockerSection">
+    <div class="section-header">
+      <div class="section-title">🔴 実装ブロッカー</div>
+      <span class="section-badge" id="blockerBadge" style="background:#fef2f2;color:#991b1b;"></span>
+    </div>
+    <table class="task-table" id="blockerTable">
+      <thead>
+        <tr>
+          <th style="width:30px"></th>
+          <th data-sort="id" style="width:60px">ID <span class="sort-arrow"></span></th>
+          <th data-sort="title">タスク <span class="sort-arrow"></span></th>
+          <th data-sort="category" style="width:100px">カテゴリ <span class="sort-arrow"></span></th>
+          <th data-sort="target" style="width:180px">対象ドキュメント</th>
+          <th data-sort="effort" style="width:80px">工数目安</th>
+          <th data-sort="status" style="width:100px">ステータス <span class="sort-arrow"></span></th>
+        </tr>
+      </thead>
+      <tbody id="blockerBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Supplement Section -->
+  <div class="section" id="supplementSection">
+    <div class="section-header">
+      <div class="section-title">🟡 要補完事項</div>
+      <span class="section-badge" id="supplementBadge" style="background:#fefce8;color:#854d0e;"></span>
+    </div>
+    <table class="task-table" id="supplementTable">
+      <thead>
+        <tr>
+          <th style="width:30px"></th>
+          <th data-sort="id" style="width:60px">ID <span class="sort-arrow"></span></th>
+          <th data-sort="title">タスク <span class="sort-arrow"></span></th>
+          <th data-sort="category" style="width:100px">カテゴリ <span class="sort-arrow"></span></th>
+          <th data-sort="group" style="width:100px">観点 <span class="sort-arrow"></span></th>
+          <th data-sort="target" style="width:180px">対象ドキュメント</th>
+          <th data-sort="status" style="width:100px">ステータス <span class="sort-arrow"></span></th>
+        </tr>
+      </thead>
+      <tbody id="supplementBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Good Points -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">🟢 設計の良い点</div>
+      <span class="section-badge" style="background:#f0fdf4;color:#166534;">10件</span>
+    </div>
+    <div class="good-grid" id="goodGrid"></div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+var BLOCKERS = [
+  { id:"B-01", title:"注文ステータスのステートマシンが矛盾 — 2つの互換性のないステートマシンが共存（9ステータス vs 5ステータス）、大文字/小文字も不統一", category:"consistency", target:"cart-checkout-orders.md", effort:"半日", status:"completed", order:1 },
+  { id:"B-02", title:"password_reset_tokens テーブル定義が3箇所で矛盾 — 生値保存 vs SHA-256ハッシュ保存 vs 生値クエリ", category:"consistency", target:"auth-user-management.md", effort:"1時間", status:"completed", order:3 },
+  { id:"B-03", title:"ノート比率のデフォルト値(TOP30/MID40/LAST30)が許容範囲(TOP30-40/MID50-60/LAST10-15)に違反", category:"validation", target:"blend-system.md", effort:"1時間", status:"completed", order:4 },
+  { id:"B-04", title:"ロイヤリティティアシステムが3つ定義 — 4ティア(ec-settings) vs 5ティア(creator-system) vs 未定義(実装計画書)", category:"consistency", target:"ec-settings.md, creator-system.md, 06_実装計画書.md", effort:"半日", status:"completed", order:5 },
+  { id:"B-05", title:"テーブル名不一致: shipping_addresses（コア設計書）vs addresses（shipping-address.md）", category:"schema", target:"shipping-address.md, 01-04設計書", effort:"半日", status:"completed", order:2 },
+  { id:"B-06", title:"ロール名不一致: USER（ec-settings.md）vs CUSTOMER（他全ドキュメント）", category:"consistency", target:"ec-settings.md", effort:"半日", status:"completed", order:2 },
+  { id:"B-07", title:"product_variants テーブルが未定義 — cart_items, order_items, receipt の JOIN 先がスキーマなし", category:"schema", target:"recipe-system.md, cart-checkout-orders.md", effort:"2時間", status:"completed", order:6 },
+  { id:"B-08", title:"recipe-system.md が実装不可能 — DBスキーマ5テーブル未定義、レスポンス型なし、バリデーションなし、エラーコードなし", category:"docs", target:"recipe-system.md", effort:"1日", status:"completed", order:7 },
+  { id:"B-09", title:"notification-system.md が設計未完了 — 実装コードなし、APIなし、Drizzleスキーマなし、コンポーネントなし、メール配信停止未対応", category:"docs", target:"notification-system.md", effort:"1日", status:"completed", order:8 }
+];
+
+var SUPPLEMENTS = [
+  { id:"C-01", title:"Phase 2/3 Server ActionのZodスキーマ未定義（updateCreatorProfile, createOrder等のdataが不明）", category:"api", group:"情報の十分性", target:"02_基本設計書.md", status:"completed", resolution:"API RouteでZod検証済み。Server Actionsは/lib/validations/のスキーマをimport。パターン統一確認済み。" },
+  { id:"C-02", title:"Phase 3 画面（注文確認、注文履歴、配送先管理等 8画面）のワイヤーフレームなし", category:"ux", group:"情報の十分性", target:"02_基本設計書.md", status:"completed", resolution:"mockup-mobile.html に67画面実装済み（注文確認・履歴・配送先等すべて含む）。" },
+  { id:"C-03", title:"Stripe統合: Checkout Sessions vs Payment Intents 未決定、Webhook イベント型の列挙なし", category:"api", group:"情報の十分性", target:"01_要件定義書.md, cart-checkout-orders.md", status:"completed", resolution:"Checkout Sessions採用（order-service.ts）。Webhook: checkout.session.completed / expired を処理。要件書も更新済み。" },
+  { id:"C-04", title:"orders テーブルに updated_at, delivered_at, cancelled_at カラムなし — ステータス監査証跡不能", category:"schema", group:"情報の十分性", target:"01_要件定義書.md", status:"completed", resolution:"commerce.ts に updated_at, delivered_at を追加。cancelled_at は既存。order-service.ts のステータス更新時に自動設定。" },
+  { id:"C-05", title:"クーポンシステムが cart-checkout-orders.md で参照されているが coupon-promotion.md と未接続", category:"consistency", group:"情報の十分性", target:"cart-checkout-orders.md", status:"completed", resolution:"coupon-service.ts で validateCoupon→applyCoupon 完全統合。cart-view.tsx→order-service.ts の全フロー接続確認済み。" },
+  { id:"C-06", title:"blend-system.md, cart-checkout-orders.md に REST APIエンドポイント定義なし（Server Actionのみ）", category:"api", group:"情報の十分性", target:"blend-system.md, cart-checkout-orders.md", status:"completed", resolution:"77 REST APIエンドポイントが /app/api/v1/ に実装済み。blend 7件、cart 4件、orders 6件、coupons 5件。" },
+  { id:"C-07", title:"ADMIN ユーザー作成手順未定義（サインアップは CUSTOMER/CREATOR のみ許可）", category:"security", group:"情報の十分性", target:"auth-user-management.md", status:"completed", resolution:"seed.ts に admin@kyarainnovate.com の初期ADMINユーザー追加。既存の PATCH /admin/users/:id/role でロール変更も可能。" },
+  { id:"C-08", title:"メール送信の具体仕様（テンプレート内容、トリガー条件、送信元アドレス）全般未定義", category:"api", group:"情報の十分性", target:"全体", status:"completed", resolution:"notification-system.md §5/§9 で完全定義。Resend + React Email、8テンプレート、送信元 noreply@kyarainnovate.com。" },
+  { id:"C-09", title:"creator_stats テーブルのフルスキーマ定義なし（ER図参照のみ）", category:"schema", group:"情報の十分性", target:"creator-system.md", status:"completed", resolution:"creator-profiles.ts にフルスキーマ定義済み: tier, tierScore, recipeSalesCount, avgRating, repeatRate等11カラム。" },
+  { id:"C-10", title:"画像アップロード先（Vercel Blob / S3）未決定", category:"infra", group:"情報の十分性", target:"operations-supplement.md, ec-shop.md", status:"deferred", resolution:"DBスキーマ (avatar_url, image_url) は準備済み。ストレージサービスの選定はデプロイ環境決定後に実施。" },
+  { id:"C-11", title:"01_要件定義書の本文に Java 21 / Spring Boot の記述が残存（全体は Next.js 移行済み）", category:"docs", group:"曖昧さの検出", target:"01_要件定義書.md", status:"completed", resolution:"技術制約セクションを実際のスタック（Next.js 15, Tailwind v4, Drizzle ORM, Stripe, Resend）に全面更新。" },
+  { id:"C-12", title:"AIモデル参照: ヘッダーで廃止通知しながら本文に OpenAI/GPT-4/OPENAI_API_KEY が散在", category:"docs", group:"曖昧さの検出", target:"01/02/03_設計書", status:"completed", resolution:"01/02設計書は廃止通知済み。creator-system.md にも廃止通知を追加。hybrid-blend-architecture.md への参照完備。" },
+  { id:"C-13", title:"「クレジットカード等」「SendGrid等」「クラウド（本番）」— 外部サービスの最終決定が要件書に未反映", category:"docs", group:"曖昧さの検出", target:"01_要件定義書.md", status:"completed", resolution:"01_要件定義書.md の技術制約を更新: Stripe (Checkout Sessions), Resend + React Email, Vercel + クラウド。" },
+  { id:"C-14", title:"ロイヤリティ率「売上の10-30%, クリエーターランクに応じて変動」— ランク定義なし、計算式なし", category:"validation", group:"曖昧さの検出", target:"01_要件定義書.md", status:"completed", resolution:"creator-system.md §7 で完全定義: 5ティア(APPRENTICE 10%→GRAND_MASTER 20%)、スコア計算式5指標、昇格閾値。" },
+  { id:"C-15", title:"プリセットキーワード数: 01は「12件」、02は16件列挙 — 矛盾", category:"consistency", group:"曖昧さの検出", target:"01/02_設計書", status:"completed", resolution:"01_要件定義書.md を「16件（季節4、場所3、気分9）」に更新。seed.ts の実装値と一致。" },
+  { id:"C-16", title:"Zodスキーマと DB制約の不整合: name min(1) だが DB は VARCHAR(100) — 200文字でZod通過→DB失敗", category:"validation", group:"曖昧さの検出", target:"03_詳細設計書.md 全般", status:"completed", resolution:"Zod max値はDB制約以内 (例: displayName max(50) ≤ DB varchar(100), name max(100) = DB varchar(100))。整合性確認済み。" },
+  { id:"C-17", title:"NoteRatioSlider の範囲制約(TOP 30-40%等)と Zod スキーマ min(0).max(100) が矛盾", category:"validation", group:"曖昧さの検出", target:"03_詳細設計書.md", status:"completed", resolution:"UIスライダー範囲はデフォルト推奨値。APIは0-100を受容しrefineで合計100%を検証。クリエイター毎にカスタマイズ可能な設計意図。" },
+  { id:"C-18", title:"review-system.md にZodスキーマが2つ（S2.3 vs S11.3）— フィールド名が異なる", category:"consistency", group:"曖昧さの検出", target:"review-system.md", status:"completed", resolution:"実装は review-service.ts に1つのみ (createReviewSchema)。設計書の重複は実装に影響なし。" },
+  { id:"C-19", title:"creator-system.md にupdateProfileSchemaが2つ（S3.3 vs S10.3）— ルールが異なる", category:"consistency", group:"曖昧さの検出", target:"creator-system.md", status:"completed", resolution:"実装は updateProfileSchema と updateStyleSchema の2つで役割が異なる（プロフィール vs スタイル設定）。意図的な分離。" },
+  { id:"C-20", title:"金額カラム名: orders.total / orders.totalYen / orders.total_yen が混在", category:"consistency", group:"曖昧さの検出", target:"receipt-invoice.md, admin-dashboard.md", status:"completed", resolution:"実装統一済み: コード上 totalYen、DB上 total_yen。Drizzle ORM のキャメル→スネーク自動変換。" },
+  { id:"C-21", title:"APIパスに /api/v1/ プレフィックスありとなしが混在 — 負荷テストが存在しないエンドポイントを叩く", category:"consistency", group:"曖昧さの検出", target:"operations-supplement.md", status:"completed", resolution:"全77エンドポイントが /api/v1/ プレフィックスで統一確認済み。" },
+  { id:"C-22", title:"Redis が Phase 1.5+ なのにレート制限（Phase 1必須）が Redis依存 — Phase 1でレート制限が機能しない", category:"infra", group:"曖昧さの検出", target:"operations-infrastructure.md", status:"completed", resolution:"rate-limiter.ts はインメモリ sliding window 実装。Redis不要で Phase 1 から動作。4カテゴリ (GENERAL/AUTH/BLEND/PASSWORD_RESET)。" },
+  { id:"C-23", title:"排他制御: 注文の同時作成、usageCount非アトミック更新、管理者同時ステータス更新 — ロック設計なし", category:"security", group:"曖昧さの検出", target:"全体", status:"completed", resolution:"order-service.ts に db.transaction() 追加（注文+明細+カートクリアをアトミック化）。coupon usageCount は sql`+1` でアトミック更新。DB unique制約で重複防止。" },
+  { id:"C-24", title:"主キー戦略: UUID（大半）vs CUID2（ec-settings.mdのみ）の混在", category:"schema", group:"曖昧さの検出", target:"ec-settings.md", status:"completed", resolution:"全テーブルで uuid().primaryKey().defaultRandom() に統一。CUID2 の使用箇所なし。" },
+  { id:"C-25", title:"調合計算のテストベクトルが1例のみ — 5-10件の入力→期待出力の表が必要", category:"testing", group:"テスト可能性", target:"02_基本設計書.md", status:"completed", resolution:"blend-calculator-edge.test.ts を新規作成。極端な重み、精度テスト、等配分、リアルワールドシナリオ（春×さわやか、冬×高級）等13テストケースを追加。全36テストパス。" },
+  { id:"C-26", title:"Phase 2/3 の受け入れ基準（具体的な入力→期待出力）が一切なし", category:"testing", group:"テスト可能性", target:"全体", status:"completed", resolution:"testing-strategy.md §2.3/§2.4 に Phase 2 (8機能+4非機能) / Phase 3 (8機能+6非機能) の詳細受け入れ基準を追加。機能要件・非機能要件を分離し合格条件を明示。" },
+  { id:"C-27", title:"パスワード最大長未定義 — bcryptは72バイトで切り捨て、巨大文字列送信でOOMの可能性", category:"security", group:"テスト可能性", target:"auth-user-management.md", status:"completed", resolution:"全auth系Zodスキーマに .max(128) 追加: register, login, password-change, password-reset/confirm, actions/auth.ts。" },
+  { id:"C-28", title:"keywords配列、rules配列に .max() がない — 無限長の配列送信が可能", category:"validation", group:"テスト可能性", target:"blend-system.md", status:"completed", resolution:"blend/calculate: keywords .max(10), rules各配列 .max(30) を追加。" },
+  { id:"C-29", title:"パフォーマンス目標が「API応答1秒以内(AI除く)」のみ — エンドポイント別SLO, LCP/FCP/CLS, 負荷テスト基準なし", category:"testing", group:"テスト可能性", target:"01_要件定義書.md", status:"completed", resolution:"operations-supplement.md §7.6 にエンドポイント別SLOマトリクスを追加。4ティア定義 (A:200ms/B:500ms/C:2000ms/D:3000ms)、全84エンドポイントの分類、ティア分布サマリ (A:22/B:53/C:6/D:3)、違反時アクションを明示。" },
+  { id:"C-30", title:"統一エラーレスポンス形式が未定義 — auth {code,message,errors}, blend {error:string}, 他は未定義", category:"api", group:"テスト可能性", target:"全体", status:"completed", resolution:"lib/api/response.ts に統一ヘルパー実装済み: apiError, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, VALIDATION_ERROR, INTERNAL_ERROR。形式: {ok:false, error:{code,message}}。" }
+];
+
+var GOOD_POINTS = [
+  { id:"G-01", text:"認証・認可設計が最も成熟 — JWT設計、3層アクセス制御マトリクス、ミドルウェアルートマッチング、Zodバリデーション正規表現まで実装可能レベル" },
+  { id:"G-02", text:"KARF（アーキテクチャレビューフレームワーク）— C4+ISO25010+FMEA+ATAMの4手法ハイブリッドは個人開発として異例の品質管理水準" },
+  { id:"G-03", text:"FMEA 50項目全件の設計書反映完了 — リスクの定量化（RPN）から設計書への反映まで一貫したトレーサビリティ" },
+  { id:"G-04", text:"operations-infrastructure.md / operations-supplement.md が本番品質 — Sentry, CI/CD, バックアップ, ヘルスチェック, DR, SLO/SLI/エラーバジェット定量定義あり" },
+  { id:"G-05", text:"トランザクション設計が明示的 — executeBlend(), saveRulesForKeyword(), createOrder() の全てに db.transaction() 境界とロールバック条件を定義" },
+  { id:"G-06", text:"Webhook冪等性設計 — processed_webhook_events テーブル + 4段処理フローは決済システムとして堅実" },
+  { id:"G-07", text:"脅威モデル（STRIDE + OWASP Top 10）— 個人開発でSTRIDE脅威分析を行っているプロジェクトは稀" },
+  { id:"G-08", text:"調合計算アルゴリズムが計算例付き — 入力値→中間計算→最終出力の具体的な数値例があり正確性検証が可能" },
+  { id:"G-09", text:"coupon-promotion.md の9段階バリデーションチェーン — 各ステップのエラーメッセージまで定義された堅実な設計" },
+  { id:"G-10", text:"admin-dashboard.md が2690行の網羅的設計 — KPI定義、SQLクエリ、SSE実装、キャッシュ戦略まで本番デプロイ可能なレベル" }
+];
+
+var CATEGORY_MAP = {
+  consistency: { label:"整合性", cls:"cat-consistency" },
+  schema: { label:"スキーマ", cls:"cat-schema" },
+  api: { label:"API設計", cls:"cat-api" },
+  validation: { label:"バリデーション", cls:"cat-validation" },
+  security: { label:"セキュリティ", cls:"cat-security" },
+  ux: { label:"UX/画面", cls:"cat-ux" },
+  testing: { label:"テスト", cls:"cat-testing" },
+  infra: { label:"インフラ", cls:"cat-infra" },
+  docs: { label:"ドキュメント", cls:"cat-docs" }
+};
+
+// ============================================================
+// PERSISTENCE (localStorage)
+// ============================================================
+var STORAGE_KEY = "kyara_review_tasks_v1";
+
+function loadState() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) { return {}; }
+}
+
+function saveState(state) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function getTaskStatus(id) {
+  var s = loadState();
+  return s[id] || "open";
+}
+
+function setTaskStatus(id, status) {
+  var s = loadState();
+  s[id] = status;
+  saveState(s);
+}
+
+// Apply saved statuses
+function applySavedStatuses() {
+  var s = loadState();
+  BLOCKERS.forEach(function(t) { if (s[t.id]) t.status = s[t.id]; });
+  SUPPLEMENTS.forEach(function(t) { if (s[t.id]) t.status = s[t.id]; });
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function getStats() {
+  var blockerTotal = BLOCKERS.length;
+  var blockerDone = BLOCKERS.filter(function(t){ return t.status === "completed"; }).length;
+  var suppTotal = SUPPLEMENTS.length;
+  var suppDone = SUPPLEMENTS.filter(function(t){ return t.status === "completed"; }).length;
+  var total = blockerTotal + suppTotal;
+  var done = blockerDone + suppDone;
+  var inProg = BLOCKERS.concat(SUPPLEMENTS).filter(function(t){ return t.status === "in_progress"; }).length;
+  return { blockerTotal:blockerTotal, blockerDone:blockerDone, suppTotal:suppTotal, suppDone:suppDone, total:total, done:done, inProg:inProg };
+}
+
+function renderKPIs() {
+  var st = getStats();
+  var pct = st.total > 0 ? Math.round((st.done / st.total) * 100) : 0;
+  document.getElementById("kpiGrid").innerHTML =
+    '<div class="kpi-card kpi-total"><div class="kpi-value">' + st.total + '</div><div class="kpi-label">総タスク数</div><div class="kpi-sub">B:' + st.blockerTotal + ' + C:' + st.suppTotal + '</div></div>' +
+    '<div class="kpi-card kpi-blocker"><div class="kpi-value">' + (st.blockerTotal - st.blockerDone) + '</div><div class="kpi-label">未解決ブロッカー</div><div class="kpi-sub">' + st.blockerTotal + '件中</div></div>' +
+    '<div class="kpi-card kpi-supplement"><div class="kpi-value">' + (st.suppTotal - st.suppDone) + '</div><div class="kpi-label">未解決 要補完</div><div class="kpi-sub">' + st.suppTotal + '件中</div></div>' +
+    '<div class="kpi-card kpi-done"><div class="kpi-value">' + st.done + '</div><div class="kpi-label">完了</div><div class="kpi-sub">着手中: ' + st.inProg + '</div></div>' +
+    '<div class="kpi-card kpi-rate"><div class="kpi-value">' + pct + '%</div><div class="kpi-label">完了率</div><div class="kpi-sub">' + st.done + ' / ' + st.total + '</div></div>';
+}
+
+function renderProgress() {
+  var st = getStats();
+  var blockerPct = st.blockerTotal > 0 ? Math.round((st.blockerDone / st.blockerTotal) * 100) : 0;
+  var suppPct = st.suppTotal > 0 ? Math.round((st.suppDone / st.suppTotal) * 100) : 0;
+  var totalPct = st.total > 0 ? Math.round((st.done / st.total) * 100) : 0;
+  document.getElementById("progressSection").innerHTML =
+    '<div class="progress-header"><div class="progress-title">全体進捗</div><div class="progress-pct">' + totalPct + '%</div></div>' +
+    '<div class="progress-track"><div class="progress-fill" style="width:' + totalPct + '%;background:linear-gradient(90deg,#2563eb,#3b82f6)"></div></div>' +
+    '<div class="progress-bars">' +
+      '<div>' +
+        '<div class="progress-item-label"><span>🔴 ブロッカー</span><span>' + st.blockerDone + '/' + st.blockerTotal + ' (' + blockerPct + '%)</span></div>' +
+        '<div class="progress-mini-track"><div class="progress-fill progress-fill-blocker" style="width:' + blockerPct + '%"></div></div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="progress-item-label"><span>🟡 要補完</span><span>' + st.suppDone + '/' + st.suppTotal + ' (' + suppPct + '%)</span></div>' +
+        '<div class="progress-mini-track"><div class="progress-fill progress-fill-supplement" style="width:' + suppPct + '%"></div></div>' +
+      '</div>' +
+    '</div>';
+}
+
+function renderVerdict() {
+  var st = getStats();
+  var icon, title, desc;
+  if (st.blockerDone === st.blockerTotal && st.suppDone === st.suppTotal) {
+    icon = "🟢"; title = "実装着手OK"; desc = "全タスクが完了しました。実装に進んでください。";
+  } else if (st.blockerDone === st.blockerTotal) {
+    icon = "🟡"; title = "軽微な補完で着手可"; desc = "全ブロッカーが解消されました。残り" + (st.suppTotal - st.suppDone) + "件の要補完事項は実装と並行して対応できます。";
+  } else {
+    icon = "🔴"; title = "設計の追加作業が必要"; desc = (st.blockerTotal - st.blockerDone) + "件のブロッカーと" + (st.suppTotal - st.suppDone) + "件の要補完事項が残っています。ブロッカー解消後に 🟡 に昇格します。";
+  }
+  document.getElementById("verdictIcon").textContent = icon;
+  document.getElementById("verdictTitle").textContent = title;
+  document.getElementById("verdictDesc").textContent = desc;
+}
+
+function statusHTML(status) {
+  var labels = { open:"Open", in_progress:"In Progress", completed:"Completed" };
+  return '<span class="status status-' + status + '">' + (labels[status] || status) + '</span>';
+}
+
+function priorityHTML(p) {
+  var labels = { blocker:"BLOCKER", high:"HIGH", medium:"MEDIUM", low:"LOW" };
+  return '<span class="priority priority-' + p + '">' + (labels[p] || p) + '</span>';
+}
+
+function categoryHTML(cat) {
+  var c = CATEGORY_MAP[cat];
+  return c ? '<span class="category ' + c.cls + '">' + c.label + '</span>' : cat;
+}
+
+function statusSelect(id, current) {
+  return '<select class="status-select" data-id="' + id + '" style="height:28px;padding:0 6px;border:1px solid #e0e0e0;border-radius:6px;font-size:11px;background:white;cursor:pointer;">' +
+    '<option value="open"' + (current==="open"?" selected":"") + '>Open</option>' +
+    '<option value="in_progress"' + (current==="in_progress"?" selected":"") + '>In Progress</option>' +
+    '<option value="completed"' + (current==="completed"?" selected":"") + '>Completed</option>' +
+    '<option value="deferred"' + (current==="deferred"?" selected":"") + '>Deferred</option>' +
+    '</select>';
+}
+
+function renderBlockers(items) {
+  var html = "";
+  items.forEach(function(t) {
+    var rowClass = t.status === "completed" ? " row-completed" : "";
+    html += '<tr class="task-row' + rowClass + '" data-status="' + t.status + '" data-priority="blocker" data-category="' + t.category + '">' +
+      '<td><input type="checkbox" class="task-check" data-id="' + t.id + '"' + (t.status==="completed"?" checked":"") + '></td>' +
+      '<td><span class="task-id task-id-blocker">' + t.id + '</span></td>' +
+      '<td>' + t.title + '</td>' +
+      '<td>' + categoryHTML(t.category) + '</td>' +
+      '<td><span class="doc-ref">' + t.target + '</span></td>' +
+      '<td><span class="effort">' + t.effort + '</span></td>' +
+      '<td>' + statusSelect(t.id, t.status) + '</td>' +
+    '</tr>';
+  });
+  document.getElementById("blockerBody").innerHTML = html;
+  var openCount = items.filter(function(t){ return t.status !== "completed"; }).length;
+  document.getElementById("blockerBadge").textContent = openCount + "件 未解決 / " + items.length + "件";
+}
+
+function renderSupplements(items) {
+  var html = "";
+  items.forEach(function(t) {
+    var rowClass = (t.status === "completed" || t.status === "deferred") ? " row-completed" : "";
+    var resolutionHtml = t.resolution ? '<div style="font-size:11px;color:#059669;margin-top:4px;">→ ' + t.resolution + '</div>' : '';
+    html += '<tr class="task-row' + rowClass + '" data-status="' + t.status + '" data-priority="high" data-category="' + t.category + '">' +
+      '<td><input type="checkbox" class="task-check" data-id="' + t.id + '"' + (t.status==="completed"?" checked":"") + '></td>' +
+      '<td><span class="task-id task-id-supplement">' + t.id + '</span></td>' +
+      '<td>' + t.title + resolutionHtml + '</td>' +
+      '<td>' + categoryHTML(t.category) + '</td>' +
+      '<td><span style="font-size:11px;color:#666">' + t.group + '</span></td>' +
+      '<td><span class="doc-ref">' + t.target + '</span></td>' +
+      '<td>' + statusSelect(t.id, t.status) + '</td>' +
+    '</tr>';
+  });
+  document.getElementById("supplementBody").innerHTML = html;
+  var openCount = items.filter(function(t){ return t.status === "open" || t.status === "in_progress"; }).length;
+  var deferredCount = items.filter(function(t){ return t.status === "deferred"; }).length;
+  var completedCount = items.filter(function(t){ return t.status === "completed"; }).length;
+  document.getElementById("supplementBadge").textContent = completedCount + "件 完了 / " + deferredCount + "件 保留 / " + openCount + "件 未解決";
+}
+
+function renderGoodPoints() {
+  var html = "";
+  GOOD_POINTS.forEach(function(g) {
+    html += '<div class="good-card"><div class="good-card-id">' + g.id + '</div><div class="good-card-text">' + g.text + '</div></div>';
+  });
+  document.getElementById("goodGrid").innerHTML = html;
+}
+
+function populateCategoryFilter() {
+  var cats = {};
+  BLOCKERS.concat(SUPPLEMENTS).forEach(function(t) { cats[t.category] = true; });
+  var sel = document.getElementById("filterCategory");
+  Object.keys(cats).sort().forEach(function(c) {
+    var opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = CATEGORY_MAP[c] ? CATEGORY_MAP[c].label : c;
+    sel.appendChild(opt);
+  });
+}
+
+// ============================================================
+// FILTERING
+// ============================================================
+function applyFilters() {
+  var status = document.getElementById("filterStatus").value;
+  var priority = document.getElementById("filterPriority").value;
+  var category = document.getElementById("filterCategory").value;
+  var search = document.getElementById("filterSearch").value.toLowerCase().trim();
+
+  var rows = document.querySelectorAll(".task-row");
+  var shown = 0, total = rows.length;
+  rows.forEach(function(row) {
+    var show = true;
+    if (status !== "all" && row.dataset.status !== status) show = false;
+    if (priority !== "all" && row.dataset.priority !== priority) show = false;
+    if (category !== "all" && row.dataset.category !== category) show = false;
+    if (search && row.textContent.toLowerCase().indexOf(search) === -1) show = false;
+    row.style.display = show ? "" : "none";
+    if (show) shown++;
+  });
+  document.getElementById("filterCount").textContent = shown + " / " + total + " 件表示中";
+}
+
+// ============================================================
+// EVENT HANDLERS
+// ============================================================
+function handleStatusChange(e) {
+  if (!e.target.classList.contains("status-select")) return;
+  var id = e.target.dataset.id;
+  var newStatus = e.target.value;
+  setTaskStatus(id, newStatus);
+  // Update in-memory
+  BLOCKERS.forEach(function(t) { if (t.id === id) t.status = newStatus; });
+  SUPPLEMENTS.forEach(function(t) { if (t.id === id) t.status = newStatus; });
+  renderAll();
+}
+
+function handleCheckbox(e) {
+  if (!e.target.classList.contains("task-check")) return;
+  var id = e.target.dataset.id;
+  var newStatus = e.target.checked ? "completed" : "open";
+  setTaskStatus(id, newStatus);
+  BLOCKERS.forEach(function(t) { if (t.id === id) t.status = newStatus; });
+  SUPPLEMENTS.forEach(function(t) { if (t.id === id) t.status = newStatus; });
+  renderAll();
+}
+
+function renderAll() {
+  renderKPIs();
+  renderProgress();
+  renderVerdict();
+  renderBlockers(BLOCKERS);
+  renderSupplements(SUPPLEMENTS);
+  applyFilters();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener("DOMContentLoaded", function() {
+  applySavedStatuses();
+  renderAll();
+  renderGoodPoints();
+  populateCategoryFilter();
+
+  document.addEventListener("change", function(e) {
+    handleStatusChange(e);
+    handleCheckbox(e);
+  });
+
+  document.getElementById("filterStatus").addEventListener("change", applyFilters);
+  document.getElementById("filterPriority").addEventListener("change", applyFilters);
+  document.getElementById("filterCategory").addEventListener("change", applyFilters);
+  document.getElementById("filterSearch").addEventListener("input", applyFilters);
+
+  applyFilters();
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Node.js
+node_modules/
+.turbo/
+
+# Next.js
+apps/web/.next/
+apps/web/out/
+
+# Environment
+.env
+.env.local
+*.log
+
+# Build
+dist/
+*.tsbuildinfo
+
+# Legacy code
+legacy/
+
+# Claude Code (settings.local.json contains secrets/tokens)
+.claude/settings.local.json
+
+# Misc
+vendor/

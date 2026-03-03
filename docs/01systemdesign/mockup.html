@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KyaraInnovate - 全画面モックアップ</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', 'sans-serif'] },
+      colors: {
+        brand: { 50:'#fafafa', 100:'#f5f5f5', 200:'#e5e5e5', 300:'#d4d4d4', 400:'#a3a3a3', 500:'#737373', 600:'#525252', 700:'#404040', 800:'#262626', 900:'#171717', 950:'#0a0a0a' },
+        accent: '#000000',
+      }
+    }
+  }
+}
+</script>
+<style>
+  .page { display: none; }
+  .page.active { display: block; }
+  .nav-item.active { background: #262626; color: white; }
+  .nav-item.active .material-icons-outlined { color: white !important; }
+  .nav-item:not(.active):hover { background: #262626; }
+  .phase-badge { font-size: 0.55rem; padding: 1px 6px; border-radius: 2px; margin-left: 4px; vertical-align: middle; font-weight: 600; letter-spacing: 0.05em; }
+  .phase1 { background: #e5e5e5; color: #404040; }
+  .phase2 { background: #d4d4d4; color: #262626; }
+  .phase3 { background: #a3a3a3; color: #171717; }
+  body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  input[type="range"] { -webkit-appearance: none; height: 4px; border-radius: 2px; background: #e5e5e5; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #171717; cursor: pointer; }
+  .card { background: white; border: 1px solid #e5e5e5; border-radius: 8px; }
+  .btn-primary { background: #171717; color: white; font-weight: 500; }
+  .btn-primary:hover { background: #404040; }
+  .btn-secondary { background: white; color: #171717; border: 1px solid #d4d4d4; font-weight: 500; }
+  .btn-secondary:hover { background: #f5f5f5; }
+  .icon { font-size: 20px; vertical-align: middle; }
+  .icon-sm { font-size: 16px; vertical-align: middle; }
+  table th { font-weight: 500; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
+</style>
+</head>
+<body class="bg-brand-50 min-h-screen text-brand-900">
+
+<!-- Header -->
+<header class="bg-brand-950 sticky top-0 z-50">
+  <div class="flex items-center justify-between px-5 py-3">
+    <div class="flex items-center gap-4">
+      <button onclick="toggleSidebar()" class="lg:hidden text-white"><span class="material-icons-outlined">menu</span></button>
+      <h1 class="text-lg font-semibold tracking-tight text-white">KyaraInnovate</h1>
+      <span class="text-[10px] text-brand-500 tracking-widest uppercase">Mockup</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <select id="roleSwitch" onchange="switchRole(this.value)" class="text-xs border border-brand-700 rounded px-3 py-1.5 bg-brand-900 text-white focus:outline-none">
+        <option value="customer">CUSTOMER</option>
+        <option value="creator">CREATOR</option>
+        <option value="admin">ADMIN</option>
+      </select>
+      <div class="w-8 h-8 bg-brand-700 rounded-full flex items-center justify-center text-white text-xs font-medium">U</div>
+    </div>
+  </div>
+</header>
+
+<div class="flex">
+<!-- Sidebar -->
+<aside id="sidebar" class="w-60 bg-brand-950 min-h-screen fixed lg:static z-40 transform -translate-x-full lg:translate-x-0 transition-transform">
+  <nav class="py-3 text-[13px]">
+    <div class="px-4 py-2 text-[10px] font-semibold text-brand-500 uppercase tracking-widest">Core</div>
+    <div id="nav-customer" class="space-y-0.5 px-2">
+      <a onclick="showPage('login')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">login</span> ログイン <span class="phase-badge phase1">P1</span>
+      </a>
+      <a onclick="showPage('register')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">person_add</span> ユーザー登録 <span class="phase-badge phase1">P1</span>
+      </a>
+      <a onclick="showPage('blend-request')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">science</span> 調合リクエスト <span class="phase-badge phase1">P1</span>
+      </a>
+      <a onclick="showPage('blend-result')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">analytics</span> 調合結果 <span class="phase-badge phase1">P1</span>
+      </a>
+      <a onclick="showPage('history')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">history</span> 調合履歴 <span class="phase-badge phase1">P1</span>
+      </a>
+    </div>
+
+    <div id="nav-creator-basic">
+      <div class="px-4 py-2 mt-4 text-[10px] font-semibold text-brand-500 uppercase tracking-widest">Creator</div>
+      <div class="space-y-0.5 px-2">
+        <a onclick="showPage('keyword-list')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+          <span class="material-icons-outlined icon-sm text-white">label</span> キーワード一覧 <span class="phase-badge phase1">P1</span>
+        </a>
+        <a onclick="showPage('rule-edit')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+          <span class="material-icons-outlined icon-sm text-white">tune</span> ルール編集 <span class="phase-badge phase1">P1</span>
+        </a>
+        <a onclick="showPage('stats')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+          <span class="material-icons-outlined icon-sm text-white">bar_chart</span> 統計 <span class="phase-badge phase1">P1</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="px-4 py-2 mt-4 text-[10px] font-semibold text-brand-500 uppercase tracking-widest">Marketplace</div>
+    <div id="nav-phase2" class="space-y-0.5 px-2">
+      <a onclick="showPage('creator-list')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">groups</span> クリエーター一覧 <span class="phase-badge phase2">P2</span>
+      </a>
+      <a onclick="showPage('creator-detail')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">person</span> クリエーター詳細 <span class="phase-badge phase2">P2</span>
+      </a>
+      <a onclick="showPage('creator-settings')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">settings</span> クリエーター設定 <span class="phase-badge phase2">P2</span>
+      </a>
+      <a onclick="showPage('creator-dashboard')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">dashboard</span> クリエーター統計 <span class="phase-badge phase2">P2</span>
+      </a>
+    </div>
+
+    <div class="px-4 py-2 mt-4 text-[10px] font-semibold text-brand-500 uppercase tracking-widest">Commerce</div>
+    <div id="nav-phase3" class="space-y-0.5 px-2">
+      <a onclick="showPage('shop')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">storefront</span> ショップ <span class="phase-badge phase1">P1</span>
+      </a>
+      <a onclick="showPage('cart')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">shopping_cart</span> カート <span class="phase-badge phase1">P1</span>
+      </a>
+      <a onclick="showPage('checkout')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">lock</span> チェックアウト <span class="phase-badge phase1">P1</span>
+      </a>
+      <a onclick="showPage('order-history')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">receipt_long</span> 注文履歴 <span class="phase-badge phase1">P1</span>
+      </a>
+      <a onclick="showPage('order-detail')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">local_shipping</span> 注文詳細 <span class="phase-badge phase1">P1</span>
+      </a>
+      <a onclick="showPage('addresses')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+        <span class="material-icons-outlined icon-sm text-white">location_on</span> 配送先管理 <span class="phase-badge phase1">P1</span>
+      </a>
+    </div>
+
+    <div id="nav-admin">
+      <div class="px-4 py-2 mt-4 text-[10px] font-semibold text-brand-500 uppercase tracking-widest">Admin</div>
+      <div class="space-y-0.5 px-2">
+        <a onclick="showPage('admin-dashboard')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+          <span class="material-icons-outlined icon-sm text-white">dashboard</span> ダッシュボード <span class="phase-badge phase1">P1</span>
+        </a>
+        <a onclick="showPage('admin-users')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+          <span class="material-icons-outlined icon-sm text-white">manage_accounts</span> ユーザー管理 <span class="phase-badge phase1">P1</span>
+        </a>
+        <a onclick="showPage('admin-orders')" class="nav-item flex items-center gap-2.5 px-3 py-2 cursor-pointer rounded text-brand-400">
+          <span class="material-icons-outlined icon-sm text-white">inventory</span> 注文管理 <span class="phase-badge phase1">P1</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+</aside>
+
+<main class="flex-1 p-6 lg:p-8 max-w-4xl mx-auto w-full">
+
+<!-- ==================== LOGIN ==================== -->
+<div id="page-login" class="page active">
+  <div class="max-w-sm mx-auto mt-16">
+    <div class="text-center mb-10">
+      <h2 class="text-2xl font-semibold tracking-tight">KyaraInnovate</h2>
+      <p class="text-brand-400 text-sm mt-1">Sign in to your account</p>
+    </div>
+    <div class="card p-6 space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-brand-500 mb-1.5 uppercase tracking-wider">Email</label>
+        <input type="email" value="user@example.com" class="w-full border border-brand-200 rounded px-3 py-2.5 text-sm focus:ring-1 focus:ring-brand-900 focus:border-brand-900 outline-none">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-brand-500 mb-1.5 uppercase tracking-wider">Password</label>
+        <input type="password" value="password" class="w-full border border-brand-200 rounded px-3 py-2.5 text-sm focus:ring-1 focus:ring-brand-900 focus:border-brand-900 outline-none">
+      </div>
+      <button class="w-full btn-primary py-2.5 rounded text-sm">ログイン</button>
+      <p class="text-center text-xs text-brand-400">アカウントがない方は <a onclick="showPage('register')" class="text-brand-900 underline cursor-pointer">新規登録</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== REGISTER ==================== -->
+<div id="page-register" class="page">
+  <div class="max-w-sm mx-auto mt-16">
+    <div class="text-center mb-10">
+      <h2 class="text-2xl font-semibold tracking-tight">Create Account</h2>
+    </div>
+    <div class="card p-6 space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-brand-500 mb-1.5 uppercase tracking-wider">Name</label>
+        <input type="text" placeholder="山田太郎" class="w-full border border-brand-200 rounded px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-brand-900">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-brand-500 mb-1.5 uppercase tracking-wider">Email</label>
+        <input type="email" placeholder="mail@example.com" class="w-full border border-brand-200 rounded px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-brand-900">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-brand-500 mb-1.5 uppercase tracking-wider">Password</label>
+        <input type="password" placeholder="6文字以上" class="w-full border border-brand-200 rounded px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-brand-900">
+      </div>
+      <button class="w-full btn-primary py-2.5 rounded text-sm">登録</button>
+      <p class="text-center text-xs text-brand-400">既にアカウントをお持ちの方は <a onclick="showPage('login')" class="text-brand-900 underline cursor-pointer">ログイン</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== BLEND REQUEST ==================== -->
+<div id="page-blend-request" class="page">
+  <div class="space-y-6">
+    <div>
+      <h2 class="text-xl font-semibold tracking-tight">Blend Request</h2>
+      <p class="text-brand-400 text-sm mt-1">キーワードと比率を指定して香りを調合</p>
+    </div>
+
+    <!-- Creator Selection -->
+    <div class="card p-5">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="material-icons-outlined icon-sm text-brand-400">person</span>
+        <span class="text-xs font-semibold text-brand-500 uppercase tracking-wider">Creator</span>
+        <span class="phase-badge phase2">P2</span>
+      </div>
+      <div class="flex gap-3">
+        <div class="flex items-center gap-2 border-2 border-brand-900 rounded px-3 py-2 cursor-pointer">
+          <div class="w-7 h-7 bg-brand-200 rounded-full flex items-center justify-center text-[10px] font-semibold">TH</div>
+          <div><div class="text-xs font-semibold">田中花子</div><div class="text-[10px] text-brand-400">Natural</div></div>
+        </div>
+        <div class="flex items-center gap-2 border border-brand-200 rounded px-3 py-2 cursor-pointer hover:border-brand-400">
+          <div class="w-7 h-7 bg-brand-200 rounded-full flex items-center justify-center text-[10px] font-semibold">YT</div>
+          <div><div class="text-xs font-semibold">山田太郎</div><div class="text-[10px] text-brand-400">Modern</div></div>
+        </div>
+        <div class="flex items-center gap-2 border border-brand-200 rounded px-3 py-2 cursor-pointer hover:border-brand-400">
+          <div class="w-7 h-7 bg-brand-200 rounded-full flex items-center justify-center text-[10px] font-semibold">AI</div>
+          <div><div class="text-xs font-semibold">AI Master</div><div class="text-[10px] text-brand-400">Experimental</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keywords -->
+    <div class="card p-5">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-xs font-bold tracking-widest uppercase px-2 py-0.5" style="background:#171717;color:white">01</span>
+        <span class="text-xs font-semibold text-brand-500 uppercase tracking-wider">キーワードを入力</span>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <span class="text-[10px] text-brand-400 uppercase tracking-wider font-medium">Season</span>
+          <div class="flex gap-2 mt-1.5">
+            <button class="px-3 py-1.5 rounded text-xs border border-brand-200 hover:border-brand-400">春</button>
+            <button class="px-3 py-1.5 rounded text-xs btn-primary">夏</button>
+            <button class="px-3 py-1.5 rounded text-xs border border-brand-200 hover:border-brand-400">秋</button>
+            <button class="px-3 py-1.5 rounded text-xs border border-brand-200 hover:border-brand-400">冬</button>
+          </div>
+        </div>
+        <div>
+          <span class="text-[10px] text-brand-400 uppercase tracking-wider font-medium">Mood</span>
+          <div class="flex gap-2 mt-1.5 flex-wrap">
+            <button class="px-3 py-1.5 rounded text-xs border border-brand-200">ナチュラル</button>
+            <button class="px-3 py-1.5 rounded text-xs border border-brand-200">陽気</button>
+            <button class="px-3 py-1.5 rounded text-xs btn-primary">優雅</button>
+            <button class="px-3 py-1.5 rounded text-xs border border-brand-200">高級</button>
+            <button class="px-3 py-1.5 rounded text-xs border border-brand-200">リラックス</button>
+            <button class="px-3 py-1.5 rounded text-xs border border-brand-200">ロマンティック</button>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <input type="text" placeholder="フリーキーワード..." class="flex-1 border border-brand-200 rounded px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-brand-900">
+          <button class="btn-secondary px-3 py-2 rounded text-xs">
+            <span class="material-icons-outlined icon-sm">add</span>
+          </button>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3 bg-brand-50 border border-brand-100 rounded px-3 py-2">
+            <span class="text-xs font-medium w-12">夏</span>
+            <input type="range" min="0" max="10" value="7" class="flex-1">
+            <span class="text-xs font-semibold w-4 text-right">7</span>
+            <button class="text-brand-300 hover:text-brand-600"><span class="material-icons-outlined icon-sm">close</span></button>
+          </div>
+          <div class="flex items-center gap-3 bg-brand-50 border border-brand-100 rounded px-3 py-2">
+            <span class="text-xs font-medium w-12">優雅</span>
+            <input type="range" min="0" max="10" value="5" class="flex-1">
+            <span class="text-xs font-semibold w-4 text-right">5</span>
+            <button class="text-brand-300 hover:text-brand-600"><span class="material-icons-outlined icon-sm">close</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Note Ratios -->
+    <div class="card p-5">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-xs font-bold tracking-widest uppercase px-2 py-0.5" style="background:#171717;color:white">02</span>
+        <span class="text-xs font-semibold text-brand-500 uppercase tracking-wider">ノート比率を選択</span>
+      </div>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-medium tracking-wide w-16 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full inline-block" style="background:#F59E0B"></span> TOP
+          </span>
+          <input type="range" min="30" max="40" value="30" class="flex-1">
+          <span class="text-xs text-brand-400 w-10 text-right">30%</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-medium tracking-wide w-16 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full inline-block" style="background:#EC4899"></span> MIDDLE
+          </span>
+          <input type="range" min="50" max="60" value="60" class="flex-1">
+          <span class="text-xs text-brand-400 w-10 text-right">60%</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-medium tracking-wide w-16 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full inline-block" style="background:#059669"></span> LAST
+          </span>
+          <input type="range" min="10" max="15" value="10" class="flex-1">
+          <span class="text-xs text-brand-400 w-10 text-right">10%</span>
+        </div>
+        <div class="flex justify-between text-[10px] text-brand-400 pt-1">
+          <span>合計: 100%</span>
+          <span style="color:#059669">OK</span>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="showPage('blend-result')" class="w-full btn-primary py-3 rounded text-sm flex items-center justify-center gap-2">
+      <span class="material-icons-outlined icon-sm" style="color:#FCD34D">science</span> 調合を生成する
+    </button>
+  </div>
+</div>
+
+<!-- ==================== BLEND RESULT ==================== -->
+<div id="page-blend-result" class="page">
+  <div class="space-y-5">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold tracking-tight">Blend Result</h2>
+      <a onclick="showPage('history')" class="text-xs text-brand-400 hover:text-brand-700 cursor-pointer flex items-center gap-1"><span class="material-icons-outlined icon-sm" style="color:#6366F1">history</span> 履歴</a>
+    </div>
+
+    <div class="flex gap-2">
+      <span class="bg-brand-100 text-brand-600 px-2.5 py-1 rounded text-xs font-medium">夏 (7)</span>
+      <span class="bg-brand-100 text-brand-600 px-2.5 py-1 rounded text-xs font-medium">優雅 (5)</span>
+    </div>
+
+    <div class="card p-4 flex items-center gap-3">
+      <span class="material-icons-outlined text-brand-400">local_florist</span>
+      <span class="text-base font-semibold">夏の風</span>
+      <button class="text-xs text-brand-400 hover:text-brand-700 underline ml-auto">変更</button>
+    </div>
+
+    <div class="card p-4 flex items-center gap-3">
+      <div class="w-8 h-8 bg-brand-200 rounded-full flex items-center justify-center text-[10px] font-semibold">TH</div>
+      <div><div class="text-xs font-semibold">田中花子</div><div class="text-[10px] text-brand-400">Natural Creator</div></div>
+      <span class="phase-badge phase2 ml-auto">P2</span>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="card p-5">
+        <h3 class="text-xs font-semibold text-brand-500 uppercase tracking-wider mb-4">Composition</h3>
+        <div class="space-y-3">
+          <div>
+            <div class="text-[10px] font-semibold text-brand-900 uppercase tracking-wider mb-1"><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#F59E0B"></span>Top (35%)</div>
+            <div class="pl-3 space-y-1 text-xs text-brand-600">
+              <div class="flex justify-between"><span>ライム</span><span class="font-medium text-brand-900">21.00%</span></div>
+              <div class="flex justify-between"><span>グレープフルーツ</span><span class="font-medium text-brand-900">14.00%</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="text-[10px] font-semibold text-brand-700 uppercase tracking-wider mb-1"><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#EC4899"></span>Middle (55%)</div>
+            <div class="pl-3 space-y-1 text-xs text-brand-600">
+              <div class="flex justify-between"><span>ジャスミン</span><span class="font-medium text-brand-900">30.25%</span></div>
+              <div class="flex justify-between"><span>スイートローズ</span><span class="font-medium text-brand-900">24.75%</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="text-[10px] font-semibold text-brand-500 uppercase tracking-wider mb-1"><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#059669"></span>Last (10%)</div>
+            <div class="pl-3 text-xs text-brand-600">
+              <div class="flex justify-between"><span>サンダルウッド</span><span class="font-medium text-brand-900">10.00%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card p-5">
+        <h3 class="text-xs font-semibold text-brand-500 uppercase tracking-wider mb-4">Chart</h3>
+        <canvas id="blendChart" width="280" height="280"></canvas>
+      </div>
+    </div>
+
+    <div class="card p-5">
+      <h3 class="text-xs font-semibold text-brand-500 uppercase tracking-wider mb-3">Story</h3>
+      <p class="text-sm text-brand-600 leading-relaxed">
+        真夏の午後、風がそっと運んできたのはライムの爽やかさとグレープフルーツの甘い微笑み。
+        その奥には、ジャスミンとスイートローズが紡ぐ優雅な花々の対話が広がり、
+        サンダルウッドの温かな余韻が、夏の記憶を静かに閉じ込めます。
+      </p>
+    </div>
+
+    <div class="flex gap-3">
+      <button onclick="showPage('order-confirm')" class="flex-1 btn-primary py-3 rounded text-sm flex items-center justify-center gap-2">
+        <span class="material-icons-outlined icon-sm">shopping_bag</span> 注文する <span class="phase-badge phase3 bg-brand-700">P3</span>
+      </button>
+      <button onclick="showPage('blend-request')" class="btn-secondary px-5 py-3 rounded text-sm flex items-center gap-1">
+        <span class="material-icons-outlined icon-sm">refresh</span> 再調合
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== HISTORY ==================== -->
+<div id="page-history" class="page">
+  <div class="space-y-5">
+    <h2 class="text-xl font-semibold tracking-tight">History</h2>
+    <div class="space-y-2">
+      <div onclick="showPage('blend-result')" class="card p-4 hover:bg-brand-50 transition cursor-pointer flex items-center justify-between">
+        <div>
+          <div class="text-sm font-semibold">夏の風</div>
+          <div class="flex gap-1.5 mt-1">
+            <span class="bg-brand-100 text-brand-600 px-2 py-0.5 rounded text-[10px]">夏</span>
+            <span class="bg-brand-100 text-brand-600 px-2 py-0.5 rounded text-[10px]">優雅</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] text-brand-400">2026-02-11</div>
+          <span class="text-[10px] text-brand-500 font-medium">COMPLETED</span>
+        </div>
+      </div>
+      <div class="card p-4 hover:bg-brand-50 transition cursor-pointer flex items-center justify-between">
+        <div>
+          <div class="text-sm text-brand-400 italic">Untitled</div>
+          <div class="flex gap-1.5 mt-1">
+            <span class="bg-brand-100 text-brand-600 px-2 py-0.5 rounded text-[10px]">冬</span>
+            <span class="bg-brand-100 text-brand-600 px-2 py-0.5 rounded text-[10px]">高級</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] text-brand-400">2026-02-10</div>
+          <span class="text-[10px] text-brand-500 font-medium">COMPLETED</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== KEYWORD LIST ==================== -->
+<div id="page-keyword-list" class="page">
+  <div class="space-y-5">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold tracking-tight">Rule Management</h2>
+      <a onclick="showPage('stats')" class="text-xs text-brand-400 hover:text-brand-700 cursor-pointer flex items-center gap-1"><span class="material-icons-outlined icon-sm" style="color:#6366F1">bar_chart</span> Stats</a>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+      <button class="px-3 py-1.5 rounded text-xs btn-primary">All</button>
+      <button class="px-3 py-1.5 rounded text-xs btn-secondary">Undefined</button>
+      <button class="px-3 py-1.5 rounded text-xs btn-secondary">Defined</button>
+      <span class="text-xs text-brand-400 ml-2">15 items</span>
+      <button class="ml-auto btn-primary px-3 py-1.5 rounded text-xs flex items-center gap-1">
+        <span class="material-icons-outlined icon-sm" style="color:#F59E0B">auto_awesome</span> 一括AI生成 (3)
+      </button>
+    </div>
+    <div class="space-y-2">
+      <div onclick="showPage('rule-edit')" class="card p-4 hover:bg-brand-50 transition cursor-pointer flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="w-2 h-2 rounded-full bg-brand-900"></span>
+          <span class="text-sm font-medium">夏</span>
+          <span class="text-[10px] px-2 py-0.5 bg-brand-100 rounded text-brand-500 uppercase tracking-wider">Season</span>
+        </div>
+        <div class="flex items-center gap-4 text-xs text-brand-400">
+          <span>Uses: 15</span><span>Rules: 8</span>
+          <span class="material-icons-outlined icon-sm">chevron_right</span>
+        </div>
+      </div>
+      <div class="card p-4 hover:bg-brand-50 transition cursor-pointer flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="w-2 h-2 rounded-full bg-brand-900"></span>
+          <span class="text-sm font-medium">優雅</span>
+          <span class="text-[10px] px-2 py-0.5 bg-brand-100 rounded text-brand-500 uppercase tracking-wider">Mood</span>
+        </div>
+        <div class="flex items-center gap-4 text-xs text-brand-400">
+          <span>Uses: 12</span><span>Rules: 6</span>
+          <span class="material-icons-outlined icon-sm">chevron_right</span>
+        </div>
+      </div>
+      <div class="card p-4 hover:bg-brand-50 transition cursor-pointer flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="w-2 h-2 rounded-full bg-brand-300"></span>
+          <span class="text-sm font-medium">海辺</span>
+          <span class="text-[10px] px-2 py-0.5 bg-brand-100 rounded text-brand-500 uppercase tracking-wider">Free</span>
+        </div>
+        <div class="flex items-center gap-4 text-xs text-brand-400">
+          <span>Uses: 3</span><span>Rules: 0</span>
+          <span class="material-icons-outlined icon-sm">chevron_right</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== RULE EDIT ==================== -->
+<div id="page-rule-edit" class="page">
+  <div class="space-y-5">
+    <div class="flex items-center gap-3">
+      <a onclick="showPage('keyword-list')" class="text-brand-400 hover:text-brand-600 cursor-pointer"><span class="material-icons-outlined icon">arrow_back</span></a>
+      <h2 class="text-xl font-semibold tracking-tight">Rule: 「夏」</h2>
+    </div>
+    <div class="card p-5 space-y-5">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-brand-500 uppercase tracking-wider">Flavor Rules</span>
+        <button class="btn-primary px-3 py-1.5 rounded text-xs flex items-center gap-1"><span class="material-icons-outlined icon-sm" style="color:#F59E0B">auto_awesome</span> AI提案</button>
+      </div>
+
+      <!-- TOP ノート -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-medium tracking-wide flex items-center gap-1.5" style="color:#F59E0B">
+            <span class="w-2 h-2 rounded-full inline-block" style="background:#F59E0B"></span>
+            TOP ノート <span class="text-brand-300 font-normal">(2)</span>
+          </p>
+          <button class="px-2 py-0.5 text-xs border border-brand-200 rounded hover:border-brand-900 transition flex items-center gap-0.5">
+            <span class="material-icons-outlined icon-sm" style="color:#818CF8">add</span> 追加
+          </button>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3 p-3 bg-brand-50 border border-brand-100 rounded">
+            <select class="flex-1 border border-brand-200 rounded px-2 py-1.5 text-xs bg-white"><option selected>ライム</option></select>
+            <div class="flex items-center gap-1.5"><span class="text-[10px] text-brand-400">重み:</span><input type="number" value="0.80" step="0.05" class="w-16 border border-brand-200 rounded px-2 py-1.5 text-xs"></div>
+            <button class="text-brand-300 hover:text-red-500"><span class="material-icons-outlined icon-sm">delete</span></button>
+          </div>
+          <div class="flex items-center gap-3 p-3 bg-brand-50 border border-brand-100 rounded">
+            <select class="flex-1 border border-brand-200 rounded px-2 py-1.5 text-xs bg-white"><option selected>ベルガモット</option></select>
+            <div class="flex items-center gap-1.5"><span class="text-[10px] text-brand-400">重み:</span><input type="number" value="0.60" step="0.05" class="w-16 border border-brand-200 rounded px-2 py-1.5 text-xs"></div>
+            <button class="text-brand-300 hover:text-red-500"><span class="material-icons-outlined icon-sm">delete</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MIDDLE ノート -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-medium tracking-wide flex items-center gap-1.5" style="color:#EC4899">
+            <span class="w-2 h-2 rounded-full inline-block" style="background:#EC4899"></span>
+            MIDDLE ノート <span class="text-brand-300 font-normal">(1)</span>
+          </p>
+          <button class="px-2 py-0.5 text-xs border border-brand-200 rounded hover:border-brand-900 transition flex items-center gap-0.5">
+            <span class="material-icons-outlined icon-sm" style="color:#818CF8">add</span> 追加
+          </button>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3 p-3 bg-brand-50 border border-brand-100 rounded">
+            <select class="flex-1 border border-brand-200 rounded px-2 py-1.5 text-xs bg-white"><option selected>ジャスミン</option></select>
+            <div class="flex items-center gap-1.5"><span class="text-[10px] text-brand-400">重み:</span><input type="number" value="0.50" step="0.05" class="w-16 border border-brand-200 rounded px-2 py-1.5 text-xs"></div>
+            <button class="text-brand-300 hover:text-red-500"><span class="material-icons-outlined icon-sm">delete</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LAST ノート -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-medium tracking-wide flex items-center gap-1.5" style="color:#059669">
+            <span class="w-2 h-2 rounded-full inline-block" style="background:#059669"></span>
+            LAST ノート <span class="text-brand-300 font-normal">(1)</span>
+          </p>
+          <button class="px-2 py-0.5 text-xs border border-brand-200 rounded hover:border-brand-900 transition flex items-center gap-0.5">
+            <span class="material-icons-outlined icon-sm" style="color:#818CF8">add</span> 追加
+          </button>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3 p-3 bg-brand-50 border border-brand-100 rounded">
+            <select class="flex-1 border border-brand-200 rounded px-2 py-1.5 text-xs bg-white"><option selected>バニラ</option></select>
+            <div class="flex items-center gap-1.5"><span class="text-[10px] text-brand-400">重み:</span><input type="number" value="0.30" step="0.05" class="w-16 border border-brand-200 rounded px-2 py-1.5 text-xs"></div>
+            <button class="text-brand-300 hover:text-red-500"><span class="material-icons-outlined icon-sm">delete</span></button>
+          </div>
+        </div>
+      </div>
+
+      <button class="w-full btn-primary py-2.5 rounded text-sm"><span class="material-icons-outlined icon-sm mr-1">save</span> 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== STATS ==================== -->
+<div id="page-stats" class="page">
+  <div class="space-y-5">
+    <div class="flex items-center gap-3">
+      <a onclick="showPage('keyword-list')" class="text-brand-400 hover:text-brand-600 cursor-pointer"><span class="material-icons-outlined icon">arrow_back</span></a>
+      <h2 class="text-xl font-semibold tracking-tight">Statistics</h2>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="card p-4"><div class="text-2xl font-semibold">15</div><div class="text-[10px] text-brand-400 uppercase tracking-wider mt-1"><span class="material-icons-outlined" style="font-size:16px;color:#F59E0B">label</span> Keywords</div></div>
+      <div class="card p-4"><div class="text-2xl font-semibold">12</div><div class="text-[10px] text-brand-400 uppercase tracking-wider mt-1"><span class="material-icons-outlined" style="font-size:16px;color:#059669">check_circle</span> With Rules</div></div>
+      <div class="card p-4"><div class="text-2xl font-semibold">68</div><div class="text-[10px] text-brand-400 uppercase tracking-wider mt-1"><span class="material-icons-outlined" style="font-size:16px;color:#6366F1">tune</span> Total Rules</div></div>
+      <div class="card p-4"><div class="text-2xl font-semibold">80%</div><div class="text-[10px] text-brand-400 uppercase tracking-wider mt-1"><span class="material-icons-outlined" style="font-size:16px;color:#F43F5E">pie_chart</span> Coverage</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CREATOR LIST (P2) ==================== -->
+<div id="page-creator-list" class="page">
+  <div class="space-y-5">
+    <div>
+      <h2 class="text-xl font-semibold tracking-tight">Creators <span class="phase-badge phase2">P2</span></h2>
+      <p class="text-brand-400 text-sm mt-1">好みに合うクリエーターを選んで調合</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-4">
+      <div onclick="showPage('creator-detail')" class="card p-5 text-center hover:shadow-md transition cursor-pointer">
+        <div class="w-16 h-16 bg-brand-200 rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-semibold">TH</div>
+        <h3 class="font-semibold text-sm">田中花子</h3>
+        <p class="text-[10px] text-brand-400 mt-0.5 uppercase tracking-wider">Natural</p>
+        <p class="text-xs text-brand-500 mt-2 line-clamp-2">自然素材の調和を重視した優しい香り</p>
+        <div class="flex justify-center gap-3 mt-3 text-xs text-brand-400">
+          <span class="flex items-center gap-0.5"><span class="material-icons-outlined" style="font-size:14px;color:#F59E0B">star</span> 4.5</span>
+          <span class="flex items-center gap-0.5"><span class="material-icons-outlined" style="font-size:14px;color:#F43F5E">favorite</span> 128</span>
+        </div>
+        <button onclick="event.stopPropagation();showPage('blend-request')" class="mt-4 w-full btn-primary py-2 rounded text-xs">調合する</button>
+      </div>
+      <div class="card p-5 text-center hover:shadow-md transition cursor-pointer">
+        <div class="w-16 h-16 bg-brand-200 rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-semibold">YT</div>
+        <h3 class="font-semibold text-sm">山田太郎</h3>
+        <p class="text-[10px] text-brand-400 mt-0.5 uppercase tracking-wider">Modern</p>
+        <p class="text-xs text-brand-500 mt-2">都会的でスタイリッシュな香りの組み合わせ</p>
+        <div class="flex justify-center gap-3 mt-3 text-xs text-brand-400">
+          <span class="flex items-center gap-0.5"><span class="material-icons-outlined" style="font-size:14px;color:#F59E0B">star</span> 4.2</span>
+          <span class="flex items-center gap-0.5"><span class="material-icons-outlined" style="font-size:14px;color:#F43F5E">favorite</span> 95</span>
+        </div>
+        <button class="mt-4 w-full btn-primary py-2 rounded text-xs">調合する</button>
+      </div>
+      <div class="card p-5 text-center hover:shadow-md transition cursor-pointer">
+        <div class="w-16 h-16 bg-brand-200 rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-semibold">AI</div>
+        <h3 class="font-semibold text-sm">AI Master</h3>
+        <p class="text-[10px] text-brand-400 mt-0.5 uppercase tracking-wider">Experimental</p>
+        <p class="text-xs text-brand-500 mt-2">AIが最適化した大胆で革新的な配合</p>
+        <div class="flex justify-center gap-3 mt-3 text-xs text-brand-400">
+          <span class="flex items-center gap-0.5"><span class="material-icons-outlined" style="font-size:14px;color:#F59E0B">star</span> 3.8</span>
+          <span class="flex items-center gap-0.5"><span class="material-icons-outlined" style="font-size:14px;color:#F43F5E">favorite</span> 67</span>
+        </div>
+        <button class="mt-4 w-full btn-primary py-2 rounded text-xs">調合する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CREATOR DETAIL (P2) ==================== -->
+<div id="page-creator-detail" class="page">
+  <div class="space-y-5">
+    <a onclick="showPage('creator-list')" class="text-brand-400 hover:text-brand-600 cursor-pointer text-xs flex items-center gap-1"><span class="material-icons-outlined icon-sm">arrow_back</span> Creators</a>
+    <div class="card p-6">
+      <div class="flex items-start gap-5">
+        <div class="w-20 h-20 bg-brand-200 rounded-full flex items-center justify-center text-xl font-semibold flex-shrink-0">TH</div>
+        <div class="flex-1">
+          <h2 class="text-lg font-semibold">田中花子</h2>
+          <p class="text-sm text-brand-500 mt-1">ナチュラルで心地よい香りを大切にしています</p>
+          <div class="mt-3 bg-brand-50 border border-brand-100 rounded p-3">
+            <div class="text-[10px] font-semibold text-brand-500 uppercase tracking-wider mb-1">Style</div>
+            <p class="text-xs text-brand-600">自然素材の調和を重視し、季節の移ろいを香りで表現するスタイルです。</p>
+          </div>
+          <div class="flex gap-5 mt-3 text-xs text-brand-400">
+            <span>Coverage: <strong class="text-brand-900">92%</strong></span>
+            <span>Uses: <strong class="text-brand-900">256</strong></span>
+            <span class="flex items-center gap-0.5"><span class="material-icons-outlined" style="font-size:14px;color:#F59E0B">star</span> <strong class="text-brand-900">4.5</strong></span>
+          </div>
+          <div class="flex gap-2 mt-5">
+            <button class="btn-secondary px-4 py-2 rounded text-xs flex items-center gap-1"><span class="material-icons-outlined icon-sm" style="color:#F43F5E">favorite_border</span> お気に入り</button>
+            <button onclick="showPage('blend-request')" class="btn-primary px-4 py-2 rounded text-xs flex items-center gap-1"><span class="material-icons-outlined icon-sm" style="color:#F59E0B">science</span> このクリエーターで調合</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CREATOR SETTINGS (P2) ==================== -->
+<div id="page-creator-settings" class="page">
+  <div class="space-y-5">
+    <h2 class="text-xl font-semibold tracking-tight">Creator Settings <span class="phase-badge phase2">P2</span></h2>
+    <div class="card p-5 space-y-4">
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 bg-brand-200 rounded-full flex items-center justify-center text-lg font-semibold">TH</div>
+        <button class="btn-secondary px-3 py-1.5 rounded text-xs flex items-center gap-1"><span class="material-icons-outlined icon-sm">photo_camera</span> 変更</button>
+      </div>
+      <div><label class="block text-[10px] font-semibold text-brand-500 uppercase tracking-wider mb-1.5">Display Name</label><input type="text" value="田中花子" class="w-full border border-brand-200 rounded px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-brand-900"></div>
+      <div><label class="block text-[10px] font-semibold text-brand-500 uppercase tracking-wider mb-1.5">Bio</label><textarea rows="2" class="w-full border border-brand-200 rounded px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-brand-900">ナチュラルで心地よい香りを大切にしています</textarea></div>
+      <div><label class="block text-[10px] font-semibold text-brand-500 uppercase tracking-wider mb-1.5">Style Description</label><textarea rows="2" class="w-full border border-brand-200 rounded px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-brand-900">自然素材の調和を重視し、季節の移ろいを香りで表現するスタイルです。</textarea></div>
+      <div><label class="block text-[10px] font-semibold text-brand-500 uppercase tracking-wider mb-1.5">AI Style Prompt <span class="text-brand-300 normal-case">(internal)</span></label><textarea rows="2" class="w-full border border-brand-200 rounded px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-brand-900">ナチュラル志向。花系と柑橘系のハーモニーを大切に。</textarea></div>
+      <button class="w-full btn-primary py-2.5 rounded text-sm"><span class="material-icons-outlined icon-sm mr-1">save</span> 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CREATOR DASHBOARD (P2) ==================== -->
+<div id="page-creator-dashboard" class="page">
+  <div class="space-y-5">
+    <h2 class="text-xl font-semibold tracking-tight">Dashboard <span class="phase-badge phase2">P2</span></h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="card p-4"><div class="text-2xl font-semibold">256</div><div class="text-[10px] text-brand-400 uppercase tracking-wider mt-1">Total Uses</div></div>
+      <div class="card p-4"><div class="text-2xl font-semibold">128</div><div class="text-[10px] text-brand-400 uppercase tracking-wider mt-1">Favorites</div></div>
+      <div class="card p-4"><div class="text-2xl font-semibold">92%</div><div class="text-[10px] text-brand-400 uppercase tracking-wider mt-1">Coverage</div></div>
+      <div class="card p-4"><div class="text-2xl font-semibold">4.5</div><div class="text-[10px] text-brand-400 uppercase tracking-wider mt-1">Rating</div></div>
+    </div>
+    <div class="card p-5">
+      <h3 class="text-xs font-semibold text-brand-500 uppercase tracking-wider mb-4">Top Keywords</h3>
+      <div class="space-y-2.5">
+        <div class="flex items-center gap-3"><span class="text-xs text-brand-400 w-4">1</span><span class="text-xs font-medium w-16">夏</span><div class="flex-1 bg-brand-100 rounded h-1.5"><div class="bg-brand-900 h-1.5 rounded" style="width:85%"></div></div><span class="text-xs text-brand-400 w-8 text-right">42</span></div>
+        <div class="flex items-center gap-3"><span class="text-xs text-brand-400 w-4">2</span><span class="text-xs font-medium w-16">優雅</span><div class="flex-1 bg-brand-100 rounded h-1.5"><div class="bg-brand-700 h-1.5 rounded" style="width:65%"></div></div><span class="text-xs text-brand-400 w-8 text-right">32</span></div>
+        <div class="flex items-center gap-3"><span class="text-xs text-brand-400 w-4">3</span><span class="text-xs font-medium w-16">春</span><div class="flex-1 bg-brand-100 rounded h-1.5"><div class="bg-brand-500 h-1.5 rounded" style="width:55%"></div></div><span class="text-xs text-brand-400 w-8 text-right">27</span></div>
+        <div class="flex items-center gap-3"><span class="text-xs text-brand-400 w-4">4</span><span class="text-xs font-medium w-16">リラックス</span><div class="flex-1 bg-brand-100 rounded h-1.5"><div class="bg-brand-400 h-1.5 rounded" style="width:40%"></div></div><span class="text-xs text-brand-400 w-8 text-right">20</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ORDER CONFIRM (P3) ==================== -->
+<div id="page-order-confirm" class="page">
+  <div class="space-y-5">
+    <h2 class="text-xl font-semibold tracking-tight">Order <span class="phase-badge phase3">P3</span></h2>
+    <div class="card p-5">
+      <div class="text-[10px] font-semibold text-brand-500 uppercase tracking-wider mb-3">Product</div>
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 bg-brand-100 rounded flex items-center justify-center"><span class="material-icons-outlined text-brand-400" style="font-size:28px">spa</span></div>
+        <div><div class="font-semibold text-sm">夏の風</div><div class="text-xs text-brand-400">Creator: 田中花子</div></div>
+      </div>
+    </div>
+    <div class="card p-5">
+      <div class="text-[10px] font-semibold text-brand-500 uppercase tracking-wider mb-3">Size</div>
+      <div class="grid grid-cols-3 gap-2">
+        <div class="border border-brand-200 rounded p-3 text-center cursor-pointer hover:border-brand-400"><div class="font-semibold text-sm">30ml</div><div class="text-xs text-brand-400">&yen;5,800</div></div>
+        <div class="border-2 border-brand-900 rounded p-3 text-center cursor-pointer"><div class="font-semibold text-sm">50ml</div><div class="text-xs font-medium">&yen;8,800</div></div>
+        <div class="border border-brand-200 rounded p-3 text-center cursor-pointer hover:border-brand-400"><div class="font-semibold text-sm">100ml</div><div class="text-xs text-brand-400">&yen;14,800</div></div>
+      </div>
+    </div>
+    <div class="card p-5">
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-[10px] font-semibold text-brand-500 uppercase tracking-wider">Shipping</div>
+        <a onclick="showPage('addresses')" class="text-xs text-brand-400 hover:text-brand-700 cursor-pointer">管理</a>
+      </div>
+      <div class="bg-brand-50 border border-brand-100 rounded p-3">
+        <div class="text-sm font-medium">山田太郎</div>
+        <div class="text-xs text-brand-500">〒100-0001 東京都千代田区千代田1-1-1</div>
+      </div>
+    </div>
+    <div class="card p-5">
+      <div class="text-[10px] font-semibold text-brand-500 uppercase tracking-wider mb-3">Summary</div>
+      <div class="space-y-2 text-sm">
+        <div class="flex justify-between"><span class="text-brand-500">Product</span><span>&yen;8,800</span></div>
+        <div class="flex justify-between"><span class="text-brand-500">Shipping</span><span>&yen;550</span></div>
+        <div class="flex justify-between"><span class="text-brand-500">Tax</span><span>&yen;935</span></div>
+        <div class="flex justify-between border-t border-brand-200 pt-2 mt-2"><span class="font-semibold">Total</span><span class="font-semibold text-lg">&yen;10,285</span></div>
+      </div>
+    </div>
+    <button onclick="showPage('order-detail')" class="w-full btn-primary py-3 rounded text-sm flex items-center justify-center gap-1">
+      <span class="material-icons-outlined icon-sm">lock</span> 注文を確定する
+    </button>
+  </div>
+</div>
+
+<!-- ==================== ORDER HISTORY ==================== -->
+<div id="page-order-history" class="page">
+  <div class="space-y-5">
+    <h2 class="text-xl font-semibold tracking-tight">注文履歴</h2>
+    <div class="space-y-2">
+      <div onclick="showPage('order-detail')" class="card p-4 hover:bg-brand-50 transition cursor-pointer flex items-center justify-between">
+        <div>
+          <div class="text-[10px] text-brand-400 uppercase tracking-wider">ORD-2026-0001</div>
+          <div class="text-sm font-medium mt-0.5">夏の風 (50ml)</div>
+          <div class="text-xs text-brand-400">田中花子</div>
+        </div>
+        <div class="text-right">
+          <div class="text-sm font-semibold">&yen;10,285</div>
+          <span class="text-[10px] font-medium text-brand-500 uppercase tracking-wider">Manufacturing</span>
+        </div>
+      </div>
+      <div class="card p-4 hover:bg-brand-50 transition cursor-pointer flex items-center justify-between">
+        <div>
+          <div class="text-[10px] text-brand-400 uppercase tracking-wider">ORD-2026-0002</div>
+          <div class="text-sm font-medium mt-0.5">春の微笑み (30ml)</div>
+          <div class="text-xs text-brand-400">山田太郎</div>
+        </div>
+        <div class="text-right">
+          <div class="text-sm font-semibold">&yen;6,930</div>
+          <span class="text-[10px] font-medium text-brand-500 uppercase tracking-wider">Delivered</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ORDER DETAIL ==================== -->
+<div id="page-order-detail" class="page">
+  <div class="space-y-5">
+    <a onclick="showPage('order-history')" class="text-brand-400 hover:text-brand-600 cursor-pointer text-xs flex items-center gap-1"><span class="material-icons-outlined icon-sm">arrow_back</span> Orders</a>
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold tracking-tight">ORD-2026-0001</h2>
+      <span class="text-[10px] font-semibold uppercase tracking-wider bg-brand-100 text-brand-600 px-2.5 py-1 rounded">Manufacturing</span>
+    </div>
+    <div class="card p-5">
+      <div class="flex items-center justify-between">
+        <div class="text-center flex-1"><div class="w-6 h-6 bg-brand-900 rounded-full mx-auto mb-1 flex items-center justify-center"><span class="material-icons-outlined text-white" style="font-size:14px">check</span></div><div class="text-[10px] text-brand-500">Ordered</div></div>
+        <div class="flex-1 h-px bg-brand-900"></div>
+        <div class="text-center flex-1"><div class="w-6 h-6 bg-brand-900 rounded-full mx-auto mb-1 flex items-center justify-center"><span class="material-icons-outlined text-white" style="font-size:14px">precision_manufacturing</span></div><div class="text-[10px] font-semibold">Manufacturing</div></div>
+        <div class="flex-1 h-px bg-brand-200"></div>
+        <div class="text-center flex-1"><div class="w-6 h-6 bg-brand-200 rounded-full mx-auto mb-1"></div><div class="text-[10px] text-brand-400">Shipped</div></div>
+        <div class="flex-1 h-px bg-brand-200"></div>
+        <div class="text-center flex-1"><div class="w-6 h-6 bg-brand-200 rounded-full mx-auto mb-1"></div><div class="text-[10px] text-brand-400">Delivered</div></div>
+      </div>
+    </div>
+    <div class="card p-5 space-y-2 text-sm">
+      <div class="flex justify-between"><span class="text-brand-500">Product</span><span>夏の風 (50ml)</span></div>
+      <div class="flex justify-between"><span class="text-brand-500">Creator</span><span>田中花子</span></div>
+      <div class="flex justify-between"><span class="text-brand-500">Ordered</span><span>2026-02-11</span></div>
+      <div class="flex justify-between border-t border-brand-100 pt-2 mt-2"><span class="font-semibold">Total</span><span class="font-semibold">&yen;10,285</span></div>
+    </div>
+    <button class="text-xs text-brand-400 hover:text-brand-700 flex items-center gap-1"><span class="material-icons-outlined icon-sm">cancel</span> キャンセル</button>
+  </div>
+</div>
+
+<!-- ==================== ADDRESSES ==================== -->
+<div id="page-addresses" class="page">
+  <div class="space-y-5">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold tracking-tight">配送先管理</h2>
+      <button class="btn-primary px-3 py-1.5 rounded text-xs flex items-center gap-1"><span class="material-icons-outlined icon-sm">add</span> 追加</button>
+    </div>
+    <div class="space-y-2">
+      <div class="card p-4 flex items-start justify-between">
+        <div>
+          <div class="flex items-center gap-2"><span class="text-sm font-medium">山田太郎</span><span class="text-[10px] bg-brand-900 text-white px-1.5 py-0.5 rounded font-medium">Default</span></div>
+          <div class="text-xs text-brand-500 mt-1">〒100-0001 東京都千代田区千代田1-1-1</div>
+          <div class="text-xs text-brand-400">090-1234-5678</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="text-brand-400 hover:text-brand-700"><span class="material-icons-outlined icon-sm">edit</span></button>
+          <button class="text-brand-300 hover:text-red-500"><span class="material-icons-outlined icon-sm">delete</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SHOP ==================== -->
+<div id="page-shop" class="page">
+  <div class="space-y-5">
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-semibold tracking-tight">ショップ</h2>
+      <a onclick="showPage('cart')" class="flex items-center gap-1 text-xs text-brand-400 hover:text-brand-900 cursor-pointer"><span class="material-icons-outlined icon-sm">shopping_cart</span> カート</a>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div class="card overflow-hidden">
+        <div class="h-32 bg-brand-100 flex items-center justify-center"><span class="material-icons-outlined text-brand-300" style="font-size:40px">image</span></div>
+        <div class="p-4 space-y-2">
+          <h3 class="text-sm font-medium">夏の風オードトワレ 50ml</h3>
+          <p class="text-lg font-bold">&yen;8,500</p>
+          <p class="text-[11px] text-brand-400 line-clamp-2">爽やかなシトラスとフローラルの調和</p>
+          <button class="w-full btn-primary py-2 rounded text-xs flex items-center justify-center gap-1"><span class="material-icons-outlined icon-sm">add_shopping_cart</span> カートに追加</button>
+        </div>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="h-32 bg-brand-100 flex items-center justify-center"><span class="material-icons-outlined text-brand-300" style="font-size:40px">image</span></div>
+        <div class="p-4 space-y-2">
+          <h3 class="text-sm font-medium">冬の静寂パルファム 30ml</h3>
+          <p class="text-lg font-bold">&yen;6,200</p>
+          <p class="text-[11px] text-brand-400 line-clamp-2">温もりのあるウッディノート</p>
+          <button class="w-full btn-primary py-2 rounded text-xs flex items-center justify-center gap-1"><span class="material-icons-outlined icon-sm">add_shopping_cart</span> カートに追加</button>
+        </div>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="h-32 bg-brand-100 flex items-center justify-center"><span class="material-icons-outlined text-brand-300" style="font-size:40px">image</span></div>
+        <div class="p-4 space-y-2">
+          <h3 class="text-sm font-medium">桜の記憶 100ml</h3>
+          <p class="text-lg font-bold">&yen;12,000</p>
+          <p class="text-[11px] text-brand-400 line-clamp-2">春の息吹を感じるフローラルブレンド</p>
+          <button class="w-full btn-primary py-2 rounded text-xs flex items-center justify-center gap-1"><span class="material-icons-outlined icon-sm">add_shopping_cart</span> カートに追加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CART ==================== -->
+<div id="page-cart" class="page">
+  <div class="space-y-5">
+    <h2 class="text-xl font-semibold tracking-tight">カート</h2>
+    <div class="space-y-3">
+      <div class="card p-4 flex items-center gap-4">
+        <div class="w-16 h-16 bg-brand-100 rounded flex items-center justify-center flex-shrink-0"><span class="material-icons-outlined text-brand-300">image</span></div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium">夏の風オードトワレ 50ml</p>
+          <p class="text-xs text-brand-400">&yen;8,500</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="w-7 h-7 border border-brand-200 rounded flex items-center justify-center text-xs hover:border-brand-900">−</button>
+          <span class="text-sm font-medium w-6 text-center">2</span>
+          <button class="w-7 h-7 border border-brand-200 rounded flex items-center justify-center text-xs hover:border-brand-900">+</button>
+        </div>
+        <p class="text-sm font-bold w-20 text-right">&yen;17,000</p>
+        <button class="text-brand-300 hover:text-red-500"><span class="material-icons-outlined icon-sm">close</span></button>
+      </div>
+      <div class="card p-4 flex items-center gap-4">
+        <div class="w-16 h-16 bg-brand-100 rounded flex items-center justify-center flex-shrink-0"><span class="material-icons-outlined text-brand-300">image</span></div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium">冬の静寂パルファム 30ml</p>
+          <p class="text-xs text-brand-400">&yen;6,200</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="w-7 h-7 border border-brand-200 rounded flex items-center justify-center text-xs hover:border-brand-900">−</button>
+          <span class="text-sm font-medium w-6 text-center">1</span>
+          <button class="w-7 h-7 border border-brand-200 rounded flex items-center justify-center text-xs hover:border-brand-900">+</button>
+        </div>
+        <p class="text-sm font-bold w-20 text-right">&yen;6,200</p>
+        <button class="text-brand-300 hover:text-red-500"><span class="material-icons-outlined icon-sm">close</span></button>
+      </div>
+    </div>
+    <div class="card p-5 flex items-center justify-between">
+      <span class="text-sm text-brand-500">合計</span>
+      <span class="text-xl font-bold">&yen;23,200</span>
+    </div>
+    <button onclick="showPage('checkout')" class="w-full btn-primary py-3 rounded text-sm flex items-center justify-center gap-2"><span class="material-icons-outlined icon-sm">lock</span> レジに進む</button>
+  </div>
+</div>
+
+<!-- ==================== CHECKOUT ==================== -->
+<div id="page-checkout" class="page">
+  <div class="space-y-5">
+    <h2 class="text-xl font-semibold tracking-tight">チェックアウト</h2>
+    <div class="card p-5 space-y-3">
+      <h3 class="text-xs font-semibold text-brand-500 uppercase tracking-wider">注文内容</h3>
+      <div class="flex items-center justify-between text-sm border-b border-brand-100 pb-2"><span>夏の風オードトワレ 50ml × 2</span><span class="font-medium">&yen;17,000</span></div>
+      <div class="flex items-center justify-between text-sm border-b border-brand-100 pb-2"><span>冬の静寂パルファム 30ml × 1</span><span class="font-medium">&yen;6,200</span></div>
+      <div class="flex items-center justify-between text-sm font-bold pt-1"><span>合計</span><span>&yen;23,200</span></div>
+    </div>
+    <div class="card p-5 space-y-3">
+      <h3 class="text-xs font-semibold text-brand-500 uppercase tracking-wider">配送先</h3>
+      <label class="flex items-start gap-3 p-3 border border-brand-900 rounded cursor-pointer">
+        <input type="radio" name="addr" checked class="mt-1">
+        <div>
+          <p class="text-sm font-medium">自宅 <span class="text-[10px] bg-brand-900 text-white px-1.5 py-0.5 ml-1">デフォルト</span></p>
+          <p class="text-xs text-brand-400 mt-1">山田太郎 · 〒100-0001 東京都千代田区1-1-1</p>
+        </div>
+      </label>
+      <label class="flex items-start gap-3 p-3 border border-brand-200 rounded cursor-pointer hover:border-brand-400">
+        <input type="radio" name="addr" class="mt-1">
+        <div>
+          <p class="text-sm font-medium">会社</p>
+          <p class="text-xs text-brand-400 mt-1">山田太郎 · 〒150-0002 東京都渋谷区2-2-2</p>
+        </div>
+      </label>
+    </div>
+    <button class="w-full btn-primary py-3 rounded text-sm flex items-center justify-center gap-2"><span class="material-icons-outlined icon-sm">lock</span> 注文を確定する</button>
+  </div>
+</div>
+
+<!-- ==================== ADMIN: DASHBOARD ==================== -->
+<div id="page-admin-dashboard" class="page">
+  <div class="space-y-5">
+    <h2 class="text-xl font-semibold tracking-tight">ダッシュボード</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="card p-4">
+        <div class="flex items-center gap-2 mb-2"><span class="w-2 h-2 rounded-full bg-indigo-500"></span><span class="text-[10px] text-brand-400 uppercase tracking-wider">ユーザー数</span></div>
+        <div class="text-xl font-bold">256</div>
+      </div>
+      <div class="card p-4">
+        <div class="flex items-center gap-2 mb-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span><span class="text-[10px] text-brand-400 uppercase tracking-wider">注文数</span></div>
+        <div class="text-xl font-bold">142</div>
+      </div>
+      <div class="card p-4">
+        <div class="flex items-center gap-2 mb-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-[10px] text-brand-400 uppercase tracking-wider">売上合計</span></div>
+        <div class="text-xl font-bold">&yen;1,250,000</div>
+      </div>
+      <div class="card p-4">
+        <div class="flex items-center gap-2 mb-2"><span class="w-2 h-2 rounded-full bg-pink-500"></span><span class="text-[10px] text-brand-400 uppercase tracking-wider">調合数</span></div>
+        <div class="text-xl font-bold">389</div>
+      </div>
+    </div>
+    <div class="card p-5">
+      <h3 class="text-xs font-semibold text-brand-500 uppercase tracking-wider mb-4">ロール分布</h3>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3"><span class="text-xs w-20 text-brand-500">CUSTOMER</span><div class="flex-1 bg-brand-100 rounded h-3"><div class="bg-brand-300 h-3 rounded" style="width:78%"></div></div><span class="text-xs text-brand-400 w-10 text-right">200</span></div>
+        <div class="flex items-center gap-3"><span class="text-xs w-20 text-indigo-500">CREATOR</span><div class="flex-1 bg-brand-100 rounded h-3"><div class="bg-indigo-500 h-3 rounded" style="width:20%"></div></div><span class="text-xs text-brand-400 w-10 text-right">50</span></div>
+        <div class="flex items-center gap-3"><span class="text-xs w-20 text-amber-500">ADMIN</span><div class="flex-1 bg-brand-100 rounded h-3"><div class="bg-amber-500 h-3 rounded" style="width:2%"></div></div><span class="text-xs text-brand-400 w-10 text-right">6</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADMIN: USERS ==================== -->
+<div id="page-admin-users" class="page">
+  <div class="space-y-5">
+    <h2 class="text-xl font-semibold tracking-tight">ユーザー管理</h2>
+    <div class="flex items-center gap-3">
+      <input type="text" placeholder="名前・メールで検索..." class="flex-1 border border-brand-200 rounded px-3 py-2 text-sm focus:ring-1 focus:ring-brand-900 focus:border-brand-900 outline-none">
+      <div class="flex gap-1">
+        <button class="px-3 py-1.5 rounded text-xs btn-primary">全て</button>
+        <button class="px-3 py-1.5 rounded text-xs btn-secondary">CUSTOMER</button>
+        <button class="px-3 py-1.5 rounded text-xs btn-secondary">CREATOR</button>
+        <button class="px-3 py-1.5 rounded text-xs btn-secondary">ADMIN</button>
+      </div>
+    </div>
+    <div class="card overflow-hidden">
+      <table class="w-full text-xs">
+        <thead class="bg-brand-50 border-b border-brand-200"><tr><th class="px-4 py-3 text-left text-brand-500">名前</th><th class="px-4 py-3 text-left text-brand-500">メール</th><th class="px-4 py-3 text-left text-brand-500">ロール</th><th class="px-4 py-3 text-left text-brand-500">登録日</th><th class="px-4 py-3 text-left text-brand-500">アクション</th></tr></thead>
+        <tbody>
+          <tr class="border-b border-brand-100"><td class="px-4 py-3 font-medium">山田太郎</td><td class="px-4 py-3 text-brand-400">yamada@ex.com</td><td class="px-4 py-3"><span class="text-[10px] font-medium px-2 py-0.5 bg-brand-100 text-brand-600">CUSTOMER</span></td><td class="px-4 py-3">2026-01-15</td><td class="px-4 py-3"><select class="text-[10px] border border-brand-200 rounded px-1.5 py-1"><option selected>CUSTOMER</option><option>CREATOR</option><option>ADMIN</option></select></td></tr>
+          <tr class="border-b border-brand-100"><td class="px-4 py-3 font-medium">田中花子</td><td class="px-4 py-3 text-brand-400">tanaka@ex.com</td><td class="px-4 py-3"><span class="text-[10px] font-medium px-2 py-0.5 bg-indigo-50 text-indigo-700">CREATOR</span></td><td class="px-4 py-3">2026-01-10</td><td class="px-4 py-3"><select class="text-[10px] border border-brand-200 rounded px-1.5 py-1"><option>CUSTOMER</option><option selected>CREATOR</option><option>ADMIN</option></select></td></tr>
+          <tr><td class="px-4 py-3 font-medium">管理者</td><td class="px-4 py-3 text-brand-400">admin@ex.com</td><td class="px-4 py-3"><span class="text-[10px] font-medium px-2 py-0.5 bg-amber-50 text-amber-700">ADMIN</span></td><td class="px-4 py-3">2026-01-01</td><td class="px-4 py-3"><select class="text-[10px] border border-brand-200 rounded px-1.5 py-1"><option>CUSTOMER</option><option>CREATOR</option><option selected>ADMIN</option></select></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ADMIN: ORDERS ==================== -->
+<div id="page-admin-orders" class="page">
+  <div class="space-y-5">
+    <h2 class="text-xl font-semibold tracking-tight">注文管理</h2>
+    <div class="flex gap-1 flex-wrap">
+      <button class="px-3 py-1.5 rounded text-xs btn-primary">全て</button>
+      <button class="px-3 py-1.5 rounded text-xs btn-secondary">未決済</button>
+      <button class="px-3 py-1.5 rounded text-xs btn-secondary">決済完了</button>
+      <button class="px-3 py-1.5 rounded text-xs btn-secondary">発送済</button>
+      <button class="px-3 py-1.5 rounded text-xs btn-secondary">配達完了</button>
+      <button class="px-3 py-1.5 rounded text-xs btn-secondary">キャンセル</button>
+    </div>
+    <div class="card overflow-hidden">
+      <table class="w-full text-xs">
+        <thead class="bg-brand-50 border-b border-brand-200"><tr><th class="px-4 py-3 text-left text-brand-500">注文ID</th><th class="px-4 py-3 text-left text-brand-500">顧客名</th><th class="px-4 py-3 text-left text-brand-500">商品数</th><th class="px-4 py-3 text-left text-brand-500">合計</th><th class="px-4 py-3 text-left text-brand-500">ステータス</th><th class="px-4 py-3 text-left text-brand-500">日付</th><th class="px-4 py-3 text-left text-brand-500">アクション</th></tr></thead>
+        <tbody>
+          <tr class="border-b border-brand-100"><td class="px-4 py-3 font-mono">a1b2c3d4</td><td class="px-4 py-3">山田太郎</td><td class="px-4 py-3">3点</td><td class="px-4 py-3 font-medium">&yen;23,200</td><td class="px-4 py-3"><span class="text-[10px] font-medium px-2 py-0.5 bg-amber-50 text-amber-700">決済完了</span></td><td class="px-4 py-3">2026-02-10</td><td class="px-4 py-3"><select class="text-[10px] border border-brand-200 rounded px-1.5 py-1"><option>PENDING</option><option selected>PAID</option><option>SHIPPED</option><option>DELIVERED</option><option>CANCELLED</option></select></td></tr>
+          <tr class="border-b border-brand-100"><td class="px-4 py-3 font-mono">e5f6g7h8</td><td class="px-4 py-3">佐藤花子</td><td class="px-4 py-3">1点</td><td class="px-4 py-3 font-medium">&yen;6,200</td><td class="px-4 py-3"><span class="text-[10px] font-medium px-2 py-0.5 bg-blue-50 text-blue-700">発送済</span></td><td class="px-4 py-3">2026-02-08</td><td class="px-4 py-3"><select class="text-[10px] border border-brand-200 rounded px-1.5 py-1"><option>PENDING</option><option>PAID</option><option selected>SHIPPED</option><option>DELIVERED</option><option>CANCELLED</option></select></td></tr>
+          <tr><td class="px-4 py-3 font-mono">i9j0k1l2</td><td class="px-4 py-3">鈴木一郎</td><td class="px-4 py-3">2点</td><td class="px-4 py-3 font-medium">&yen;14,700</td><td class="px-4 py-3"><span class="text-[10px] font-medium px-2 py-0.5 bg-emerald-50 text-emerald-700">配達完了</span></td><td class="px-4 py-3">2026-02-05</td><td class="px-4 py-3"><select class="text-[10px] border border-brand-200 rounded px-1.5 py-1"><option>PENDING</option><option>PAID</option><option>SHIPPED</option><option selected>DELIVERED</option><option>CANCELLED</option></select></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<div id="overlay" class="fixed inset-0 bg-black/40 z-30 hidden" onclick="toggleSidebar()"></div>
+
+<script>
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + id + "'")) n.classList.add('active');
+  });
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar.classList.contains('translate-x-0')) toggleSidebar();
+  if (id === 'blend-result') setTimeout(initChart, 100);
+  window.scrollTo(0, 0);
+}
+function toggleSidebar() {
+  const s = document.getElementById('sidebar'), o = document.getElementById('overlay');
+  s.classList.toggle('-translate-x-full'); s.classList.toggle('translate-x-0'); o.classList.toggle('hidden');
+}
+function switchRole(role) {
+  document.getElementById('nav-creator-basic').style.display = role === 'customer' ? 'none' : 'block';
+  document.getElementById('nav-admin').style.display = role === 'admin' ? 'block' : 'none';
+}
+function initChart() {
+  const c = document.getElementById('blendChart');
+  if (!c) return;
+  if (c._ci) c._ci.destroy();
+  c._ci = new Chart(c, {
+    type: 'doughnut',
+    data: {
+      labels: ['ライム','グレープフルーツ','ジャスミン','スイートローズ','サンダルウッド'],
+      datasets: [{ data: [21,14,30.25,24.75,10], backgroundColor: ['#F59E0B','#FBBF24','#EC4899','#A855F7','#059669'], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: { responsive: true, cutout: '55%', plugins: { legend: { position: 'bottom', labels: { font: { size: 10, family: 'Inter' }, padding: 10, usePointStyle: true, pointStyle: 'circle' } } } }
+  });
+}
+switchRole('customer');
+</script>
+</body>
+</html>

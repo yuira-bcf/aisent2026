@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>調香師データ入力UI — モックアップ（レイヤーアーキテクチャ版）</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafafa; }
+  .tab-active { background: #000; color: #fff; }
+  .tab-inactive { background: #fff; color: #6b7280; border: 1px solid #e5e7eb; }
+  input[type="range"] { -webkit-appearance: none; height: 6px; border-radius: 3px; background: #e5e7eb; outline: none; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #000; cursor: pointer; }
+  .layer-badge { font-size: 9px; padding: 1px 6px; border-radius: 2px; font-weight: 600; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+
+<!-- Navigation tabs -->
+<div class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-4xl mx-auto px-4">
+    <div class="flex items-center justify-between py-3">
+      <h1 class="text-sm font-bold tracking-tight text-black">AISCENT Creator</h1>
+      <span class="text-xs text-gray-400">CREATOR: 調香師A</span>
+    </div>
+    <div class="flex gap-1 pb-2 overflow-x-auto text-xs">
+      <button onclick="showTab('dashboard')" id="btn-dashboard" class="tab-active px-3 py-1.5 rounded-sm whitespace-nowrap transition">Dashboard</button>
+      <button onclick="showTab('ingredients')" id="btn-ingredients" class="tab-inactive px-3 py-1.5 rounded-sm whitespace-nowrap transition">Tab1 香料</button>
+      <button onclick="showTab('prohibited')" id="btn-prohibited" class="tab-inactive px-3 py-1.5 rounded-sm whitespace-nowrap transition">Tab2 禁止ペア</button>
+      <button onclick="showTab('swipe')" id="btn-swipe" class="tab-inactive px-3 py-1.5 rounded-sm whitespace-nowrap transition">Tab3 相性</button>
+      <button onclick="showTab('recipe')" id="btn-recipe" class="tab-inactive px-3 py-1.5 rounded-sm whitespace-nowrap transition">Tab4 レシピ</button>
+      <button onclick="showTab('review')" id="btn-review" class="tab-inactive px-3 py-1.5 rounded-sm whitespace-nowrap transition">Tab5 評価</button>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 py-6">
+
+<!-- ===== DASHBOARD ===== -->
+<div id="tab-dashboard">
+  <h2 class="text-lg font-bold text-black mb-4">データ入力ダッシュボード</h2>
+
+  <!-- レイヤー構成概要 -->
+  <div class="border border-gray-200 bg-white p-5 mb-4">
+    <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">5層レイヤー構成</h3>
+    <div class="space-y-1.5 text-xs">
+      <div class="flex items-center gap-2 p-2 bg-violet-50 border border-violet-200 rounded-sm">
+        <span class="layer-badge bg-violet-600 text-white">L1</span>
+        <span class="font-medium text-violet-900 w-16">物理層</span>
+        <span class="text-violet-600 flex-1">香料の物理特性 → Tab1で入力</span>
+        <span class="text-violet-400">配合計算に直結</span>
+      </div>
+      <div class="flex items-center gap-2 p-2 bg-blue-50 border border-blue-200 rounded-sm">
+        <span class="layer-badge bg-blue-600 text-white">L2</span>
+        <span class="font-medium text-blue-900 w-16">環境層</span>
+        <span class="text-blue-600 flex-1">シーン（主軸）+ 季節（タグ）</span>
+        <span class="text-blue-400">レシピ絞り込み</span>
+      </div>
+      <div class="flex items-center gap-2 p-2 bg-emerald-50 border border-emerald-200 rounded-sm">
+        <span class="layer-badge bg-emerald-600 text-white">L3</span>
+        <span class="font-medium text-emerald-900 w-16">印象層</span>
+        <span class="text-emerald-600 flex-1">ムード（主軸）</span>
+        <span class="text-emerald-400">組み合わせ方針</span>
+      </div>
+      <div class="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-sm">
+        <span class="layer-badge bg-amber-600 text-white">L4</span>
+        <span class="font-medium text-amber-900 w-16">世界観層</span>
+        <span class="text-amber-600 flex-1">色彩・自然イメージ等</span>
+        <span class="text-amber-400">AI推論 / 任意選択</span>
+      </div>
+      <div class="flex items-center gap-2 p-2 bg-pink-50 border border-pink-200 rounded-sm">
+        <span class="layer-badge bg-pink-600 text-white">L5</span>
+        <span class="font-medium text-pink-900 w-16">関係層</span>
+        <span class="text-pink-600 flex-1">ジェンダー・ペルソナ等</span>
+        <span class="text-pink-400">EC連携 / 任意</span>
+      </div>
+    </div>
+    <p class="text-[10px] text-gray-400 mt-3">主軸テーマ = <strong>L2 シーン × L3 ムード</strong>。季節はレシピへのタグ付与（副軸）。</p>
+  </div>
+
+  <!-- 必要データ数サマリー -->
+  <div class="border border-gray-200 bg-white p-5 mb-4">
+    <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">必要データ数サマリー</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="border-b border-gray-200">
+            <th class="text-left py-2 font-medium text-gray-500">カテゴリ</th>
+            <th class="text-left py-2 font-medium text-gray-500 pl-2">層</th>
+            <th class="text-right py-2 font-medium text-gray-500">必要数</th>
+            <th class="text-right py-2 font-medium text-gray-500">入力済</th>
+            <th class="text-right py-2 font-medium text-gray-500">残り</th>
+            <th class="text-left py-2 font-medium text-gray-500 pl-3">算出根拠</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm">
+          <tr class="border-b border-gray-50">
+            <td class="py-2">1. 香料マスタ</td>
+            <td class="py-2 pl-2"><span class="layer-badge bg-violet-100 text-violet-600">L1</span></td>
+            <td class="text-right py-2 font-medium">50</td>
+            <td class="text-right py-2 text-emerald-600 font-medium">50</td>
+            <td class="text-right py-2 text-emerald-600 font-medium">0</td>
+            <td class="py-2 pl-3 text-gray-400">全品目数（物理特性含む）</td>
+          </tr>
+          <tr class="border-b border-gray-50">
+            <td class="py-2">2. 禁止ペア</td>
+            <td class="py-2 pl-2"><span class="layer-badge bg-violet-100 text-violet-600">L1</span></td>
+            <td class="text-right py-2 font-medium">~40</td>
+            <td class="text-right py-2 font-medium">32</td>
+            <td class="text-right py-2 text-amber-600 font-medium">~8</td>
+            <td class="py-2 pl-3 text-gray-400">専門家判断（全ペアの約3%）</td>
+          </tr>
+          <tr id="summary-row-theme" class="border-b border-gray-50">
+            <!-- JS動的 -->
+          </tr>
+          <tr id="summary-row-recipe" class="border-b border-gray-50">
+            <!-- JS動的 -->
+          </tr>
+          <tr class="border-b border-gray-50">
+            <td class="py-2">5. 相性スコア</td>
+            <td class="py-2 pl-2"><span class="layer-badge bg-violet-100 text-violet-600">L1</span></td>
+            <td class="text-right py-2 font-medium">1,225</td>
+            <td class="text-right py-2 font-medium">412</td>
+            <td class="text-right py-2 text-red-500 font-medium">813</td>
+            <td class="py-2 pl-3 text-gray-400">₅₀C₂ = 1,225ペア</td>
+          </tr>
+          <tr>
+            <td class="py-2">6. レシピ評価</td>
+            <td class="py-2 pl-2"><span class="layer-badge bg-emerald-100 text-emerald-600">L3</span></td>
+            <td class="text-right py-2 font-medium">~500</td>
+            <td class="text-right py-2 font-medium">477</td>
+            <td class="text-right py-2 text-amber-600 font-medium">~23</td>
+            <td class="py-2 pl-3 text-gray-400">AI合成レシピ（手動×2倍）</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 画面説明 -->
+  <div class="bg-blue-50 border border-blue-200 p-5 mb-4 rounded-sm">
+    <h3 class="text-sm font-bold text-blue-800 mb-2">この画面について</h3>
+    <p class="text-xs text-blue-700 leading-relaxed mb-3">
+      調香師がAIモデルの学習に必要なデータの入力進捗を一覧で確認する画面です。<br>
+      5層レイヤーに基づき、各カテゴリの進捗とテーマカバレッジを可視化します。
+    </p>
+    <h4 class="text-xs font-bold text-blue-800 mb-1">操作ガイド</h4>
+    <ul class="text-xs text-blue-700 leading-relaxed list-disc pl-4 space-y-1">
+      <li><strong>テーマ軸管理</strong> — シーン（L2）とムード（L3）の項目を追加・削除できます。変更するとテーマ数・必要レシピ数が自動再計算されます。</li>
+      <li><strong>レシピカバレッジ</strong> — 赤は0件のテーマ（最優先）、黄は不足テーマ。「Tab4 レシピ」で不足テーマのレシピを追加します。</li>
+    </ul>
+  </div>
+
+  <!-- テーマ軸管理: シーン(L2) -->
+  <div class="border border-gray-200 bg-white p-5 mb-4">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-blue-600 text-white">L2</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">シーン（環境層）管理</h3>
+    </div>
+    <div class="bg-blue-50 border border-blue-200 p-3 mb-4 rounded-sm">
+      <p class="text-[11px] text-blue-700 leading-relaxed">
+        レシピの主軸テーマ（横軸）です。ユーザーが「どんな場面で使うか」を選択する項目になります。追加・削除するとテーマ数が変動します。
+      </p>
+    </div>
+    <div id="scene-manager" class="space-y-1.5 mb-4"></div>
+    <div class="flex gap-2">
+      <input id="new-scene-input" type="text" placeholder="新しいシーンを入力..." class="flex-1 border border-gray-200 px-3 py-2 text-sm focus:border-black focus:outline-none" onkeydown="if(event.key==='Enter'){addScene();}">
+      <button onclick="addScene()" class="px-4 py-2 text-xs bg-black text-white font-medium hover:bg-gray-800 transition shrink-0">+ 追加</button>
+    </div>
+  </div>
+
+  <!-- テーマ軸管理: ムード(L3) -->
+  <div class="border border-gray-200 bg-white p-5 mb-4">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-emerald-600 text-white">L3</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">ムード（印象層）管理</h3>
+    </div>
+    <div class="bg-emerald-50 border border-emerald-200 p-3 mb-4 rounded-sm">
+      <p class="text-[11px] text-emerald-700 leading-relaxed">
+        レシピの主軸テーマ（縦軸）です。ユーザーが「どんな印象の香りがほしいか」を選択する項目になります。追加・削除するとテーマ数が変動します。
+      </p>
+    </div>
+    <div id="mood-manager" class="space-y-1.5 mb-4"></div>
+    <div class="flex gap-2">
+      <input id="new-mood-input" type="text" placeholder="新しいムードを入力..." class="flex-1 border border-gray-200 px-3 py-2 text-sm focus:border-black focus:outline-none" onkeydown="if(event.key==='Enter'){addMood();}">
+      <button onclick="addMood()" class="px-4 py-2 text-xs bg-black text-white font-medium hover:bg-gray-800 transition shrink-0">+ 追加</button>
+    </div>
+  </div>
+
+  <!-- 全体進捗 -->
+  <div class="border border-gray-200 bg-white p-6 mb-4">
+    <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-4">全体進捗</h3>
+    <div class="space-y-3">
+      <div>
+        <div class="flex justify-between text-sm mb-1"><span><span class="layer-badge bg-violet-100 text-violet-600 mr-1">L1</span> 香料マスタ</span><span class="text-gray-400">50 / 50</span></div>
+        <div class="h-2 bg-gray-100 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width:100%"></div></div>
+      </div>
+      <div>
+        <div class="flex justify-between text-sm mb-1"><span><span class="layer-badge bg-violet-100 text-violet-600 mr-1">L1</span> 禁止ペア</span><span class="text-gray-400">32 / 40</span></div>
+        <div class="h-2 bg-gray-100 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width:80%"></div></div>
+      </div>
+      <div id="prog-theme"><!-- JS動的 --></div>
+      <div id="prog-recipe"><!-- JS動的 --></div>
+      <div>
+        <div class="flex justify-between text-sm mb-1"><span><span class="layer-badge bg-violet-100 text-violet-600 mr-1">L1</span> 相性スコア</span><span class="text-gray-400">412 / 1,225</span></div>
+        <div class="h-2 bg-gray-100 rounded-full"><div class="h-full bg-blue-500 rounded-full" style="width:34%"></div></div>
+      </div>
+      <div>
+        <div class="flex justify-between text-sm mb-1"><span><span class="layer-badge bg-pink-100 text-pink-600 mr-1">L5</span> ペルソナ</span><span class="text-gray-400">25 / 25</span></div>
+        <div class="h-2 bg-gray-100 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width:100%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- レシピカバレッジ -->
+  <div class="border border-gray-200 bg-white p-6">
+    <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-4">レシピ カバレッジ（不足テーマ優先表示）</h3>
+    <div id="coverage-gaps" class="space-y-2"><!-- JS動的 --></div>
+  </div>
+</div>
+
+<!-- ===== TAB1: INGREDIENTS ===== -->
+<div id="tab-ingredients" class="hidden">
+  <h2 class="text-lg font-bold text-black mb-4">Tab 1: 香料マスタ登録</h2>
+
+  <!-- 必要データ数 -->
+  <div class="border border-gray-200 bg-white p-4 mb-4">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2">
+        <span class="layer-badge bg-violet-600 text-white">L1 物理層</span>
+        <span class="text-xs font-medium text-gray-500">必要データ数</span>
+      </div>
+      <span class="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-200 font-medium">完了</span>
+    </div>
+    <div class="flex items-end gap-4">
+      <div>
+        <span class="text-2xl font-bold text-black">50</span>
+        <span class="text-sm text-gray-400"> / 50件</span>
+      </div>
+      <div class="flex-1">
+        <div class="h-2 bg-gray-100 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width:100%"></div></div>
+      </div>
+    </div>
+    <p class="text-[11px] text-gray-400 mt-2">算出根拠: 使用する香料の全品目数。1件＝1香料の基礎データ（名前・ノートタイプ・カテゴリ・揮発性・強さ・重さ・温度感）。</p>
+  </div>
+
+  <!-- 画面説明 -->
+  <div class="bg-blue-50 border border-blue-200 p-5 mb-4 rounded-sm">
+    <h3 class="text-sm font-bold text-blue-800 mb-2">この画面について</h3>
+    <p class="text-xs text-blue-700 leading-relaxed mb-3">
+      AIが配合計算に使用する香料の基礎データ（L1 物理層）を登録する画面です。<br>
+      各香料の物理的特性を定義することで、AIが適切なノートバランスの配合を生成できるようになります。
+    </p>
+    <h4 class="text-xs font-bold text-blue-800 mb-1">入力項目の説明</h4>
+    <ul class="text-xs text-blue-700 leading-relaxed list-disc pl-4 space-y-1">
+      <li><strong>香料名（日本語/英語）</strong> — ユーザー画面に表示される名称。日本語名は必須。</li>
+      <li><strong>ノートタイプ</strong> — TOP（最初に香る）/ MIDDLE（中心の香り）/ LAST（余韻として残る）から選択。</li>
+      <li><strong>カテゴリ</strong> — 香料の系統分類。AIのグルーピングに使用。</li>
+      <li><strong>揮発性（0.00〜1.00）</strong> — 0に近いほど長く持続し、1に近いほどすぐ揮発する。</li>
+      <li><strong>香りの強さ（0.00〜1.00）</strong> — 0に近いほどほのかで、1に近いほど強く香る。</li>
+      <li><strong>重さ</strong> — エアリー（軽い）/ バランス / リッチ（重い）。全体の重量感設計に使用。</li>
+      <li><strong>温度感</strong> — クール / ニュートラル / ウォーム。フレグランスマップのx軸座標に対応。</li>
+      <li><strong>メモ</strong> — 香料の特徴。AI生成のストーリーテキストにも反映。</li>
+    </ul>
+  </div>
+
+  <div class="border border-gray-200 bg-white p-6 mb-4">
+    <div class="space-y-4">
+      <div>
+        <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">香料名（日本語）</label>
+        <input type="text" value="ネロリ" class="w-full border border-gray-200 px-3 py-2 text-sm mt-1 focus:border-black focus:outline-none">
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">香料名（英語）</label>
+        <input type="text" value="Neroli" class="w-full border border-gray-200 px-3 py-2 text-sm mt-1 focus:border-black focus:outline-none">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">ノートタイプ <span class="layer-badge bg-violet-100 text-violet-600">1-1</span></label>
+          <select class="w-full border border-gray-200 px-3 py-2 text-sm mt-1 focus:border-black focus:outline-none">
+            <option selected>TOP</option><option>MIDDLE</option><option>LAST</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">カテゴリ <span class="layer-badge bg-violet-100 text-violet-600">1-4</span></label>
+          <select class="w-full border border-gray-200 px-3 py-2 text-sm mt-1 focus:border-black focus:outline-none">
+            <option>citrus</option><option selected>floral_light</option><option>floral_rich</option>
+            <option>green</option><option>marine</option><option>wood</option><option>spice</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">揮発性 <span class="layer-badge bg-violet-100 text-violet-600">1-2</span> <span class="text-black font-bold">0.85</span></label>
+        <input type="range" min="0" max="100" value="85" class="w-full mt-2">
+        <div class="flex justify-between text-[10px] text-gray-300 mt-1"><span>0.00（持続性高い）</span><span>1.00（すぐ揮発）</span></div>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">香りの強さ <span class="layer-badge bg-violet-100 text-violet-600">1-3</span> <span class="text-black font-bold">0.70</span></label>
+        <input type="range" min="0" max="100" value="70" class="w-full mt-2">
+        <div class="flex justify-between text-[10px] text-gray-300 mt-1"><span>0.00（ほのか）</span><span>1.00（非常に強い）</span></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">重さ <span class="layer-badge bg-violet-100 text-violet-600">1-5</span></label>
+          <select class="w-full border border-gray-200 px-3 py-2 text-sm mt-1 focus:border-black focus:outline-none">
+            <option>エアリー（軽い）</option><option selected>バランス</option><option>リッチ（重い）</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">温度感 <span class="layer-badge bg-violet-100 text-violet-600">1-6</span></label>
+          <select class="w-full border border-gray-200 px-3 py-2 text-sm mt-1 focus:border-black focus:outline-none">
+            <option>クール</option><option selected>ニュートラル</option><option>ウォーム</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">メモ</label>
+        <textarea rows="2" class="w-full border border-gray-200 px-3 py-2 text-sm mt-1 focus:border-black focus:outline-none" placeholder="特徴を記入...">ビターオレンジの花から抽出。華やかで上品な柑橘系フローラル</textarea>
+      </div>
+    </div>
+    <button class="w-full bg-black text-white py-3 text-sm font-medium tracking-wide mt-6 hover:bg-gray-800 transition">香料を登録する</button>
+  </div>
+</div>
+
+<!-- ===== TAB2: PROHIBITED ===== -->
+<div id="tab-prohibited" class="hidden">
+  <h2 class="text-lg font-bold text-black mb-4">Tab 2: 禁止組み合わせ</h2>
+
+  <div class="border border-gray-200 bg-white p-4 mb-4">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2">
+        <span class="layer-badge bg-violet-600 text-white">L1 物理層</span>
+        <span class="text-xs font-medium text-gray-500">必要データ数</span>
+      </div>
+      <span class="text-xs px-2 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 font-medium">あと ~8件</span>
+    </div>
+    <div class="flex items-end gap-4">
+      <div>
+        <span class="text-2xl font-bold text-black">32</span>
+        <span class="text-sm text-gray-400"> / ~40件</span>
+      </div>
+      <div class="flex-1">
+        <div class="h-2 bg-gray-100 rounded-full"><div class="h-full bg-amber-500 rounded-full" style="width:80%"></div></div>
+      </div>
+    </div>
+    <p class="text-[11px] text-gray-400 mt-2">算出根拠: ₅₀C₂ = 1,225通りのうち約3%が禁止対象。目標 ~40件。</p>
+  </div>
+
+  <div class="bg-blue-50 border border-blue-200 p-5 mb-4 rounded-sm">
+    <h3 class="text-sm font-bold text-blue-800 mb-2">この画面について</h3>
+    <p class="text-xs text-blue-700 leading-relaxed mb-3">
+      一緒に使ってはいけない香料の組み合わせを登録する画面です。AIが配合生成時に必ず除外します。
+    </p>
+    <h4 class="text-xs font-bold text-blue-800 mb-1">入力手順</h4>
+    <ol class="text-xs text-blue-700 leading-relaxed list-decimal pl-4 space-y-1">
+      <li><strong>香料A・B</strong> をドロップダウンからそれぞれ選択。</li>
+      <li><strong>禁止理由</strong> を選択 — 化学的変質 / 不快な香り / 相互打消し / その他。</li>
+      <li><strong>備考</strong> に具体的な理由を記入（任意）。</li>
+      <li>「禁止ペアを登録する」で保存。</li>
+    </ol>
+  </div>
+
+  <div class="border border-gray-200 bg-white p-6 mb-4">
+    <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">香料 A</label>
+          <select class="w-full border border-gray-200 px-3 py-2 text-sm mt-1 focus:border-black focus:outline-none">
+            <option>レモン</option><option selected>ミント</option><option>ジャスミン</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">香料 B</label>
+          <select class="w-full border border-gray-200 px-3 py-2 text-sm mt-1 focus:border-black focus:outline-none">
+            <option>レモン</option><option>ミント</option><option selected>バニラ</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">禁止理由</label>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">化学的変質</button>
+          <button class="px-3 py-1.5 text-xs bg-black text-white border border-black">不快な香り</button>
+          <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">相互打消し</button>
+          <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">その他</button>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-gray-400 uppercase tracking-wide">備考</label>
+        <input type="text" value="メントールとバニリンが混ざると不快な甘さになる" class="w-full border border-gray-200 px-3 py-2 text-sm mt-1 focus:border-black focus:outline-none">
+      </div>
+    </div>
+    <button class="w-full bg-black text-white py-3 text-sm font-medium tracking-wide mt-6 hover:bg-gray-800 transition">禁止ペアを登録する</button>
+  </div>
+
+  <div class="border border-gray-200 bg-white p-6">
+    <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">登録済み (32件)</h3>
+    <div class="space-y-2">
+      <div class="flex items-center justify-between py-2 border-b border-gray-100">
+        <div class="text-sm"><span class="font-medium">ミント</span> <span class="text-gray-300">x</span> <span class="font-medium">バニラ</span></div>
+        <span class="text-[10px] px-2 py-0.5 bg-red-50 text-red-500 border border-red-200">不快な香り</span>
+      </div>
+      <div class="flex items-center justify-between py-2 border-b border-gray-100">
+        <div class="text-sm"><span class="font-medium">パチュリ</span> <span class="text-gray-300">x</span> <span class="font-medium">シーブルー</span></div>
+        <span class="text-[10px] px-2 py-0.5 bg-amber-50 text-amber-600 border border-amber-200">相互打消し</span>
+      </div>
+      <div class="flex items-center justify-between py-2 border-b border-gray-100">
+        <div class="text-sm"><span class="font-medium">レザー</span> <span class="text-gray-300">x</span> <span class="font-medium">ミュゲ</span></div>
+        <span class="text-[10px] px-2 py-0.5 bg-red-50 text-red-500 border border-red-200">不快な香り</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB3: SWIPE ===== -->
+<div id="tab-swipe" class="hidden">
+  <h2 class="text-lg font-bold text-black mb-4">Tab 3: 相性スコア — Swipe入力</h2>
+
+  <div class="border border-gray-200 bg-white p-4 mb-4">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2">
+        <span class="layer-badge bg-violet-600 text-white">L1 物理層</span>
+        <span class="text-xs font-medium text-gray-500">必要データ数</span>
+      </div>
+      <span class="text-xs px-2 py-0.5 bg-red-50 text-red-500 border border-red-200 font-medium">あと 813件</span>
+    </div>
+    <div class="flex items-end gap-4">
+      <div>
+        <span class="text-2xl font-bold text-black">412</span>
+        <span class="text-sm text-gray-400"> / 1,225件</span>
+      </div>
+      <div class="flex-1">
+        <div class="h-2 bg-gray-100 rounded-full"><div class="h-full bg-blue-500 rounded-full" style="width:34%"></div></div>
+      </div>
+    </div>
+    <p class="text-[11px] text-gray-400 mt-2">算出根拠: ₅₀C₂ = 50×49÷2 = 1,225ペア。禁止ペア（Tab2）は自動で -1.0 設定済み。</p>
+  </div>
+
+  <div class="bg-blue-50 border border-blue-200 p-5 mb-4 rounded-sm">
+    <h3 class="text-sm font-bold text-blue-800 mb-2">この画面について</h3>
+    <p class="text-xs text-blue-700 leading-relaxed mb-3">
+      2つの香料の相性を直感的にスコアリングする画面です。AIはこのデータを学習し、最適な香料の組み合わせを選びます。
+    </p>
+    <h4 class="text-xs font-bold text-blue-800 mb-1">入力手順</h4>
+    <ol class="text-xs text-blue-700 leading-relaxed list-decimal pl-4 space-y-1">
+      <li>表示される<strong>2つの香料カード</strong>を確認。</li>
+      <li><strong>相性スコア</strong>をスライダーで設定（-1.0 最悪 〜 +1.0 最高）。</li>
+      <li>「<strong>次へ</strong>」で確定。判断困難な場合は「<strong>スキップ</strong>」。</li>
+    </ol>
+    <p class="text-xs text-blue-600 mt-2"><strong>目標:</strong> 全1,225ペア。1日50件 × 4週間。</p>
+  </div>
+
+  <div class="border border-gray-200 bg-white p-6 mb-4">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs text-gray-400">進捗</span>
+      <span class="text-xs text-gray-400">412 / 1,225</span>
+    </div>
+    <div class="h-1.5 bg-gray-100 rounded-full mb-6">
+      <div class="h-full bg-blue-500 rounded-full" style="width:34%"></div>
+    </div>
+
+    <div class="flex justify-center gap-6 mb-8">
+      <div class="w-36 border border-gray-200 p-5 text-center">
+        <div class="text-3xl mb-2">🍋</div>
+        <p class="text-sm font-semibold text-black">レモン</p>
+        <p class="text-[10px] text-gray-400 mt-1">TOP / citrus</p>
+        <p class="text-[10px] text-gray-300 mt-0.5">フレッシュで明るい柑橘系</p>
+      </div>
+      <div class="w-36 border border-gray-200 p-5 text-center">
+        <div class="text-3xl mb-2">🌹</div>
+        <p class="text-sm font-semibold text-black">スウィートローズ</p>
+        <p class="text-[10px] text-gray-400 mt-1">MIDDLE / floral_rich</p>
+        <p class="text-[10px] text-gray-300 mt-0.5">甘く優しいバラの香り</p>
+      </div>
+    </div>
+
+    <div class="max-w-sm mx-auto">
+      <div class="flex items-center justify-between text-lg mb-2">
+        <span>😫</span>
+        <span class="text-sm font-bold text-black">0.6</span>
+        <span>😍</span>
+      </div>
+      <input type="range" min="-100" max="100" value="60" class="w-full" style="accent-color: #000;">
+      <div class="flex justify-between text-[10px] text-gray-300 mt-1">
+        <span>-1.0（最悪）</span><span>0</span><span>1.0（最高）</span>
+      </div>
+    </div>
+
+    <div class="flex gap-3 mt-8">
+      <button class="flex-1 py-3 text-sm border border-gray-200 text-gray-400 hover:border-gray-400 transition">スキップ →</button>
+      <button class="flex-1 py-3 text-sm bg-black text-white font-medium hover:bg-gray-800 transition">次へ</button>
+    </div>
+    <p class="text-center text-xs text-gray-300 mt-4">今日の入力: 47件</p>
+  </div>
+</div>
+
+<!-- ===== TAB4: RECIPE ===== -->
+<div id="tab-recipe" class="hidden">
+  <h2 class="text-lg font-bold text-black mb-4">Tab 4: レシピを作る</h2>
+
+  <!-- 必要データ数（動的） -->
+  <div id="tab4-data-count" class="border border-gray-200 bg-white p-4 mb-4"><!-- JS動的 --></div>
+
+  <!-- テーマ別内訳（動的） -->
+  <div class="border border-gray-200 bg-white p-4 mb-4">
+    <p class="text-[11px] font-medium text-gray-500 mb-1.5">テーマ別 内訳（シーン × ムード）</p>
+    <div id="theme-grid" class="grid gap-x-3 gap-y-1 text-[11px]"><!-- JS動的 --></div>
+  </div>
+
+  <!-- 画面説明 -->
+  <div class="bg-blue-50 border border-blue-200 p-5 mb-4 rounded-sm">
+    <h3 class="text-sm font-bold text-blue-800 mb-2">この画面について</h3>
+    <p class="text-xs text-blue-700 leading-relaxed mb-3">
+      AIの学習データとなるレシピ（配合例）を作成する画面です。<br>
+      <strong>L2シーン × L3ムード</strong> の組み合わせが主軸テーマ。季節はタグとして複数選択できます。
+    </p>
+    <h4 class="text-xs font-bold text-blue-800 mb-1">入力手順</h4>
+    <ol class="text-xs text-blue-700 leading-relaxed list-decimal pl-4 space-y-1">
+      <li><strong>テーマ設定</strong> — シーン（L2）とムード（L3）を選択。季節タグを付与（複数可）。</li>
+      <li><strong>L4 世界観</strong>（任意） — 色彩・自然イメージを選択するとストーリー生成に反映。</li>
+      <li><strong>香料の配合</strong> — 「+ 香料を追加」で追加し、スライダーで比率調整。合計100%にする。</li>
+      <li><strong>品質スコア</strong> — 自己評価（★1〜5）。AIの学習優先度に影響。</li>
+    </ol>
+    <p class="text-xs text-blue-600 mt-2"><strong>目標:</strong> 各テーマに約10件。Dashboard のカバレッジで不足テーマを確認し優先作成。</p>
+  </div>
+
+  <div class="border border-gray-200 bg-white p-6 mb-4">
+    <!-- L2 環境層: シーン -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-blue-600 text-white">L2</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">シーン（環境層）</h3>
+      <span class="text-[10px] text-gray-300 ml-auto">Dashboard で増減可能</span>
+    </div>
+    <div id="scene-selector" class="flex flex-wrap gap-2 mb-5"><!-- JS動的 --></div>
+
+    <!-- L3 印象層: ムード -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-emerald-600 text-white">L3</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">ムード（印象層）</h3>
+      <span class="text-[10px] text-gray-300 ml-auto">Dashboard で増減可能</span>
+    </div>
+    <div id="mood-selector" class="flex flex-wrap gap-2 mb-5"><!-- JS動的 --></div>
+
+    <!-- L2 副軸: 季節タグ -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-blue-100 text-blue-600">L2 副軸</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">季節タグ</h3>
+      <span class="text-[10px] text-gray-300 ml-auto">複数選択可</span>
+    </div>
+    <div class="flex gap-2 mb-5">
+      <button class="px-4 py-2 text-xs bg-black text-white border border-black">🌸 春</button>
+      <button class="px-4 py-2 text-xs bg-black text-white border border-black">☀️ 夏</button>
+      <button class="px-4 py-2 text-xs border border-gray-200 text-gray-600">🍂 秋</button>
+      <button class="px-4 py-2 text-xs border border-gray-200 text-gray-600">❄️ 冬</button>
+    </div>
+
+    <!-- L2 副軸: 時間帯 -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-blue-100 text-blue-600">L2 副軸</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">時間帯</h3>
+      <span class="text-[10px] text-gray-300 ml-auto">複数選択可</span>
+    </div>
+    <div class="flex gap-2 mb-5">
+      <button class="px-4 py-2 text-xs border border-gray-200 text-gray-600">🌅 朝</button>
+      <button class="px-4 py-2 text-xs bg-black text-white border border-black">☀️ 昼</button>
+      <button class="px-4 py-2 text-xs border border-gray-200 text-gray-600">🌙 夜</button>
+    </div>
+
+    <!-- L3 副軸: エネルギー -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-emerald-100 text-emerald-600">L3 副軸</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">エネルギー</h3>
+      <span class="text-[10px] text-gray-300 ml-auto">単一選択</span>
+    </div>
+    <div class="flex gap-2 mb-5">
+      <button class="px-3 py-1.5 text-xs bg-black text-white border border-black">アクティブ</button>
+      <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">リラックス</button>
+      <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">集中</button>
+      <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">高揚</button>
+    </div>
+
+    <!-- L3 副軸: 香りの強さ -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-emerald-100 text-emerald-600">L3 副軸</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">香りの強さ</h3>
+      <span class="text-[10px] text-gray-300 ml-auto">単一選択</span>
+    </div>
+    <div class="flex gap-2 mb-5">
+      <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">ライト</button>
+      <button class="px-3 py-1.5 text-xs bg-black text-white border border-black">ミディアム</button>
+      <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">インテンス</button>
+    </div>
+
+    <!-- L3 副軸: 持続イメージ -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-emerald-100 text-emerald-600">L3 副軸</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">持続イメージ</h3>
+      <span class="text-[10px] text-gray-300 ml-auto">単一選択</span>
+    </div>
+    <div class="flex gap-2 mb-5">
+      <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">一瞬の印象</button>
+      <button class="px-3 py-1.5 text-xs bg-black text-white border border-black">半日</button>
+      <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">一日中</button>
+    </div>
+
+    <!-- L3 副軸: 質感 -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-emerald-100 text-emerald-600">L3 副軸</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">質感</h3>
+      <span class="text-[10px] text-gray-300 ml-auto">単一選択</span>
+    </div>
+    <div class="flex gap-2 mb-5">
+      <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">シルキー</button>
+      <button class="px-3 py-1.5 text-xs bg-black text-white border border-black">クリスプ</button>
+      <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">パウダリー</button>
+      <button class="px-3 py-1.5 text-xs border border-gray-200 text-gray-600">ジューシー</button>
+    </div>
+
+    <!-- L4 世界観層（任意） -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-amber-600 text-white">L4</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">世界観（任意）</h3>
+      <span class="text-[10px] text-gray-300 ml-auto">未選択の場合AIが推論</span>
+    </div>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="text-[10px] text-gray-400 mb-1 block">4-1 色彩イメージ</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="w-7 h-7 rounded-full bg-white border-2 border-gray-200" title="ホワイト"></button>
+          <button class="w-7 h-7 rounded-full bg-pink-300 border-2 border-pink-400" title="ピンク"></button>
+          <button class="w-7 h-7 rounded-full bg-blue-400 border-2 border-blue-500 ring-2 ring-blue-200" title="ブルー"></button>
+          <button class="w-7 h-7 rounded-full bg-green-400 border-2 border-green-500" title="グリーン"></button>
+          <button class="w-7 h-7 rounded-full bg-amber-400 border-2 border-amber-500" title="ゴールド"></button>
+          <button class="w-7 h-7 rounded-full bg-gray-800 border-2 border-gray-900" title="ブラック"></button>
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400 mb-1 block">4-2 自然イメージ</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="px-2 py-1 text-[10px] bg-blue-50 border border-blue-200 text-blue-600 rounded-sm">🏖 海辺</button>
+          <button class="px-2 py-1 text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-sm">🌲 森林</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🌸 花畑</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🏙 都会</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🏜 砂漠</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="text-[10px] text-gray-400 mb-1 block">4-3 光</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🌅 朝日</button>
+          <button class="px-2 py-1 text-[10px] bg-amber-50 border border-amber-200 text-amber-600 rounded-sm">🌿 木漏れ日</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🌇 夕焼け</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🌙 月明かり</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🕯 キャンドル</button>
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400 mb-1 block">4-4 素材感</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">シルク</button>
+          <button class="px-2 py-1 text-[10px] bg-amber-50 border border-amber-200 text-amber-600 rounded-sm">リネン</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">レザー</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">カシミア</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">デニム</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="text-[10px] text-gray-400 mb-1 block">4-5 飲み物</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🥂 シャンパン</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🍵 抹茶</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">☕ コーヒー</button>
+          <button class="px-2 py-1 text-[10px] bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-sm">🫖 ハーブティー</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🍸 カクテル</button>
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400 mb-1 block">4-6 音楽</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🎷 ジャズ</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🎻 クラシック</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🎤 ポップ</button>
+          <button class="px-2 py-1 text-[10px] bg-amber-50 border border-amber-200 text-amber-600 rounded-sm">🎸 ボサノヴァ</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🎧 アンビエント</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4 mb-2">
+      <div>
+        <label class="text-[10px] text-gray-400 mb-1 block">4-7 カルチャー</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🏯 和</button>
+          <button class="px-2 py-1 text-[10px] bg-blue-50 border border-blue-200 text-blue-600 rounded-sm">🗼 フレンチ</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🗽 NY</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🏖 地中海</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">🕌 オリエンタル</button>
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400 mb-1 block">4-8 時代感</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">クラシック</button>
+          <button class="px-2 py-1 text-[10px] bg-amber-50 border border-amber-200 text-amber-600 rounded-sm">モダン</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">フューチャリスティック</button>
+        </div>
+      </div>
+    </div>
+    <p class="text-[10px] text-gray-300 mb-4">4-3〜4-6 は未選択の場合 L2+L3 から AI が自動推論します。</p>
+
+    <!-- L5 関係層（任意） -->
+    <div class="flex items-center gap-2 mb-3">
+      <span class="layer-badge bg-pink-600 text-white">L5</span>
+      <h3 class="text-xs font-medium text-gray-700 uppercase tracking-wide">関係層（任意）</h3>
+      <span class="text-[10px] text-gray-300 ml-auto">パーソナライズ・EC連携用</span>
+    </div>
+    <div class="grid grid-cols-3 gap-4 mb-2">
+      <div>
+        <label class="text-[10px] text-gray-400 mb-1 block">5-1 ジェンダー表現</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">フェミニン</button>
+          <button class="px-2 py-1 text-[10px] bg-pink-50 border border-pink-200 text-pink-600 rounded-sm">ニュートラル</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">マスキュリン</button>
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400 mb-1 block">5-3 贈る相手</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="px-2 py-1 text-[10px] bg-pink-50 border border-pink-200 text-pink-600 rounded-sm">自分用</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">パートナー</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">友人</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">家族</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">同僚</button>
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400 mb-1 block">5-6 ファッション</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">カジュアル</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">エレガント</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">スポーティ</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">モード</button>
+          <button class="px-2 py-1 text-[10px] border border-gray-200 text-gray-500 rounded-sm">ボヘミアン</button>
+        </div>
+      </div>
+    </div>
+    <p class="text-[10px] text-gray-300 mb-2">5-2 年代イメージ / 5-4 恋愛ステージ / 5-5 ペルソナ は L2+L3 から AI が自動推論します。</p>
+
+    <div class="my-5 border-t border-gray-100"></div>
+
+    <!-- コンセプト -->
+    <div class="mb-6">
+      <label class="text-xs text-gray-400 mb-1 block">コンセプト（自由記述）</label>
+      <input type="text" value="夏の朝、海辺で目覚めた瞬間の空気" class="w-full border border-gray-200 px-3 py-2 text-sm focus:border-black focus:outline-none">
+    </div>
+
+    <!-- Blend -->
+    <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">香料を選んで配合</h3>
+
+    <div class="border border-amber-200 bg-amber-50/30 p-4 mb-3 rounded-sm">
+      <div class="flex items-center gap-1.5 mb-3">
+        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        <span class="text-xs font-medium text-amber-700">トップノート</span>
+        <span class="text-xs text-amber-400 ml-auto">合計: 30%</span>
+      </div>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3">
+          <span class="text-sm w-28 shrink-0">🍋 レモン</span>
+          <input type="range" min="0" max="50" value="20" class="flex-1">
+          <span class="text-sm font-medium w-10 text-right">20%</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm w-28 shrink-0">🍊 ベルガモット</span>
+          <input type="range" min="0" max="50" value="10" class="flex-1">
+          <span class="text-sm font-medium w-10 text-right">10%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="border border-pink-200 bg-pink-50/30 p-4 mb-3 rounded-sm">
+      <div class="flex items-center gap-1.5 mb-3">
+        <span class="w-2 h-2 rounded-full bg-pink-500"></span>
+        <span class="text-xs font-medium text-pink-700">ミドルノート</span>
+        <span class="text-xs text-pink-400 ml-auto">合計: 45%</span>
+      </div>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3">
+          <span class="text-sm w-28 shrink-0">🌊 シーブルー</span>
+          <input type="range" min="0" max="50" value="25" class="flex-1">
+          <span class="text-sm font-medium w-10 text-right">25%</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm w-28 shrink-0">🌿 ラベンダー</span>
+          <input type="range" min="0" max="50" value="20" class="flex-1">
+          <span class="text-sm font-medium w-10 text-right">20%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="border border-emerald-200 bg-emerald-50/30 p-4 mb-3 rounded-sm">
+      <div class="flex items-center gap-1.5 mb-3">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span class="text-xs font-medium text-emerald-700">ラストノート</span>
+        <span class="text-xs text-emerald-400 ml-auto">合計: 25%</span>
+      </div>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3">
+          <span class="text-sm w-28 shrink-0">🪵 シダーウッド</span>
+          <input type="range" min="0" max="50" value="15" class="flex-1">
+          <span class="text-sm font-medium w-10 text-right">15%</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm w-28 shrink-0">🪶 ムスク</span>
+          <input type="range" min="0" max="50" value="10" class="flex-1">
+          <span class="text-sm font-medium w-10 text-right">10%</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="text-xs text-gray-400 border border-dashed border-gray-300 w-full py-2 mb-6 hover:border-gray-500 hover:text-gray-600 transition">+ 香料を追加</button>
+
+    <!-- Balance meter -->
+    <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">バランスメーター</h3>
+    <div class="space-y-2 mb-6">
+      <div class="flex items-center gap-3">
+        <span class="text-xs w-16 text-gray-400">トップ</span>
+        <div class="flex-1 h-2 bg-gray-100 rounded-full"><div class="h-full bg-amber-500 rounded-full" style="width:30%"></div></div>
+        <span class="text-xs w-12 text-right">30%</span>
+        <span class="text-emerald-500 text-xs">OK</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs w-16 text-gray-400">ミドル</span>
+        <div class="flex-1 h-2 bg-gray-100 rounded-full"><div class="h-full bg-pink-500 rounded-full" style="width:45%"></div></div>
+        <span class="text-xs w-12 text-right">45%</span>
+        <span class="text-emerald-500 text-xs">OK</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs w-16 text-gray-400">ラスト</span>
+        <div class="flex-1 h-2 bg-gray-100 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width:25%"></div></div>
+        <span class="text-xs w-12 text-right">25%</span>
+        <span class="text-emerald-500 text-xs">OK</span>
+      </div>
+      <div class="flex items-center gap-3 pt-1 border-t border-gray-100">
+        <span class="text-xs w-16 font-medium text-black">合計</span>
+        <div class="flex-1 h-2 bg-gray-100 rounded-full"><div class="h-full bg-black rounded-full" style="width:100%"></div></div>
+        <span class="text-xs w-12 text-right font-medium">100%</span>
+        <span class="text-emerald-500 text-xs">OK</span>
+      </div>
+    </div>
+
+    <div class="mb-6">
+      <label class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2 block">品質スコア（自己評価）</label>
+      <div class="flex gap-1">
+        <button class="text-2xl">★</button><button class="text-2xl">★</button><button class="text-2xl">★</button><button class="text-2xl">★</button><button class="text-2xl text-gray-200">★</button>
+        <span class="text-xs text-gray-400 self-center ml-2">(4 / 5)</span>
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button class="flex-1 py-3 text-sm border border-gray-200 text-gray-400 hover:border-gray-400 transition">下書き保存</button>
+      <button class="flex-1 py-3 text-sm bg-black text-white font-medium hover:bg-gray-800 transition">レシピを登録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB5: REVIEW ===== -->
+<div id="tab-review" class="hidden">
+  <h2 class="text-lg font-bold text-black mb-4">Tab 5: 合成レシピ評価</h2>
+
+  <div class="border border-gray-200 bg-white p-4 mb-4">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2">
+        <span class="layer-badge bg-emerald-600 text-white">L3 印象層</span>
+        <span class="text-xs font-medium text-gray-500">必要データ数</span>
+      </div>
+      <span class="text-xs px-2 py-0.5 bg-amber-50 text-amber-600 border border-amber-200 font-medium">未評価 23件</span>
+    </div>
+    <div class="flex items-end gap-4">
+      <div>
+        <span class="text-2xl font-bold text-black">477</span>
+        <span class="text-sm text-gray-400"> / ~500件</span>
+      </div>
+      <div class="flex-1">
+        <div class="h-2 bg-gray-100 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width:95%"></div></div>
+      </div>
+    </div>
+    <p class="text-[11px] text-gray-400 mt-2">算出根拠: 手動レシピ × 約2倍をAI合成 → 調香師が評価。</p>
+    <div class="mt-3 pt-3 border-t border-gray-100 grid grid-cols-3 gap-3 text-center">
+      <div><p class="text-lg font-bold text-emerald-600">312</p><p class="text-[10px] text-gray-400">採用（★3以上）</p></div>
+      <div><p class="text-lg font-bold text-red-400">165</p><p class="text-[10px] text-gray-400">不採用（★2以下）</p></div>
+      <div><p class="text-lg font-bold text-amber-500">23</p><p class="text-[10px] text-gray-400">未評価</p></div>
+    </div>
+  </div>
+
+  <div class="bg-blue-50 border border-blue-200 p-5 mb-4 rounded-sm">
+    <h3 class="text-sm font-bold text-blue-800 mb-2">この画面について</h3>
+    <p class="text-xs text-blue-700 leading-relaxed mb-3">
+      AIが自動生成したレシピを調香師が評価・承認する画面です。★3以上で採用、★2以下で不採用。
+    </p>
+    <h4 class="text-xs font-bold text-blue-800 mb-1">評価基準</h4>
+    <ul class="text-xs text-blue-700 leading-relaxed list-disc pl-4 space-y-1">
+      <li><strong>★5</strong> プロ品質 / <strong>★4</strong> 良い / <strong>★3</strong> 許容範囲（採用最低ライン）</li>
+      <li><strong>★2</strong> 不十分 / <strong>★1</strong> 問題あり</li>
+    </ul>
+  </div>
+
+  <div class="border border-gray-200 bg-white p-6 mb-4">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-500 border border-blue-200">合成データ</span>
+        <span class="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-500 border border-blue-200">リラックス × 落ち着いた</span>
+      </div>
+      <span class="text-xs text-gray-400">未評価: 23件</span>
+    </div>
+
+    <div class="mb-2">
+      <div class="flex gap-1.5 mb-2">
+        <span class="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-sm">🍂 秋</span>
+        <span class="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded-sm">❄️ 冬</span>
+      </div>
+      <p class="text-sm text-black">「紅葉の庭園を歩く貴婦人」</p>
+    </div>
+
+    <div class="grid grid-cols-3 gap-2 mb-4 text-sm">
+      <div>
+        <p class="text-[10px] text-gray-400 mb-1">TOP (30%)</p>
+        <p>ベルガモット 15%</p>
+        <p>オレンジ 15%</p>
+      </div>
+      <div>
+        <p class="text-[10px] text-gray-400 mb-1">MIDDLE (40%)</p>
+        <p>ダマスクローズ 20%</p>
+        <p>ジャスミン 12%</p>
+        <p>カーネーション 8%</p>
+      </div>
+      <div>
+        <p class="text-[10px] text-gray-400 mb-1">LAST (30%)</p>
+        <p>パチュリ 15%</p>
+        <p>アンバー 10%</p>
+        <p>サンダルウッド 5%</p>
+      </div>
+    </div>
+
+    <div class="border-t border-gray-100 pt-4">
+      <label class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2 block">このレシピの品質は？</label>
+      <div class="flex gap-1 mb-4">
+        <button class="text-2xl">★</button><button class="text-2xl">★</button><button class="text-2xl">★</button><button class="text-2xl text-gray-200">★</button><button class="text-2xl text-gray-200">★</button>
+        <span class="text-xs text-gray-400 self-center ml-2">3以上で採用</span>
+      </div>
+      <div class="flex gap-3">
+        <button class="flex-1 py-2.5 text-sm border border-red-200 text-red-400 hover:border-red-400 transition">不採用 (1-2)</button>
+        <button class="flex-1 py-2.5 text-sm bg-black text-white font-medium hover:bg-gray-800 transition">採用して次へ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /max-w container -->
+
+<script>
+// ===== テーマ軸データ =====
+let scenes = ['デート', 'オフィス', 'パーティー', 'リラックス', 'アウトドア', 'フォーマル'];
+let moods = ['明るい', '落ち着いた', '情熱的', 'ミステリアス', '清潔感'];
+let selectedScene = 'リラックス';
+let selectedMood = '明るい';
+
+// デモ用レシピ件数
+const recipeCountBase = {
+  'デート×明るい':8,'デート×落ち着いた':6,'デート×情熱的':10,'デート×ミステリアス':7,'デート×清潔感':5,
+  'オフィス×明るい':6,'オフィス×落ち着いた':9,'オフィス×情熱的':2,'オフィス×ミステリアス':3,'オフィス×清潔感':11,
+  'パーティー×明るい':9,'パーティー×落ち着いた':3,'パーティー×情熱的':8,'パーティー×ミステリアス':6,'パーティー×清潔感':4,
+  'リラックス×明るい':7,'リラックス×落ち着いた':12,'リラックス×情熱的':2,'リラックス×ミステリアス':4,'リラックス×清潔感':8,
+  'アウトドア×明るい':10,'アウトドア×落ち着いた':5,'アウトドア×情熱的':3,'アウトドア×ミステリアス':1,'アウトドア×清潔感':7,
+  'フォーマル×明るい':4,'フォーマル×落ち着いた':8,'フォーマル×情熱的':5,'フォーマル×ミステリアス':6,'フォーマル×清潔感':3,
+};
+
+function getThemeCount() { return scenes.length * moods.length; }
+function getRecipeTarget() { return getThemeCount() * 10; }
+function getRecipeCount(s, m) { return recipeCountBase[s+'×'+m] ?? 0; }
+function getTotalRecipes() {
+  let t = 0; scenes.forEach(s => moods.forEach(m => { t += getRecipeCount(s,m); })); return t;
+}
+
+// ===== 軸管理レンダリング =====
+function renderAxisManager(elId, items, removeFunc, colorClass) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = items.map((item, i) =>
+    `<div class="flex items-center justify-between py-2 px-3 border border-gray-100 rounded-sm group">
+      <div class="flex items-center gap-2">
+        <span class="w-5 h-5 flex items-center justify-center ${colorClass} text-[10px] rounded-full">${i+1}</span>
+        <span class="text-sm font-medium">${item}</span>
+      </div>
+      <button onclick="${removeFunc}(${i})" class="text-xs text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100" title="削除">&#x2715;</button>
+    </div>`
+  ).join('');
+}
+
+function addScene() {
+  const input = document.getElementById('new-scene-input');
+  const val = input.value.trim();
+  if (!val || scenes.includes(val)) { if(scenes.includes(val)) alert('既に登録済み'); return; }
+  scenes.push(val); input.value = ''; onAxesChanged();
+}
+function removeScene(i) {
+  if (!confirm('「'+scenes[i]+'」を削除しますか？')) return;
+  if (selectedScene === scenes[i]) selectedScene = scenes[0] === scenes[i] ? (scenes[1]||'') : scenes[0];
+  scenes.splice(i,1); onAxesChanged();
+}
+function addMood() {
+  const input = document.getElementById('new-mood-input');
+  const val = input.value.trim();
+  if (!val || moods.includes(val)) { if(moods.includes(val)) alert('既に登録済み'); return; }
+  moods.push(val); input.value = ''; onAxesChanged();
+}
+function removeMood(i) {
+  if (!confirm('「'+moods[i]+'」を削除しますか？')) return;
+  if (selectedMood === moods[i]) selectedMood = moods[0] === moods[i] ? (moods[1]||'') : moods[0];
+  moods.splice(i,1); onAxesChanged();
+}
+
+function onAxesChanged() {
+  renderAxisManager('scene-manager', scenes, 'removeScene', 'bg-blue-100 text-blue-600');
+  renderAxisManager('mood-manager', moods, 'removeMood', 'bg-emerald-100 text-emerald-600');
+  renderSceneSelector(); renderMoodSelector();
+  renderThemeGrid(); updateDashboardCounts(); renderCoverageGaps();
+}
+
+// ===== Tab4 セレクター =====
+function renderSceneSelector() {
+  const el = document.getElementById('scene-selector'); if (!el) return;
+  el.innerHTML = scenes.map(s =>
+    `<button onclick="selectedScene='${s}';renderSceneSelector()" class="px-3 py-1.5 text-xs ${s===selectedScene?'bg-black text-white border border-black':'border border-gray-200 text-gray-600 hover:border-gray-400'} transition">${s}</button>`
+  ).join('');
+}
+function renderMoodSelector() {
+  const el = document.getElementById('mood-selector'); if (!el) return;
+  el.innerHTML = moods.map(m =>
+    `<button onclick="selectedMood='${m}';renderMoodSelector()" class="px-3 py-1.5 text-xs ${m===selectedMood?'bg-black text-white border border-black':'border border-gray-200 text-gray-600 hover:border-gray-400'} transition">${m}</button>`
+  ).join('');
+}
+
+// ===== テーマグリッド =====
+function renderThemeGrid() {
+  const el = document.getElementById('theme-grid'); if (!el) return;
+  const cols = moods.length;
+  el.style.gridTemplateColumns = `80px repeat(${cols}, minmax(0, 1fr))`;
+  let html = '<div></div>' + moods.map(m => `<div class="text-center font-medium text-gray-500 pb-1">${m}</div>`).join('');
+  scenes.forEach(s => {
+    html += `<div class="font-medium text-gray-500 pr-2">${s}</div>`;
+    moods.forEach(m => {
+      const c = getRecipeCount(s,m); const low = c < 5;
+      html += `<div class="text-center ${low?'text-red-500 font-bold':'text-gray-600'}">${c}</div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+// ===== カバレッジギャップ =====
+function renderCoverageGaps() {
+  const el = document.getElementById('coverage-gaps'); if (!el) return;
+  const gaps = [];
+  scenes.forEach(s => moods.forEach(m => {
+    const c = getRecipeCount(s,m);
+    if (c < 10) gaps.push({scene:s, mood:m, count:c, remain:10-c});
+  }));
+  gaps.sort((a,b) => a.count - b.count);
+  el.innerHTML = gaps.slice(0,5).map(g => {
+    const isZero = g.count === 0;
+    return `<div class="flex items-center gap-3 p-3 ${isZero?'bg-red-50 border-red-200':'bg-amber-50 border-amber-200'} border rounded-sm">
+      <span class="${isZero?'text-red-500':'text-amber-600'} text-sm font-bold shrink-0">!</span>
+      <div class="flex-1">
+        <p class="text-sm text-black font-medium">${g.scene} × ${g.mood}</p>
+        <p class="text-xs text-gray-400">現在 ${g.count}件 / 目標 10件</p>
+      </div>
+      <span class="text-xs ${isZero?'text-red-500':'text-amber-600'} font-medium shrink-0">あと ${g.remain}件</span>
+    </div>`;
+  }).join('');
+}
+
+// ===== Dashboard 数値更新 =====
+function updateDashboardCounts() {
+  const tc = getThemeCount(), rt = getRecipeTarget(), tr = getTotalRecipes(), remain = Math.max(0, rt - tr);
+  const row3 = document.getElementById('summary-row-theme');
+  if (row3) row3.innerHTML = `<td class="py-2">3. テーマ</td>
+    <td class="py-2 pl-2"><span class="layer-badge bg-blue-100 text-blue-600">L2</span><span class="layer-badge bg-emerald-100 text-emerald-600 ml-1">L3</span></td>
+    <td class="text-right py-2 font-medium">${tc}</td>
+    <td class="text-right py-2 text-emerald-600 font-medium">${tc}</td>
+    <td class="text-right py-2 text-emerald-600 font-medium">0</td>
+    <td class="py-2 pl-3 text-gray-400">${scenes.length}シーン × ${moods.length}ムード = ${tc}</td>`;
+  const row4 = document.getElementById('summary-row-recipe');
+  if (row4) row4.innerHTML = `<td class="py-2">4. レシピ</td>
+    <td class="py-2 pl-2"><span class="layer-badge bg-blue-100 text-blue-600">L2</span><span class="layer-badge bg-emerald-100 text-emerald-600 ml-1">L3</span></td>
+    <td class="text-right py-2 font-medium">${rt}</td>
+    <td class="text-right py-2 font-medium">${tr}</td>
+    <td class="text-right py-2 ${remain>0?'text-red-500':'text-emerald-600'} font-medium">${remain}</td>
+    <td class="py-2 pl-3 text-gray-400">${tc}テーマ × 10件 = ${rt}件</td>`;
+  const pt = document.getElementById('prog-theme');
+  if (pt) pt.innerHTML = `<div class="flex justify-between text-sm mb-1"><span><span class="layer-badge bg-blue-100 text-blue-600 mr-1">L2</span><span class="layer-badge bg-emerald-100 text-emerald-600 mr-1">L3</span> テーマ</span><span class="text-gray-400">${tc} / ${tc}</span></div>
+    <div class="h-2 bg-gray-100 rounded-full"><div class="h-full bg-emerald-500 rounded-full" style="width:100%"></div></div>`;
+  const pr = document.getElementById('prog-recipe');
+  if (pr) { const pct = Math.min(100, Math.round(tr/rt*100));
+    pr.innerHTML = `<div class="flex justify-between text-sm mb-1"><span><span class="layer-badge bg-blue-100 text-blue-600 mr-1">L2</span><span class="layer-badge bg-emerald-100 text-emerald-600 mr-1">L3</span> レシピ</span><span class="${remain>0?'text-amber-600 font-medium':'text-gray-400'}">${tr} / ${rt}</span></div>
+    <div class="h-2 bg-gray-100 rounded-full"><div class="h-full ${remain>0?'bg-amber-500':'bg-emerald-500'} rounded-full" style="width:${pct}%"></div></div>`;
+  }
+  const t4 = document.getElementById('tab4-data-count');
+  if (t4) { const pct = Math.min(100, Math.round(tr/rt*100));
+    t4.innerHTML = `<div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2"><span class="layer-badge bg-blue-600 text-white">L2</span><span class="layer-badge bg-emerald-600 text-white">L3</span><span class="text-xs font-medium text-gray-500">必要データ数</span></div>
+      <span class="text-xs px-2 py-0.5 ${remain>0?'bg-red-50 text-red-500 border-red-200':'bg-emerald-50 text-emerald-600 border-emerald-200'} border font-medium">${remain>0?'あと '+remain+'件':'完了'}</span>
+    </div>
+    <div class="flex items-end gap-4"><div><span class="text-2xl font-bold text-black">${tr}</span><span class="text-sm text-gray-400"> / ${rt}件</span></div>
+    <div class="flex-1"><div class="h-2 bg-gray-100 rounded-full"><div class="h-full ${remain>0?'bg-amber-500':'bg-emerald-500'} rounded-full" style="width:${pct}%"></div></div></div></div>
+    <p class="text-[11px] text-gray-400 mt-2">算出根拠: ${tc}テーマ（${scenes.length}シーン × ${moods.length}ムード）× 各10件 = ${rt}件。季節はタグ付与（副軸）。</p>`;
+  }
+}
+
+// ===== Tab切替 =====
+function showTab(name) {
+  ['dashboard','ingredients','prohibited','swipe','recipe','review'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('hidden', t!==name);
+    const b = document.getElementById('btn-'+t);
+    b.className = b.className.replace(t===name?'tab-inactive':'tab-active', t===name?'tab-active':'tab-inactive');
+  });
+}
+
+// ===== 初期化 =====
+document.addEventListener('DOMContentLoaded', () => {
+  renderAxisManager('scene-manager', scenes, 'removeScene', 'bg-blue-100 text-blue-600');
+  renderAxisManager('mood-manager', moods, 'removeMood', 'bg-emerald-100 text-emerald-600');
+  renderSceneSelector(); renderMoodSelector();
+  renderThemeGrid(); updateDashboardCounts(); renderCoverageGaps();
+});
+</script>
+
+</body>
+</html>

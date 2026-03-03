@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KyaraInnovate - 実装状況管理</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; }
+  body { background: #fafafa; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; }
+  .badge { font-size: 10px; padding: 2px 8px; border-radius: 9999px; font-weight: 600; white-space: nowrap; }
+  .badge-done { background: #d1fae5; color: #065f46; }
+  .badge-partial { background: #fef3c7; color: #92400e; }
+  .badge-todo { background: #fee2e2; color: #991b1b; }
+  .badge-phase { background: #e0e7ff; color: #3730a3; }
+  .badge-priority-high { background: #fecaca; color: #991b1b; }
+  .badge-priority-mid { background: #fed7aa; color: #9a3412; }
+  .badge-priority-low { background: #e5e7eb; color: #374151; }
+  .progress-bar { height: 8px; border-radius: 4px; background: #e5e7eb; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+  .filter-btn { cursor: pointer; transition: all .15s; }
+  .filter-btn:hover { opacity: 0.8; }
+  .filter-btn.active { box-shadow: 0 0 0 2px #000; }
+  tr.status-done { }
+  tr.status-partial { }
+  tr.status-todo { }
+  tr.hidden-row { display: none; }
+  .category-section { scroll-margin-top: 80px; }
+  nav.sticky-nav { position: sticky; top: 0; z-index: 10; background: #000; }
+  .nav-link { color: #9ca3af; font-size: 12px; cursor: pointer; transition: color .15s; }
+  .nav-link:hover { color: #fff; }
+  .stat-number { font-size: 32px; font-weight: 700; line-height: 1; }
+  .ring-chart { position: relative; width: 120px; height: 120px; }
+  .ring-chart svg { transform: rotate(-90deg); }
+  .ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<nav class="sticky-nav">
+  <div class="max-w-5xl mx-auto px-6 h-12 flex items-center justify-between">
+    <div class="flex items-center gap-6">
+      <h1 class="text-sm font-bold tracking-tight text-white">KYARAINNOVATE</h1>
+      <span class="text-[10px] text-gray-500">実装状況管理 v2.0</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="#overview" class="nav-link">概要</a>
+      <a href="#auth" class="nav-link">認証</a>
+      <a href="#blend" class="nav-link">調合</a>
+      <a href="#creator" class="nav-link">クリエーター</a>
+      <a href="#ec" class="nav-link">EC/決済</a>
+      <a href="#admin" class="nav-link">管理者</a>
+      <a href="#other" class="nav-link">その他</a>
+      <a href="#gaps" class="nav-link">未実装一覧</a>
+    </div>
+  </div>
+</nav>
+
+<div class="max-w-5xl mx-auto px-6 py-8 space-y-8">
+
+  <!-- ===== OVERVIEW ===== -->
+  <section id="overview" class="category-section">
+    <h2 class="text-lg font-bold mb-4">全体進捗</h2>
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <!-- Total -->
+      <div class="card p-5 text-center">
+        <div class="ring-chart mx-auto mb-2">
+          <svg viewBox="0 0 120 120" width="120" height="120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="10"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#000" stroke-width="10"
+              stroke-dasharray="314" stroke-dashoffset="6" stroke-linecap="round"/>
+          </svg>
+          <div class="ring-label">
+            <span class="text-2xl font-bold">98%</span>
+            <span class="text-[10px] text-gray-400">完了</span>
+          </div>
+        </div>
+        <p class="text-xs text-gray-500">全機能 51件中</p>
+        <p class="text-xs"><span class="font-bold">50</span> 実装済 / <span class="font-bold">1</span> 部分 / <span class="font-bold">0</span> 未実装</p>
+      </div>
+
+      <!-- Pages -->
+      <div class="card p-5">
+        <p class="text-xs text-gray-400 uppercase tracking-widest mb-1">ページ</p>
+        <p class="stat-number">62</p>
+        <p class="text-xs text-gray-500 mt-1">実装済みルート</p>
+        <div class="progress-bar mt-3">
+          <div class="progress-fill bg-black" style="width:100%"></div>
+        </div>
+        <p class="text-[10px] text-gray-400 mt-1">62 / 62 完了</p>
+      </div>
+
+      <!-- APIs -->
+      <div class="card p-5">
+        <p class="text-xs text-gray-400 uppercase tracking-widest mb-1">API</p>
+        <p class="stat-number">77</p>
+        <p class="text-xs text-gray-500 mt-1">実装済みルート</p>
+        <div class="progress-bar mt-3">
+          <div class="progress-fill bg-black" style="width:100%"></div>
+        </div>
+        <p class="text-[10px] text-gray-400 mt-1">77 / 77 完了</p>
+      </div>
+
+      <!-- Code -->
+      <div class="card p-5">
+        <p class="text-xs text-gray-400 uppercase tracking-widest mb-1">コード</p>
+        <p class="stat-number">19,000</p>
+        <p class="text-xs text-gray-500 mt-1">総行数 (app/)</p>
+        <div class="mt-3 space-y-1">
+          <div class="flex justify-between text-[10px] text-gray-500">
+            <span>サーバーアクション</span><span class="font-medium">5</span>
+          </div>
+          <div class="flex justify-between text-[10px] text-gray-500">
+            <span>クライアントコンポーネント</span><span class="font-medium">54</span>
+          </div>
+          <div class="flex justify-between text-[10px] text-gray-500">
+            <span>サービスファイル</span><span class="font-medium">14</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase Progress -->
+    <div class="card p-5">
+      <h3 class="text-sm font-bold mb-4">フェーズ別進捗</h3>
+      <div class="space-y-3">
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="font-medium">Phase 1: コア機能</span>
+            <span class="text-gray-500">100%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill bg-emerald-500" style="width:100%"></div>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-0.5">認証、調合エンジン、AI連携、履歴管理</p>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="font-medium">Phase 2: クリエーター・マーケットプレイス</span>
+            <span class="text-gray-500">100%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill bg-emerald-500" style="width:100%"></div>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-0.5">プロフィール、申請フロー、スタイル設定、レシピ管理</p>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="font-medium">Phase 3: EC・コマース</span>
+            <span class="text-gray-500">100%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill bg-emerald-500" style="width:100%"></div>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-0.5">ショップ、カート、決済、注文管理、通知、メール</p>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="font-medium">Phase 4: パーソナライゼーション</span>
+            <span class="text-gray-500">100%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill bg-emerald-500" style="width:100%"></div>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-0.5">嗜好分析、レコメンド、おすすめカルーセル</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FILTER ===== -->
+  <div class="flex items-center gap-2">
+    <span class="text-xs text-gray-500 mr-2">フィルター:</span>
+    <button onclick="filterRows('all')" class="filter-btn badge active" id="filter-all" style="background:#000;color:#fff">全て</button>
+    <button onclick="filterRows('done')" class="filter-btn badge badge-done" id="filter-done">実装済</button>
+    <button onclick="filterRows('partial')" class="filter-btn badge badge-partial" id="filter-partial">部分実装</button>
+    <button onclick="filterRows('todo')" class="filter-btn badge badge-todo" id="filter-todo">未実装</button>
+  </div>
+
+  <!-- ===== AUTH ===== -->
+  <section id="auth" class="category-section">
+    <div class="card">
+      <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-bold">認証・ユーザー管理</h3>
+          <span class="badge badge-phase">Phase 1-3</span>
+        </div>
+        <span class="text-xs text-gray-400">7/7 完了</span>
+      </div>
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-gray-400 uppercase tracking-widest border-b border-gray-50">
+            <th class="px-5 py-2 w-8">#</th>
+            <th class="px-5 py-2">機能名</th>
+            <th class="px-5 py-2">設計書ID</th>
+            <th class="px-5 py-2">フェーズ</th>
+            <th class="px-5 py-2">ページ</th>
+            <th class="px-5 py-2">API</th>
+            <th class="px-5 py-2 text-right">状態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">1</td>
+            <td class="px-5 py-2.5 font-medium">ユーザー登録</td>
+            <td class="px-5 py-2.5 text-gray-400">F-AUTH-001</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">/register</td>
+            <td class="px-5 py-2.5 text-gray-500">POST /auth/register</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">2</td>
+            <td class="px-5 py-2.5 font-medium">ログイン</td>
+            <td class="px-5 py-2.5 text-gray-400">F-AUTH-002</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">/login</td>
+            <td class="px-5 py-2.5 text-gray-500">POST /auth/login</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">3</td>
+            <td class="px-5 py-2.5 font-medium">ログアウト</td>
+            <td class="px-5 py-2.5 text-gray-400">F-AUTH-003</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">レイアウト内</td>
+            <td class="px-5 py-2.5 text-gray-500">Server Action</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">4</td>
+            <td class="px-5 py-2.5 font-medium">パスワードリセット</td>
+            <td class="px-5 py-2.5 text-gray-400">F-AUTH-004</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">/forgot-password, /reset-password</td>
+            <td class="px-5 py-2.5 text-gray-500">POST /auth/password-reset/*</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">5</td>
+            <td class="px-5 py-2.5 font-medium">ロールベースアクセス制御</td>
+            <td class="px-5 py-2.5 text-gray-400">F-AUTH-006</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">middleware.ts</td>
+            <td class="px-5 py-2.5 text-gray-500">auth-guard.ts</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">6</td>
+            <td class="px-5 py-2.5 font-medium">クリエーター登録申請</td>
+            <td class="px-5 py-2.5 text-gray-400">F-AUTH-007</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/creator-application</td>
+            <td class="px-5 py-2.5 text-gray-500">POST /creator/application</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">7</td>
+            <td class="px-5 py-2.5 font-medium">ユーザープロフィール管理</td>
+            <td class="px-5 py-2.5 text-gray-400">F-AUTH-008</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/profile</td>
+            <td class="px-5 py-2.5 text-gray-500">PATCH /auth/me, PUT /auth/password</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== BLEND ===== -->
+  <section id="blend" class="category-section">
+    <div class="card">
+      <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-bold">調合システム</h3>
+          <span class="badge badge-phase">Phase 1-2</span>
+        </div>
+        <span class="text-xs text-gray-400">9/9 完了</span>
+      </div>
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-gray-400 uppercase tracking-widest border-b border-gray-50">
+            <th class="px-5 py-2 w-8">#</th>
+            <th class="px-5 py-2">機能名</th>
+            <th class="px-5 py-2">設計書ID</th>
+            <th class="px-5 py-2">フェーズ</th>
+            <th class="px-5 py-2">ページ</th>
+            <th class="px-5 py-2">API</th>
+            <th class="px-5 py-2 text-right">状態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">1</td>
+            <td class="px-5 py-2.5 font-medium">キーワード選択</td>
+            <td class="px-5 py-2.5 text-gray-400">CUST-01</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">/blend</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /blend/keywords</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">2</td>
+            <td class="px-5 py-2.5 font-medium">キーワード重み設定</td>
+            <td class="px-5 py-2.5 text-gray-400">CUST-02</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">/blend</td>
+            <td class="px-5 py-2.5 text-gray-500">-</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">3</td>
+            <td class="px-5 py-2.5 font-medium">ノート比率設定 (TOP/MID/LAST)</td>
+            <td class="px-5 py-2.5 text-gray-400">CUST-03</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">/blend</td>
+            <td class="px-5 py-2.5 text-gray-500">-</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">4</td>
+            <td class="px-5 py-2.5 font-medium">香料手動選択 (26種)</td>
+            <td class="px-5 py-2.5 text-gray-400">CUST-04</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">/blend</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /blend/flavors</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">5</td>
+            <td class="px-5 py-2.5 font-medium">調合自動生成</td>
+            <td class="px-5 py-2.5 text-gray-400">CUST-05</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">-</td>
+            <td class="px-5 py-2.5 text-gray-500">POST /blend/generate</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">6</td>
+            <td class="px-5 py-2.5 font-medium">結果表示 (チャート・ストーリー)</td>
+            <td class="px-5 py-2.5 text-gray-400">CUST-06</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">/result/[id]</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /blend/results/[id]</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">7</td>
+            <td class="px-5 py-2.5 font-medium">フレグランス命名</td>
+            <td class="px-5 py-2.5 text-gray-400">CUST-07</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">/result/[id]</td>
+            <td class="px-5 py-2.5 text-gray-500">Server Action</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">8</td>
+            <td class="px-5 py-2.5 font-medium">調合履歴閲覧</td>
+            <td class="px-5 py-2.5 text-gray-400">CUST-08</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">/history</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /blend/results</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">9</td>
+            <td class="px-5 py-2.5 font-medium">3モード調合 (ai_only / styled / recipe)</td>
+            <td class="px-5 py-2.5 text-gray-400">Phase2 設計</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/blend (モードセレクター)</td>
+            <td class="px-5 py-2.5 text-gray-500">Server Action (recipeBlend)</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== CREATOR ===== -->
+  <section id="creator" class="category-section">
+    <div class="card">
+      <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-bold">クリエーター機能</h3>
+          <span class="badge badge-phase">Phase 2-3</span>
+        </div>
+        <span class="text-xs text-gray-400">13/13 完了</span>
+      </div>
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-gray-400 uppercase tracking-widest border-b border-gray-50">
+            <th class="px-5 py-2 w-8">#</th>
+            <th class="px-5 py-2">機能名</th>
+            <th class="px-5 py-2">設計書ID</th>
+            <th class="px-5 py-2">フェーズ</th>
+            <th class="px-5 py-2">ページ</th>
+            <th class="px-5 py-2">API</th>
+            <th class="px-5 py-2 text-right">状態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">1</td>
+            <td class="px-5 py-2.5 font-medium">クリエーター一覧表示</td>
+            <td class="px-5 py-2.5 text-gray-400">-</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/creators</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /creators</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">2</td>
+            <td class="px-5 py-2.5 font-medium">クリエーター詳細</td>
+            <td class="px-5 py-2.5 text-gray-400">-</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/creators/[slug]</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /creators/[slug]</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">3</td>
+            <td class="px-5 py-2.5 font-medium">クリエーター登録申請</td>
+            <td class="px-5 py-2.5 text-gray-400">CRTR-01</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/creator-application</td>
+            <td class="px-5 py-2.5 text-gray-500">POST /creator/application</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">4</td>
+            <td class="px-5 py-2.5 font-medium">管理者審査 (承認/却下)</td>
+            <td class="px-5 py-2.5 text-gray-400">CRTR-02</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/admin/creators</td>
+            <td class="px-5 py-2.5 text-gray-500">PUT /admin/creators/[id]/review</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">5</td>
+            <td class="px-5 py-2.5 font-medium">プロフィール編集</td>
+            <td class="px-5 py-2.5 text-gray-400">CRTR-03</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/creator/settings</td>
+            <td class="px-5 py-2.5 text-gray-500">GET/PUT /creator/profile</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">6</td>
+            <td class="px-5 py-2.5 font-medium">スタイルプロファイル設定</td>
+            <td class="px-5 py-2.5 text-gray-400">CRTR-04</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/creator/settings (スタイルタブ)</td>
+            <td class="px-5 py-2.5 text-gray-500">GET/PUT /creator/style</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">7</td>
+            <td class="px-5 py-2.5 font-medium">シグネチャーレシピ作成</td>
+            <td class="px-5 py-2.5 text-gray-400">CRTR-05</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/creator/recipes, /new, /[id]/edit</td>
+            <td class="px-5 py-2.5 text-gray-500">CRUD /creator/recipes</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">8</td>
+            <td class="px-5 py-2.5 font-medium">レシピ一括AI提案</td>
+            <td class="px-5 py-2.5 text-gray-400">CRTR-06</td>
+            <td class="px-5 py-2.5">3</td>
+            <td class="px-5 py-2.5 text-gray-500">/creator/data-input/evaluation</td>
+            <td class="px-5 py-2.5 text-gray-500">合成レシピ評価 + 上級レシピ作成</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">9</td>
+            <td class="px-5 py-2.5 font-medium">レシピバージョン管理</td>
+            <td class="px-5 py-2.5 text-gray-400">CRTR-07</td>
+            <td class="px-5 py-2.5">3</td>
+            <td class="px-5 py-2.5 text-gray-500">/history/[id]/compare</td>
+            <td class="px-5 py-2.5 text-gray-500">バージョン比較 + セレクター</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">10</td>
+            <td class="px-5 py-2.5 font-medium">ダッシュボード (KPI表示)</td>
+            <td class="px-5 py-2.5 text-gray-400">CRTR-08~09</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/creator/dashboard</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /creator/stats</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">11</td>
+            <td class="px-5 py-2.5 font-medium">キーワード・ルール管理</td>
+            <td class="px-5 py-2.5 text-gray-400">-</td>
+            <td class="px-5 py-2.5">1</td>
+            <td class="px-5 py-2.5 text-gray-500">/keywords, /keywords/[id]</td>
+            <td class="px-5 py-2.5 text-gray-500">GET/POST /creator/keywords</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">12</td>
+            <td class="px-5 py-2.5 font-medium">ロイヤリティ確認 (クリエーター側)</td>
+            <td class="px-5 py-2.5 text-gray-400">CRTR-13</td>
+            <td class="px-5 py-2.5">3</td>
+            <td class="px-5 py-2.5 text-gray-500">/creator/royalties</td>
+            <td class="px-5 py-2.5 text-gray-500">収益レポート + 明細表示</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">13</td>
+            <td class="px-5 py-2.5 font-medium">お気に入りクリエーター</td>
+            <td class="px-5 py-2.5 text-gray-400">-</td>
+            <td class="px-5 py-2.5">2</td>
+            <td class="px-5 py-2.5 text-gray-500">/creators/[slug]</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /creator/favorites</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== EC ===== -->
+  <section id="ec" class="category-section">
+    <div class="card">
+      <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-bold">EC・ショップ・決済</h3>
+          <span class="badge badge-phase">Phase 3</span>
+        </div>
+        <span class="text-xs text-gray-400">11/11 完了</span>
+      </div>
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-gray-400 uppercase tracking-widest border-b border-gray-50">
+            <th class="px-5 py-2 w-8">#</th>
+            <th class="px-5 py-2">機能名</th>
+            <th class="px-5 py-2">設計書ID</th>
+            <th class="px-5 py-2">ページ</th>
+            <th class="px-5 py-2">API</th>
+            <th class="px-5 py-2 text-right">状態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">1</td>
+            <td class="px-5 py-2.5 font-medium">商品一覧 (フィルタ・ソート)</td>
+            <td class="px-5 py-2.5 text-gray-400">PROD-01~03</td>
+            <td class="px-5 py-2.5 text-gray-500">/shop</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /shop/products</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">2</td>
+            <td class="px-5 py-2.5 font-medium">商品詳細</td>
+            <td class="px-5 py-2.5 text-gray-400">PROD-04</td>
+            <td class="px-5 py-2.5 text-gray-500">/shop/[id]</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /shop/products/[id]</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">3</td>
+            <td class="px-5 py-2.5 font-medium">お気に入り商品 (ハート)</td>
+            <td class="px-5 py-2.5 text-gray-400">PROD-05</td>
+            <td class="px-5 py-2.5 text-gray-500">/shop (ハートアイコン)</td>
+            <td class="px-5 py-2.5 text-gray-500">POST /shop/products/[id]/favorite</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">4</td>
+            <td class="px-5 py-2.5 font-medium">カート (追加・数量変更・削除)</td>
+            <td class="px-5 py-2.5 text-gray-400">CART-01~03</td>
+            <td class="px-5 py-2.5 text-gray-500">/cart</td>
+            <td class="px-5 py-2.5 text-gray-500">CRUD /cart/items</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">5</td>
+            <td class="px-5 py-2.5 font-medium">クーポン適用</td>
+            <td class="px-5 py-2.5 text-gray-400">CART-04</td>
+            <td class="px-5 py-2.5 text-gray-500">/cart (クーポン入力欄)</td>
+            <td class="px-5 py-2.5 text-gray-500">POST /coupons/validate</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">6</td>
+            <td class="px-5 py-2.5 font-medium">チェックアウト (5ステップ)</td>
+            <td class="px-5 py-2.5 text-gray-400">Step1~5</td>
+            <td class="px-5 py-2.5 text-gray-500">/checkout</td>
+            <td class="px-5 py-2.5 text-gray-500">POST /orders</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">7</td>
+            <td class="px-5 py-2.5 font-medium">注文一覧・詳細</td>
+            <td class="px-5 py-2.5 text-gray-400">-</td>
+            <td class="px-5 py-2.5 text-gray-500">/orders, /orders/[id]</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /orders</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">8</td>
+            <td class="px-5 py-2.5 font-medium">配送先管理</td>
+            <td class="px-5 py-2.5 text-gray-400">-</td>
+            <td class="px-5 py-2.5 text-gray-500">/addresses</td>
+            <td class="px-5 py-2.5 text-gray-500">CRUD /shipping-addresses</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">9</td>
+            <td class="px-5 py-2.5 font-medium">Stripe Webhook</td>
+            <td class="px-5 py-2.5 text-gray-400">-</td>
+            <td class="px-5 py-2.5 text-gray-500">-</td>
+            <td class="px-5 py-2.5 text-gray-500">POST /orders/webhook</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">10</td>
+            <td class="px-5 py-2.5 font-medium">キャンセル・返品UI</td>
+            <td class="px-5 py-2.5 text-gray-400">注文ライフサイクル</td>
+            <td class="px-5 py-2.5 text-gray-500">/orders/[id] (キャンセルボタン)</td>
+            <td class="px-5 py-2.5 text-gray-500">POST /orders/[id]/cancel</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">11</td>
+            <td class="px-5 py-2.5 font-medium">メール通知 (Resend)</td>
+            <td class="px-5 py-2.5 text-gray-400">Phase3</td>
+            <td class="px-5 py-2.5 text-gray-500">-</td>
+            <td class="px-5 py-2.5 text-gray-500">6テンプレート + 自動送信</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== ADMIN ===== -->
+  <section id="admin" class="category-section">
+    <div class="card">
+      <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-bold">管理者機能</h3>
+          <span class="badge badge-phase">Phase 2-3</span>
+        </div>
+        <span class="text-xs text-gray-400">5/5 完了</span>
+      </div>
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-gray-400 uppercase tracking-widest border-b border-gray-50">
+            <th class="px-5 py-2 w-8">#</th>
+            <th class="px-5 py-2">機能名</th>
+            <th class="px-5 py-2">設計書ID</th>
+            <th class="px-5 py-2">ページ</th>
+            <th class="px-5 py-2">API</th>
+            <th class="px-5 py-2 text-right">状態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">1</td>
+            <td class="px-5 py-2.5 font-medium">管理ダッシュボード</td>
+            <td class="px-5 py-2.5 text-gray-400">ADMN-04</td>
+            <td class="px-5 py-2.5 text-gray-500">/admin/dashboard</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /admin/dashboard</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">2</td>
+            <td class="px-5 py-2.5 font-medium">ユーザー管理</td>
+            <td class="px-5 py-2.5 text-gray-400">ADMN-02</td>
+            <td class="px-5 py-2.5 text-gray-500">/admin/users</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /admin/users, PUT role</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">3</td>
+            <td class="px-5 py-2.5 font-medium">注文管理</td>
+            <td class="px-5 py-2.5 text-gray-400">ADMN-03</td>
+            <td class="px-5 py-2.5 text-gray-500">/admin/orders</td>
+            <td class="px-5 py-2.5 text-gray-500">GET /admin/orders</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">4</td>
+            <td class="px-5 py-2.5 font-medium">クリエーター承認管理</td>
+            <td class="px-5 py-2.5 text-gray-400">ADMN-01</td>
+            <td class="px-5 py-2.5 text-gray-500">/admin/creators</td>
+            <td class="px-5 py-2.5 text-gray-500">GET/PUT /admin/creators</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">5</td>
+            <td class="px-5 py-2.5 font-medium">香料マスタ管理</td>
+            <td class="px-5 py-2.5 text-gray-400">ADMN-06</td>
+            <td class="px-5 py-2.5 text-gray-500">/admin/flavors</td>
+            <td class="px-5 py-2.5 text-gray-500">CRUD /admin/flavors</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== OTHER ===== -->
+  <section id="other" class="category-section">
+    <div class="card">
+      <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-bold">その他・非機能要件</h3>
+        </div>
+        <span class="text-xs text-gray-400">5/6 完了</span>
+      </div>
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-gray-400 uppercase tracking-widest border-b border-gray-50">
+            <th class="px-5 py-2 w-8">#</th>
+            <th class="px-5 py-2">機能名</th>
+            <th class="px-5 py-2">カテゴリ</th>
+            <th class="px-5 py-2">備考</th>
+            <th class="px-5 py-2 text-right">状態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">1</td>
+            <td class="px-5 py-2.5 font-medium">通知システム</td>
+            <td class="px-5 py-2.5 text-gray-400">Phase3</td>
+            <td class="px-5 py-2.5 text-gray-500">/notifications + ヘッダーバッジ + API 6本</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">2</td>
+            <td class="px-5 py-2.5 font-medium">レート制限</td>
+            <td class="px-5 py-2.5 text-gray-400">セキュリティ</td>
+            <td class="px-5 py-2.5 text-gray-500">ログイン10回/分、リセット5回/分、調合30回/分</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">3</td>
+            <td class="px-5 py-2.5 font-medium">監査ログ記録</td>
+            <td class="px-5 py-2.5 text-gray-400">セキュリティ</td>
+            <td class="px-5 py-2.5 text-gray-500">DB記録 + ログイン成功/失敗/管理操作</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">4</td>
+            <td class="px-5 py-2.5 font-medium">ヘルスチェック</td>
+            <td class="px-5 py-2.5 text-gray-400">運用</td>
+            <td class="px-5 py-2.5 text-gray-500">/api/health, /api/health/ready</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-done">
+            <td class="px-5 py-2.5 text-gray-300">5</td>
+            <td class="px-5 py-2.5 font-medium">パーソナライゼーション</td>
+            <td class="px-5 py-2.5 text-gray-400">Phase4</td>
+            <td class="px-5 py-2.5 text-gray-500">嗜好分析 + レシピ/クリエーターレコメンド + カルーセル</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-done">実装済</span></td>
+          </tr>
+          <tr class="border-b border-gray-50 status-partial">
+            <td class="px-5 py-2.5 text-gray-300">6</td>
+            <td class="px-5 py-2.5 font-medium">テスト (Vitest + Playwright)</td>
+            <td class="px-5 py-2.5 text-gray-400">品質</td>
+            <td class="px-5 py-2.5 text-amber-600">2ファイル (blend-calculator, api-blend)</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-partial">部分実装</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== GAP SUMMARY ===== -->
+  <section id="gaps" class="category-section">
+    <div class="card">
+      <div class="px-5 py-3 border-b border-gray-100">
+        <h3 class="text-sm font-bold">残作業一覧</h3>
+      </div>
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-gray-400 uppercase tracking-widest border-b border-gray-50">
+            <th class="px-5 py-2 w-8">#</th>
+            <th class="px-5 py-2">機能名</th>
+            <th class="px-5 py-2">設計書参照</th>
+            <th class="px-5 py-2">現状</th>
+            <th class="px-5 py-2">必要な作業</th>
+            <th class="px-5 py-2 text-right">優先度</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-gray-50">
+            <td class="px-5 py-2.5 text-gray-300">1</td>
+            <td class="px-5 py-2.5 font-medium">テスト (Vitest + Playwright)</td>
+            <td class="px-5 py-2.5 text-gray-400">品質要件</td>
+            <td class="px-5 py-2.5 text-amber-600">2ファイルのみ</td>
+            <td class="px-5 py-2.5 text-gray-500">ユニットテスト拡充 + E2Eテスト作成</td>
+            <td class="px-5 py-2.5 text-right"><span class="badge badge-priority-mid">中</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="text-center text-[10px] text-gray-400 py-6 border-t border-gray-200">
+    KyaraInnovate 実装状況管理 &mdash; 最終更新: 2026-02-18 &mdash; 設計書 v2.0 準拠
+  </footer>
+
+</div>
+
+<script>
+function filterRows(status) {
+  document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('filter-' + status).classList.add('active');
+
+  document.querySelectorAll('tbody tr').forEach(row => {
+    if (status === 'all') {
+      row.classList.remove('hidden-row');
+    } else {
+      const match = row.classList.contains('status-' + status);
+      row.classList.toggle('hidden-row', !match);
+    }
+  });
+}
+</script>
+
+</body>
+</html>

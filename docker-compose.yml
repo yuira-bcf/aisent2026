@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: kyarainnovate
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    profiles:
+      - full                      # Phase 1.5 onwards
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/kyarainnovate
+      AI_SERVICE_URL: http://ai-service:8081
+      INTERNAL_SERVICE_TOKEN: dev-internal-token
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AUTH_SECRET: dev-auth-secret-change-in-production
+      AUTH_URL: http://localhost:3000
+    depends_on:
+      - db
+
+  ai-service:
+    build:
+      context: apps/ai-service
+    ports:
+      - "8081:8081"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      INTERNAL_SERVICE_TOKEN: dev-internal-token
+    profiles:
+      - full                      # Phase 1.5 onwards
+
+volumes:
+  pgdata:
