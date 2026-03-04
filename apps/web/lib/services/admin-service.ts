@@ -110,12 +110,34 @@ export async function getAllOrders(
 // ---------------------------------------------------------------------------
 
 export async function getDashboardStats() {
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    0,
+    23,
+    59,
+    59,
+  );
+
+  const notCancelled = sql`${orders.status} != 'CANCELLED'`;
+
   const [
     [{ value: totalUsers }],
     [{ value: totalOrders }],
     [{ value: totalRevenue }],
     [{ value: totalBlends }],
     usersByRoleRows,
+    [{ value: thisMonthRevenue }],
+    [{ value: lastMonthRevenue }],
+    [{ value: thisMonthOrders }],
+    [{ value: lastMonthOrders }],
+    [{ value: thisMonthBlends }],
+    [{ value: lastMonthBlends }],
+    [{ value: newUsersThisMonth }],
+    monthlySalesRows,
   ] = await Promise.all([
     db.select({ value: count() }).from(users),
     db.select({ value: count() }).from(orders),
@@ -126,15 +148,88 @@ export async function getDashboardStats() {
         ),
       })
       .from(orders)
-      .where(sql`${orders.status} != 'CANCELLED'`),
+      .where(notCancelled),
     db.select({ value: count() }).from(blendRequests),
     db
-      .select({
-        role: users.role,
-        count: count(),
-      })
+      .select({ role: users.role, count: count() })
       .from(users)
       .groupBy(users.role),
+    // This month revenue
+    db
+      .select({
+        value: sql<number>`coalesce(sum(${orders.totalYen}), 0)`.mapWith(
+          Number,
+        ),
+      })
+      .from(orders)
+      .where(and(notCancelled, sql`${orders.createdAt} >= ${thisMonthStart}`)),
+    // Last month revenue
+    db
+      .select({
+        value: sql<number>`coalesce(sum(${orders.totalYen}), 0)`.mapWith(
+          Number,
+        ),
+      })
+      .from(orders)
+      .where(
+        and(
+          notCancelled,
+          sql`${orders.createdAt} >= ${lastMonthStart}`,
+          sql`${orders.createdAt} <= ${lastMonthEnd}`,
+        ),
+      ),
+    // This month orders
+    db
+      .select({ value: count() })
+      .from(orders)
+      .where(sql`${orders.createdAt} >= ${thisMonthStart}`),
+    // Last month orders
+    db
+      .select({ value: count() })
+      .from(orders)
+      .where(
+        and(
+          sql`${orders.createdAt} >= ${lastMonthStart}`,
+          sql`${orders.createdAt} <= ${lastMonthEnd}`,
+        ),
+      ),
+    // This month blends
+    db
+      .select({ value: count() })
+      .from(blendRequests)
+      .where(sql`${blendRequests.createdAt} >= ${thisMonthStart}`),
+    // Last month blends
+    db
+      .select({ value: count() })
+      .from(blendRequests)
+      .where(
+        and(
+          sql`${blendRequests.createdAt} >= ${lastMonthStart}`,
+          sql`${blendRequests.createdAt} <= ${lastMonthEnd}`,
+        ),
+      ),
+    // New users this month
+    db
+      .select({ value: count() })
+      .from(users)
+      .where(sql`${users.createdAt} >= ${thisMonthStart}`),
+    // Monthly sales for last 6 months
+    db
+      .select({
+        month: sql<string>`to_char(${orders.createdAt}, 'YYYY-MM')`,
+        total: sql<number>`coalesce(sum(${orders.totalYen}), 0)`.mapWith(
+          Number,
+        ),
+      })
+      .from(orders)
+      .where(
+        and(
+          notCancelled,
+          sql`${orders.createdAt} >= ${new Date(now.getFullYear(), now.getMonth() - 5, 1)}`,
+        ),
+      )
+      .groupBy(sql`to_char(${orders.createdAt}, 'YYYY-MM')`)
+      .orderBy(sql`to_char(${orders.createdAt}, 'YYYY-MM')`),
   ]);
 
   return {
@@ -146,5 +241,13 @@ export async function getDashboardStats() {
       role: row.role,
       count: row.count,
     })),
+    thisMonthRevenue,
+    lastMonthRevenue,
+    thisMonthOrders,
+    lastMonthOrders,
+    thisMonthBlends,
+    lastMonthBlends,
+    newUsersThisMonth,
+    monthlySales: monthlySalesRows,
   };
 }

@@ -1,49 +1,78 @@
 import { getDashboardStats } from "@/lib/services/admin-service";
 
+function trendText(
+  current: number,
+  previous: number,
+): { text: string; up: boolean } {
+  if (previous === 0)
+    return { text: current > 0 ? "+∞" : "±0", up: current > 0 };
+  const pct = ((current - previous) / previous) * 100;
+  const sign = pct >= 0 ? "+" : "";
+  return { text: `${sign}${pct.toFixed(1)}%`, up: pct >= 0 };
+}
+
 export default async function AdminDashboardPage() {
   const stats = await getDashboardStats();
+
+  const revenueTrend = trendText(
+    stats.thisMonthRevenue,
+    stats.lastMonthRevenue,
+  );
+  const ordersTrend = trendText(stats.thisMonthOrders, stats.lastMonthOrders);
+  const blendsTrend = trendText(stats.thisMonthBlends, stats.lastMonthBlends);
 
   const cards = [
     {
       label: "今月売上",
-      value: `¥${stats.totalRevenue.toLocaleString()}`,
+      value: `¥${stats.thisMonthRevenue.toLocaleString()}`,
       icon: "payments",
-      trend: "+18.2%",
-      trendUp: true,
-      trendLabel: "前月比",
+      trend: `${revenueTrend.text} 前月比`,
+      trendUp: revenueTrend.up,
     },
     {
       label: "注文数",
       value: stats.totalOrders.toLocaleString(),
       icon: "receipt_long",
-      trend: "+12.4%",
-      trendUp: true,
+      trend: `${ordersTrend.text} 前月比`,
+      trendUp: ordersTrend.up,
     },
     {
       label: "ユーザー数",
       value: stats.totalUsers.toLocaleString(),
       icon: "group",
-      trend: `+${Math.round(stats.totalUsers * 0.07)} 新規`,
-      trendUp: true,
+      trend: `+${stats.newUsersThisMonth} 今月新規`,
+      trendUp: stats.newUsersThisMonth > 0,
     },
     {
       label: "調合数",
       value: stats.totalBlends.toLocaleString(),
       icon: "science",
-      trend: "+8.3%",
-      trendUp: true,
+      trend: `${blendsTrend.text} 前月比`,
+      trendUp: blendsTrend.up,
     },
   ];
 
-  // Simulated monthly sales data for bar chart
-  const monthlySales = [
-    { month: "9月", value: 28 },
-    { month: "10月", value: 35 },
-    { month: "11月", value: 48 },
-    { month: "12月", value: 65 },
-    { month: "1月", value: 82 },
-    { month: "2月", value: 100 },
+  // Real monthly sales data from DB
+  const monthNames = [
+    "1月",
+    "2月",
+    "3月",
+    "4月",
+    "5月",
+    "6月",
+    "7月",
+    "8月",
+    "9月",
+    "10月",
+    "11月",
+    "12月",
   ];
+  const maxSales = Math.max(...stats.monthlySales.map((m) => m.total), 1);
+  const monthlySales = stats.monthlySales.map((m) => ({
+    month: monthNames[Number.parseInt(m.month.split("-")[1], 10) - 1],
+    value: Math.round((m.total / maxSales) * 100),
+    amount: m.total,
+  }));
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -84,7 +113,6 @@ export default async function AdminDashboardPage() {
                 {card.trendUp ? "trending_up" : "trending_down"}
               </span>
               {card.trend}
-              {card.trendLabel ? ` ${card.trendLabel}` : ""}
             </p>
           </div>
         ))}
@@ -98,13 +126,22 @@ export default async function AdminDashboardPage() {
               売上推移
             </h3>
             <div className="flex gap-1">
-              <button className="text-[9px] px-2 py-0.5 bg-black text-white rounded">
+              <button
+                type="button"
+                className="text-[9px] px-2 py-0.5 bg-black text-white rounded"
+              >
                 月別
               </button>
-              <button className="text-[9px] px-2 py-0.5 border border-gray-200 text-gray-400 rounded">
+              <button
+                type="button"
+                className="text-[9px] px-2 py-0.5 border border-gray-200 text-gray-400 rounded"
+              >
                 週別
               </button>
-              <button className="text-[9px] px-2 py-0.5 border border-gray-200 text-gray-400 rounded">
+              <button
+                type="button"
+                className="text-[9px] px-2 py-0.5 border border-gray-200 text-gray-400 rounded"
+              >
                 日別
               </button>
             </div>

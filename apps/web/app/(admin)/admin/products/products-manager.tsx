@@ -112,6 +112,7 @@ export function ProductsManager({
         <div className="flex gap-1">
           {(["ALL", "active", "inactive"] as const).map((s) => (
             <button
+              type="button"
               key={s}
               onClick={() => setStatusFilter(s)}
               className={`px-3 py-2 text-xs font-medium transition ${
@@ -125,6 +126,7 @@ export function ProductsManager({
           ))}
         </div>
         <button
+          type="button"
           onClick={openNewForm}
           className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm font-medium hover:bg-gray-800 transition"
         >
@@ -144,8 +146,14 @@ export function ProductsManager({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">商品名</label>
+              <label
+                htmlFor="input-productName"
+                className="block text-xs text-gray-500 mb-1"
+              >
+                商品名
+              </label>
               <input
+                id="input-productName"
                 type="text"
                 required
                 maxLength={200}
@@ -155,10 +163,14 @@ export function ProductsManager({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-productPrice"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 価格（円）
               </label>
               <input
+                id="input-productPrice"
                 type="number"
                 required
                 min={0}
@@ -173,10 +185,14 @@ export function ProductsManager({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-productStatus"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 ステータス
               </label>
               <select
+                id="input-productStatus"
                 value={form.isActive ? "active" : "inactive"}
                 onChange={(e) =>
                   setForm({ ...form, isActive: e.target.value === "active" })
@@ -189,8 +205,14 @@ export function ProductsManager({
             </div>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">説明</label>
+            <label
+              htmlFor="input-productDescription"
+              className="block text-xs text-gray-500 mb-1"
+            >
+              説明
+            </label>
             <textarea
+              id="input-productDescription"
               maxLength={1000}
               value={form.description}
               onChange={(e) =>
@@ -263,6 +285,7 @@ export function ProductsManager({
               </span>
               <span className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => openEditForm(product)}
                   className="text-gray-400 hover:text-black transition"
                   title="編集"
@@ -272,6 +295,7 @@ export function ProductsManager({
                   </span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleDelete(product.id)}
                   disabled={deleting === product.id}
                   className="text-gray-400 hover:text-red-600 transition disabled:opacity-50"

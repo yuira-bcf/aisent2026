@@ -112,6 +112,7 @@ export function FlavorNotesManager({ flavors }: { flavors: Flavor[] }) {
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-gray-400">{notes.length}件登録済</p>
         <button
+          type="button"
           onClick={() => setShowForm(true)}
           className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm hover:bg-gray-800 transition"
         >
@@ -126,8 +127,14 @@ export function FlavorNotesManager({ flavors }: { flavors: Flavor[] }) {
           className="border border-gray-200 p-4 mb-6 space-y-4"
         >
           <div>
-            <label className="block text-xs text-gray-500 mb-1">香料</label>
+            <label
+              htmlFor="input-selectedFlavor"
+              className="block text-xs text-gray-500 mb-1"
+            >
+              香料
+            </label>
             <select
+              id="input-selectedFlavor"
               value={selectedFlavor}
               onChange={(e) => setSelectedFlavor(e.target.value)}
               className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
@@ -142,12 +149,18 @@ export function FlavorNotesManager({ flavors }: { flavors: Flavor[] }) {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-xs text-gray-500">揮発性</label>
+              <label
+                htmlFor="input-volatility"
+                className="text-xs text-gray-500"
+              >
+                揮発性
+              </label>
               <span className="text-xs text-gray-400 tabular-nums">
                 {volatility}
               </span>
             </div>
             <input
+              id="input-volatility"
               type="range"
               min={0}
               max={100}
@@ -159,12 +172,18 @@ export function FlavorNotesManager({ flavors }: { flavors: Flavor[] }) {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-xs text-gray-500">香り強さ</label>
+              <label
+                htmlFor="input-intensity"
+                className="text-xs text-gray-500"
+              >
+                香り強さ
+              </label>
               <span className="text-xs text-gray-400 tabular-nums">
                 {intensity}
               </span>
             </div>
             <input
+              id="input-intensity"
               type="range"
               min={0}
               max={100}
@@ -176,8 +195,14 @@ export function FlavorNotesManager({ flavors }: { flavors: Flavor[] }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">重さ</label>
+              <label
+                htmlFor="input-weight"
+                className="block text-xs text-gray-500 mb-1"
+              >
+                重さ
+              </label>
               <select
+                id="input-weight"
                 value={weight}
                 onChange={(e) => setWeight(e.target.value)}
                 className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
@@ -190,8 +215,14 @@ export function FlavorNotesManager({ flavors }: { flavors: Flavor[] }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">温度感</label>
+              <label
+                htmlFor="input-temperature"
+                className="block text-xs text-gray-500 mb-1"
+              >
+                温度感
+              </label>
               <select
+                id="input-temperature"
                 value={temperature}
                 onChange={(e) => setTemperature(e.target.value)}
                 className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
@@ -206,8 +237,14 @@ export function FlavorNotesManager({ flavors }: { flavors: Flavor[] }) {
           </div>
 
           <div>
-            <label className="block text-xs text-gray-500 mb-1">メモ</label>
+            <label
+              htmlFor="input-memo"
+              className="block text-xs text-gray-500 mb-1"
+            >
+              メモ
+            </label>
             <textarea
+              id="input-memo"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               rows={2}
@@ -266,6 +303,7 @@ export function FlavorNotesManager({ flavors }: { flavors: Flavor[] }) {
                 {TEMP_OPTIONS.find((o) => o.value === note.temperature)?.label}
               </span>
               <button
+                type="button"
                 onClick={() => editNote(note)}
                 className="text-gray-400 hover:text-black transition"
               >

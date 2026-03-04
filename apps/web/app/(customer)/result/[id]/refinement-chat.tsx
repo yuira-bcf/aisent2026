@@ -78,7 +78,9 @@ export default function RefinementChat({
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2.5"
+                    aria-hidden="true"
                   >
+                    <title>送信</title>
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 )}

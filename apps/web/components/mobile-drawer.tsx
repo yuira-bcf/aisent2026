@@ -67,6 +67,12 @@ export default function MobileDrawer() {
           <div
             className="fixed inset-0 bg-black/50 z-50"
             onClick={() => setOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setOpen(false);
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label="メニューを閉じる"
           />
           <div className="fixed right-0 top-0 h-full w-72 bg-white z-50 overflow-y-auto p-4">
             <div className="flex items-center justify-between mb-4">

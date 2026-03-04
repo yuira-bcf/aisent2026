@@ -193,7 +193,7 @@ describe("Creator blend: rule filtering", () => {
     const roseB = resultB.find((r) => r.flavorId === "f-rose");
     expect(roseA).toBeDefined();
     expect(roseB).toBeDefined();
-    expect(Number(roseA!.ratio)).not.toBeCloseTo(Number(roseB!.ratio), 1);
+    expect(Number(roseA?.ratio)).not.toBeCloseTo(Number(roseB?.ratio), 1);
   });
 });
 
@@ -284,13 +284,13 @@ describe("Creator blend: styleFlavorPreferences boost", () => {
 
     const boosted = applyFlavorPreferences(results, { "f-rose": 15 });
 
-    const rose = boosted.find((r) => r.flavorId === "f-rose")!;
-    const jasmine = boosted.find((r) => r.flavorId === "f-jasmine")!;
+    const rose = boosted.find((r) => r.flavorId === "f-rose");
+    const jasmine = boosted.find((r) => r.flavorId === "f-jasmine");
 
     // Rose should take a larger share after boost
-    expect(Number(rose.ratio)).toBeGreaterThan(35);
+    expect(Number(rose?.ratio)).toBeGreaterThan(35);
     // Jasmine should shrink proportionally
-    expect(Number(jasmine.ratio)).toBeLessThan(55);
+    expect(Number(jasmine?.ratio)).toBeLessThan(55);
     // Total should still be ~100
     const total = boosted.reduce((sum, r) => sum + Number(r.ratio), 0);
     expect(total).toBeCloseTo(100, 0);
@@ -303,8 +303,8 @@ describe("Creator blend: styleFlavorPreferences boost", () => {
     ];
 
     const boosted = applyFlavorPreferences(results, { "f-rose": -20 });
-    const rose = boosted.find((r) => r.flavorId === "f-rose")!;
-    expect(Number(rose.ratio)).toBeLessThan(50);
+    const rose = boosted.find((r) => r.flavorId === "f-rose");
+    expect(Number(rose?.ratio)).toBeLessThan(50);
   });
 
   it("does not go below zero", () => {
@@ -314,8 +314,8 @@ describe("Creator blend: styleFlavorPreferences boost", () => {
     ];
 
     const boosted = applyFlavorPreferences(results, { "f-rose": -100 });
-    const rose = boosted.find((r) => r.flavorId === "f-rose")!;
-    expect(Number(rose.ratio)).toBeGreaterThanOrEqual(0);
+    const rose = boosted.find((r) => r.flavorId === "f-rose");
+    expect(Number(rose?.ratio)).toBeGreaterThanOrEqual(0);
   });
 });
 

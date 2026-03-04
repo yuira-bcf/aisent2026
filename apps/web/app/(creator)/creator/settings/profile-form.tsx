@@ -195,10 +195,14 @@ export function ProfileForm({
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+            <label
+              htmlFor="input-displayName"
+              className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+            >
               表示名
             </label>
             <input
+              id="input-displayName"
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
@@ -208,10 +212,14 @@ export function ProfileForm({
           </div>
 
           <div>
-            <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+            <label
+              htmlFor="input-bio"
+              className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+            >
               自己紹介
             </label>
             <textarea
+              id="input-bio"
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={4}
@@ -220,9 +228,9 @@ export function ProfileForm({
           </div>
 
           <div>
-            <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
               専門分野
-            </label>
+            </p>
             <div className="flex flex-wrap gap-2">
               {SPECIALTY_OPTIONS.map((s) => (
                 <button
@@ -243,10 +251,14 @@ export function ProfileForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+              <label
+                htmlFor="input-twitter"
+                className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+              >
                 Twitter URL
               </label>
               <input
+                id="input-twitter"
                 type="url"
                 value={twitter}
                 onChange={(e) => setTwitter(e.target.value)}
@@ -255,10 +267,14 @@ export function ProfileForm({
               />
             </div>
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+              <label
+                htmlFor="input-instagram"
+                className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+              >
                 Instagram URL
               </label>
               <input
+                id="input-instagram"
                 type="url"
                 value={instagram}
                 onChange={(e) => setInstagram(e.target.value)}
@@ -276,10 +292,14 @@ export function ProfileForm({
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+            <label
+              htmlFor="input-styleDescription"
+              className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+            >
               スタイル説明
             </label>
             <textarea
+              id="input-styleDescription"
               value={styleDescription}
               onChange={(e) => setStyleDescription(e.target.value)}
               rows={3}
@@ -289,10 +309,14 @@ export function ProfileForm({
           </div>
 
           <div>
-            <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+            <label
+              htmlFor="input-stylePrompt"
+              className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+            >
               スタイルプロンプト
             </label>
             <textarea
+              id="input-stylePrompt"
               value={stylePrompt}
               onChange={(e) => setStylePrompt(e.target.value)}
               rows={3}
@@ -303,9 +327,9 @@ export function ProfileForm({
 
           {/* Note Balance Sliders */}
           <div>
-            <label className="text-xs text-gray-400 uppercase tracking-wide mb-3 block">
+            <p className="text-xs text-gray-400 uppercase tracking-wide mb-3 block">
               ノートバランス
-            </label>
+            </p>
             <div className="space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-1">
@@ -367,13 +391,13 @@ export function ProfileForm({
           {/* Flavor Preferences */}
           {flavors && flavors.length > 0 && (
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide mb-3 block">
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-3 block">
                 フレーバー傾向
-              </label>
+              </p>
               <div className="space-y-2">
                 {flavorPrefs.map((pref, index) => (
                   <div
-                    key={index}
+                    key={`${pref.flavorId}-${index}`}
                     className="flex items-center gap-3 border border-gray-100 p-2"
                   >
                     <select

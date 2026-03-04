@@ -73,6 +73,7 @@ export function UserManager({ initialUsers }: { initialUsers: User[] }) {
         <div className="flex gap-1">
           {ROLE_FILTERS.map((rf) => (
             <button
+              type="button"
               key={rf.value}
               onClick={() => setRoleFilter(rf.value)}
               className={`px-3 py-2 text-xs font-medium transition ${

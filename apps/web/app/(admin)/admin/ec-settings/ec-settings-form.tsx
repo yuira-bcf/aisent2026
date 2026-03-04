@@ -55,8 +55,14 @@ export function EcSettingsForm({ initial }: { initial: EcSettingsData }) {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="border border-gray-200 p-6 space-y-5">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">送料 (円)</label>
+          <label
+            htmlFor="input-shippingFeeYen"
+            className="block text-xs text-gray-500 mb-1"
+          >
+            送料 (円)
+          </label>
           <input
+            id="input-shippingFeeYen"
             type="number"
             min={0}
             value={form.shippingFeeYen}
@@ -70,10 +76,14 @@ export function EcSettingsForm({ initial }: { initial: EcSettingsData }) {
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">
+          <label
+            htmlFor="input-freeShippingThreshold"
+            className="block text-xs text-gray-500 mb-1"
+          >
             送料無料しきい値 (円)
           </label>
           <input
+            id="input-freeShippingThreshold"
             type="number"
             min={0}
             value={form.freeShippingThresholdYen}
@@ -90,8 +100,14 @@ export function EcSettingsForm({ initial }: { initial: EcSettingsData }) {
           </p>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">税率 (%)</label>
+          <label
+            htmlFor="input-taxRate"
+            className="block text-xs text-gray-500 mb-1"
+          >
+            税率 (%)
+          </label>
           <input
+            id="input-taxRate"
             type="number"
             min={0}
             max={100}
@@ -107,10 +123,14 @@ export function EcSettingsForm({ initial }: { initial: EcSettingsData }) {
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">
+          <label
+            htmlFor="input-paymentProvider"
+            className="block text-xs text-gray-500 mb-1"
+          >
             決済プロバイダ
           </label>
           <select
+            id="input-paymentProvider"
             value={form.paymentProvider}
             onChange={(e) =>
               setForm({ ...form, paymentProvider: e.target.value })

@@ -60,6 +60,7 @@ export function ReviewsManager({
       <div className="flex gap-1 mb-6">
         {(["ALL", "visible", "hidden"] as const).map((f) => (
           <button
+            type="button"
             key={f}
             onClick={() => setVisibilityFilter(f)}
             className={`px-3 py-2 text-xs font-medium transition ${
@@ -120,6 +121,7 @@ export function ReviewsManager({
               </span>
               <span>
                 <button
+                  type="button"
                   onClick={() =>
                     handleToggleVisibility(review.id, review.isVisible)
                   }

@@ -46,6 +46,7 @@ export function ProhibitedManager({ flavors }: { flavors: Flavor[] }) {
     setItems(data.items);
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fetchItems is stable (only uses setState)
   useEffect(() => {
     fetchItems().finally(() => setLoading(false));
   }, []);
@@ -107,8 +108,14 @@ export function ProhibitedManager({ flavors }: { flavors: Flavor[] }) {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">香料A</label>
+            <label
+              htmlFor="input-flavorAId"
+              className="block text-xs text-gray-500 mb-1"
+            >
+              香料A
+            </label>
             <select
+              id="input-flavorAId"
               value={flavorAId}
               onChange={(e) => setFlavorAId(e.target.value)}
               className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
@@ -121,8 +128,14 @@ export function ProhibitedManager({ flavors }: { flavors: Flavor[] }) {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">香料B</label>
+            <label
+              htmlFor="input-flavorBId"
+              className="block text-xs text-gray-500 mb-1"
+            >
+              香料B
+            </label>
             <select
+              id="input-flavorBId"
               value={flavorBId}
               onChange={(e) => setFlavorBId(e.target.value)}
               className="w-full border border-gray-200 px-3 py-2 text-sm focus:border-black focus:outline-none"
@@ -137,7 +150,7 @@ export function ProhibitedManager({ flavors }: { flavors: Flavor[] }) {
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-2">禁止理由</label>
+          <p className="block text-xs text-gray-500 mb-2">禁止理由</p>
           <div className="flex flex-wrap gap-2">
             {REASON_OPTIONS.map((r) => (
               <button
@@ -160,8 +173,14 @@ export function ProhibitedManager({ flavors }: { flavors: Flavor[] }) {
         </div>
 
         <div>
-          <label className="block text-xs text-gray-500 mb-1">備考</label>
+          <label
+            htmlFor="input-prohibitedNotes"
+            className="block text-xs text-gray-500 mb-1"
+          >
+            備考
+          </label>
           <textarea
+            id="input-prohibitedNotes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
@@ -206,6 +225,7 @@ export function ProhibitedManager({ flavors }: { flavors: Flavor[] }) {
                 {REASON_OPTIONS.find((r) => r.value === item.reason)?.label}
               </span>
               <button
+                type="button"
                 onClick={() => handleDelete(item.id)}
                 disabled={deleting === item.id}
                 className="text-gray-400 hover:text-red-600 transition disabled:opacity-50"

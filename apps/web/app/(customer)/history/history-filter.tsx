@@ -133,7 +133,9 @@ export default function HistoryFilter({
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
+              aria-hidden="true"
             >
+              <title>検索</title>
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.3-4.3" />
             </svg>
@@ -211,6 +213,7 @@ export default function HistoryFilter({
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black text-white text-[10px]">
                 &quot;{currentSearch}&quot;{" "}
                 <button
+                  type="button"
                   onClick={() => clearFilter("search")}
                   className="ml-0.5 hover:text-gray-300"
                 >
@@ -222,6 +225,7 @@ export default function HistoryFilter({
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black text-white text-[10px]">
                 {seasonLabel}{" "}
                 <button
+                  type="button"
                   onClick={() => clearFilter("season")}
                   className="ml-0.5 hover:text-gray-300"
                 >
@@ -233,6 +237,7 @@ export default function HistoryFilter({
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black text-white text-[10px]">
                 {currentMood}{" "}
                 <button
+                  type="button"
                   onClick={() => clearFilter("mood")}
                   className="ml-0.5 hover:text-gray-300"
                 >
@@ -244,6 +249,7 @@ export default function HistoryFilter({
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black text-white text-[10px]">
                 {statusLabel}{" "}
                 <button
+                  type="button"
                   onClick={() => clearFilter("status")}
                   className="ml-0.5 hover:text-gray-300"
                 >
@@ -252,6 +258,7 @@ export default function HistoryFilter({
               </span>
             )}
             <button
+              type="button"
               onClick={clearAllFilters}
               className="text-[10px] text-gray-400 hover:text-black underline"
             >
@@ -270,6 +277,7 @@ export default function HistoryFilter({
           </p>
           <div className="flex items-center gap-1">
             <button
+              type="button"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage <= 1}
               className="w-8 h-8 flex items-center justify-center border border-gray-200 text-gray-300 rounded text-xs disabled:opacity-50"
@@ -281,13 +289,16 @@ export default function HistoryFilter({
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
+                aria-hidden="true"
               >
+                <title>前のページ</title>
                 <path d="m15 18-6-6 6-6" />
               </svg>
             </button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}
+                type="button"
                 onClick={() => handlePageChange(p)}
                 className={`w-8 h-8 flex items-center justify-center rounded text-xs font-medium ${
                   p === currentPage
@@ -299,6 +310,7 @@ export default function HistoryFilter({
               </button>
             ))}
             <button
+              type="button"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage >= totalPages}
               className="w-8 h-8 flex items-center justify-center border border-gray-200 text-gray-600 rounded text-xs hover:bg-gray-50 disabled:opacity-50"
@@ -310,7 +322,9 @@ export default function HistoryFilter({
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
+                aria-hidden="true"
               >
+                <title>次のページ</title>
                 <path d="m9 18 6-6-6-6" />
               </svg>
             </button>

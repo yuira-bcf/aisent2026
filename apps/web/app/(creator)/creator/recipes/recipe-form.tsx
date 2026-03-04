@@ -183,10 +183,14 @@ export function RecipeForm({
         <h2 className="text-sm font-bold text-black mb-4">基本情報</h2>
         <div className="space-y-4">
           <div>
-            <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+            <label
+              htmlFor="input-recipeName"
+              className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+            >
               レシピ名
             </label>
             <input
+              id="input-recipeName"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -195,10 +199,14 @@ export function RecipeForm({
             />
           </div>
           <div>
-            <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+            <label
+              htmlFor="input-recipeDescription"
+              className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+            >
               説明
             </label>
             <textarea
+              id="input-recipeDescription"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -206,10 +214,14 @@ export function RecipeForm({
             />
           </div>
           <div>
-            <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+            <label
+              htmlFor="input-recipeConcept"
+              className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+            >
               コンセプト
             </label>
             <textarea
+              id="input-recipeConcept"
               value={concept}
               onChange={(e) => setConcept(e.target.value)}
               rows={3}
@@ -218,10 +230,14 @@ export function RecipeForm({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+              <label
+                htmlFor="input-price30ml"
+                className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+              >
                 価格 30ml (円)
               </label>
               <input
+                id="input-price30ml"
                 type="number"
                 value={price30ml}
                 onChange={(e) => setPrice30ml(e.target.value)}
@@ -230,10 +246,14 @@ export function RecipeForm({
               />
             </div>
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+              <label
+                htmlFor="input-price50ml"
+                className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+              >
                 価格 50ml (円)
               </label>
               <input
+                id="input-price50ml"
                 type="number"
                 value={price50ml}
                 onChange={(e) => setPrice50ml(e.target.value)}
@@ -354,7 +374,7 @@ export function RecipeForm({
         <div className="space-y-2">
           {recipeFlavors.map((rf, index) => (
             <div
-              key={index}
+              key={`${rf.flavorId}-${index}`}
               className="flex items-center gap-3 border border-gray-100 p-2"
             >
               <select

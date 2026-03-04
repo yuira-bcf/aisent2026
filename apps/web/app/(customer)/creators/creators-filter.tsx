@@ -76,7 +76,9 @@ export default function CreatorsFilter() {
           fill="none"
           stroke="#999"
           strokeWidth="2"
+          aria-hidden="true"
         >
+          <title>検索</title>
           <circle cx="11" cy="11" r="8" />
           <path d="M21 21l-4.35-4.35" />
         </svg>
@@ -124,6 +126,7 @@ export default function CreatorsFilter() {
               {SPECIALTIES.find((s) => s.key === currentSpecialty)?.label ??
                 currentSpecialty}
               <button
+                type="button"
                 onClick={() => clearFilter("specialty")}
                 className="ml-0.5 opacity-70 hover:opacity-100"
               >
@@ -135,6 +138,7 @@ export default function CreatorsFilter() {
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-black text-white text-[10px]">
               {currentTier.replace("_", " ")}
               <button
+                type="button"
                 onClick={() => clearFilter("tier")}
                 className="ml-0.5 opacity-70 hover:opacity-100"
               >
@@ -146,6 +150,7 @@ export default function CreatorsFilter() {
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-black text-white text-[10px]">
               &quot;{currentSearch}&quot;
               <button
+                type="button"
                 onClick={() => {
                   setSearchValue("");
                   clearFilter("search");

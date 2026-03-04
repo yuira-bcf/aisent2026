@@ -168,9 +168,9 @@ export function ApplicationForm() {
         </div>
 
         <div>
-          <label className="text-xs font-medium text-gray-500 block mb-2">
+          <p className="text-xs font-medium text-gray-500 block mb-2">
             得意分野（1〜5つ選択）
-          </label>
+          </p>
           <div className="flex flex-wrap gap-2">
             {SPECIALTY_OPTIONS.map((option) => {
               const selected = specialties.includes(option.value);

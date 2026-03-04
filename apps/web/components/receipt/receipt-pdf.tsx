@@ -100,6 +100,7 @@ export function ReceiptDocument({ data }: { data: ReceiptData }) {
             <Text style={styles.colTotal}>金額</Text>
           </View>
           {data.items.map((item, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: order items may lack unique IDs
             <View key={i} style={styles.tableRow}>
               <Text style={styles.colName}>{item.productName}</Text>
               <Text style={styles.colQty}>{item.quantity}</Text>

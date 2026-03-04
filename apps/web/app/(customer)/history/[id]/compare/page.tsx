@@ -140,7 +140,10 @@ export default async function ComparePage({
           作成 {fmtDate(parentDate)} → 最終 {fmtDate(currentDate)}
         </span>
         <div className="h-4 w-px bg-gray-200" />
-        <button className="btn-secondary px-3 py-1.5 text-[10px] rounded">
+        <button
+          type="button"
+          className="btn-secondary px-3 py-1.5 text-[10px] rounded"
+        >
           共有
         </button>
         <a

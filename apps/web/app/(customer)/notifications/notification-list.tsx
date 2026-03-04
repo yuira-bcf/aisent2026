@@ -104,6 +104,7 @@ export function NotificationList({ initialItems, initialUnreadCount }: Props) {
       {unreadCount > 0 && (
         <div className="flex justify-end mb-4">
           <button
+            type="button"
             onClick={handleMarkAllAsRead}
             disabled={markingAll}
             className="text-xs text-gray-500 hover:text-black transition disabled:opacity-50"
@@ -116,6 +117,7 @@ export function NotificationList({ initialItems, initialUnreadCount }: Props) {
       <div className="border border-gray-200 divide-y divide-gray-100">
         {items.map((item) => (
           <button
+            type="button"
             key={item.id}
             onClick={() => {
               if (!item.isRead) handleMarkAsRead(item.id);

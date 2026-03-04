@@ -61,7 +61,7 @@ function ToggleGroup({
 }) {
   return (
     <div>
-      <label className="block text-xs text-gray-500 mb-2">{label}</label>
+      <p className="block text-xs text-gray-500 mb-2">{label}</p>
       <div className="flex flex-wrap gap-2">
         {options.map((opt) => (
           <button
@@ -254,10 +254,14 @@ export function AdvancedRecipeForm({ flavors }: { flavors: FlavorOption[] }) {
       <div className="border border-gray-200 p-6 mb-6 space-y-4">
         <h2 className="text-sm font-bold text-black">基本情報</h2>
         <div>
-          <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+          <label
+            htmlFor="input-advRecipeName"
+            className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+          >
             レシピ名
           </label>
           <input
+            id="input-advRecipeName"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -266,10 +270,14 @@ export function AdvancedRecipeForm({ flavors }: { flavors: FlavorOption[] }) {
           />
         </div>
         <div>
-          <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+          <label
+            htmlFor="input-advConcept"
+            className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+          >
             コンセプト
           </label>
           <textarea
+            id="input-advConcept"
             value={concept}
             onChange={(e) => setConcept(e.target.value)}
             rows={3}
@@ -326,7 +334,7 @@ export function AdvancedRecipeForm({ flavors }: { flavors: FlavorOption[] }) {
         <div className="space-y-2">
           {recipeFlavors.map((rf, index) => (
             <div
-              key={index}
+              key={`${rf.flavorId}-${index}`}
               className="flex items-center gap-3 border border-gray-100 p-2"
             >
               <select
@@ -416,6 +424,7 @@ export function AdvancedRecipeForm({ flavors }: { flavors: FlavorOption[] }) {
       {/* Actions */}
       <div className="flex items-center gap-3">
         <button
+          type="button"
           onClick={() => handleSubmit("DRAFT")}
           disabled={saving}
           className="px-4 py-2 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 transition disabled:opacity-50"
@@ -423,6 +432,7 @@ export function AdvancedRecipeForm({ flavors }: { flavors: FlavorOption[] }) {
           {saving ? "保存中..." : "下書き保存"}
         </button>
         <button
+          type="button"
           onClick={() => handleSubmit("PUBLISHED")}
           disabled={saving}
           className="px-4 py-2 text-sm bg-black text-white hover:bg-gray-800 transition disabled:opacity-50"

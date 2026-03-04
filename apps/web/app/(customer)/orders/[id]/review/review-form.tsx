@@ -65,9 +65,9 @@ export default function ReviewForm({
 
       {/* Star rating */}
       <div>
-        <label className="text-sm font-medium text-black block mb-3">
+        <p className="text-sm font-medium text-black block mb-3">
           評価 <span className="text-red-500">*</span>
-        </label>
+        </p>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
             <button

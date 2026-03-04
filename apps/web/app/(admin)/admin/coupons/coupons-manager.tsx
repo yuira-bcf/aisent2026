@@ -127,6 +127,7 @@ export function CouponsManager({
         <div className="flex gap-1">
           {(["ALL", "active", "inactive"] as const).map((s) => (
             <button
+              type="button"
               key={s}
               onClick={() => setStatusFilter(s)}
               className={`px-3 py-2 text-xs font-medium transition ${
@@ -140,6 +141,7 @@ export function CouponsManager({
           ))}
         </div>
         <button
+          type="button"
           onClick={openNewForm}
           className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm font-medium hover:bg-gray-800 transition"
         >
@@ -159,10 +161,14 @@ export function CouponsManager({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-couponCode"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 クーポンコード
               </label>
               <input
+                id="input-couponCode"
                 type="text"
                 required
                 maxLength={50}
@@ -172,10 +178,14 @@ export function CouponsManager({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-discountType"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 割引タイプ
               </label>
               <select
+                id="input-discountType"
                 value={form.discountType}
                 onChange={(e) =>
                   setForm({
@@ -190,10 +200,14 @@ export function CouponsManager({
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-discountValue"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 割引値{form.discountType === "PERCENT" ? "（%）" : "（円）"}
               </label>
               <input
+                id="input-discountValue"
                 type="number"
                 required
                 min={1}
@@ -209,10 +223,14 @@ export function CouponsManager({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-minOrderYen"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 最小注文額（円）
               </label>
               <input
+                id="input-minOrderYen"
                 type="number"
                 min={0}
                 value={form.minOrderYen}
@@ -226,10 +244,14 @@ export function CouponsManager({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-maxUses"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 使用上限（空欄=無制限）
               </label>
               <input
+                id="input-maxUses"
                 type="number"
                 min={1}
                 value={form.maxUses}
@@ -238,10 +260,14 @@ export function CouponsManager({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-validUntil"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 有効期限（空欄=無期限）
               </label>
               <input
+                id="input-validUntil"
                 type="date"
                 value={form.validUntil}
                 onChange={(e) =>
@@ -326,6 +352,7 @@ export function CouponsManager({
               </span>
               <span className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => openEditForm(coupon)}
                   className="text-gray-400 hover:text-black transition"
                   title="編集"
@@ -335,6 +362,7 @@ export function CouponsManager({
                   </span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleDelete(coupon.id)}
                   disabled={deleting === coupon.id}
                   className="text-gray-400 hover:text-red-600 transition disabled:opacity-50"

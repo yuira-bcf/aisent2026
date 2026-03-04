@@ -450,7 +450,7 @@ export async function getPublishedRecipes(
   const where = and(...conditions);
 
   // Determine sort order
-  let orderByClause;
+  let orderByClause: ReturnType<typeof desc>;
   switch (filters?.sortBy) {
     case "popular":
       orderByClause = desc(signatureRecipes.orderCount);

@@ -95,6 +95,7 @@ export function ApplicationsManager({
       <div className="flex gap-1 mb-6 flex-wrap">
         {STATUS_TABS.map((tab) => (
           <button
+            type="button"
             key={tab.value}
             onClick={() => setStatusFilter(tab.value)}
             className={`px-3 py-2 text-xs font-medium transition ${
@@ -168,6 +169,7 @@ export function ApplicationsManager({
                     {app.status === "PENDING" && (
                       <div className="flex gap-1">
                         <button
+                          type="button"
                           onClick={() => handleApprove(app.id)}
                           disabled={processing === app.id}
                           className="px-2 py-1 text-xs bg-black text-white hover:bg-gray-800 transition disabled:opacity-50"
@@ -175,6 +177,7 @@ export function ApplicationsManager({
                           承認
                         </button>
                         <button
+                          type="button"
                           onClick={() => setRejectingId(app.id)}
                           disabled={processing === app.id}
                           className="px-2 py-1 text-xs border border-gray-200 text-gray-600 hover:border-black hover:text-black transition disabled:opacity-50"
@@ -191,10 +194,14 @@ export function ApplicationsManager({
                   <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
                     <div className="flex gap-2 items-end">
                       <div className="flex-1">
-                        <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+                        <label
+                          htmlFor="input-rejectionReason"
+                          className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+                        >
                           却下理由
                         </label>
                         <input
+                          id="input-rejectionReason"
                           type="text"
                           value={rejectionReason}
                           onChange={(e) => setRejectionReason(e.target.value)}
@@ -203,6 +210,7 @@ export function ApplicationsManager({
                         />
                       </div>
                       <button
+                        type="button"
                         onClick={() => handleReject(app.id)}
                         disabled={
                           processing === app.id || !rejectionReason.trim()
@@ -212,6 +220,7 @@ export function ApplicationsManager({
                         確定
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setRejectingId(null);
                           setRejectionReason("");

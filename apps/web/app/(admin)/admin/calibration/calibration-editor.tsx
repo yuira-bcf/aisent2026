@@ -211,7 +211,10 @@ export function CalibrationEditor({
               {params.map((def) => (
                 <div key={def.paramName} className="px-4 py-4">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-black">
+                    <label
+                      htmlFor={`input-${def.paramName}`}
+                      className="text-sm font-medium text-black"
+                    >
                       {def.label}
                     </label>
                     <span className="text-sm font-mono text-black tabular-nums">
@@ -221,6 +224,7 @@ export function CalibrationEditor({
                     </span>
                   </div>
                   <input
+                    id={`input-${def.paramName}`}
                     type="range"
                     min={def.min}
                     max={def.max}
@@ -246,6 +250,7 @@ export function CalibrationEditor({
 
       <div className="flex items-center gap-3">
         <button
+          type="button"
           onClick={handleSave}
           disabled={saving}
           className="bg-black text-white px-6 py-2 text-sm font-medium hover:bg-gray-800 transition disabled:opacity-50"
@@ -253,6 +258,7 @@ export function CalibrationEditor({
           {saving ? "保存中..." : "保存"}
         </button>
         <button
+          type="button"
           onClick={resetToDefaults}
           className="bg-gray-100 text-gray-600 px-4 py-2 text-sm font-medium hover:bg-gray-200 transition"
         >

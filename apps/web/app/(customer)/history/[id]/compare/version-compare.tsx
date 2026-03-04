@@ -243,7 +243,9 @@ function FragranceMap() {
             overflow: "visible",
           }}
           viewBox="0 0 40 40"
+          aria-hidden="true"
         >
+          <title>バージョン間の矢印</title>
           <defs>
             <marker
               id="ah"

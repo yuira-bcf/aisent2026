@@ -112,10 +112,14 @@ export function ProfileEditor({ user }: ProfileEditorProps) {
 
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+              <label
+                htmlFor="input-profileName"
+                className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+              >
                 名前
               </label>
               <input
+                id="input-profileName"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -125,26 +129,26 @@ export function ProfileEditor({ user }: ProfileEditorProps) {
             </div>
 
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
                 メールアドレス
-              </label>
+              </p>
               <p className="text-sm text-gray-600">{user.email}</p>
             </div>
 
             <div className="flex items-center gap-4">
               <div>
-                <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
                   ロール
-                </label>
+                </p>
                 <span className="inline-block px-2 py-0.5 text-xs bg-gray-100 text-gray-700">
                   {roleLabelMap[user.role] ?? user.role}
                 </span>
               </div>
 
               <div>
-                <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
                   登録日
-                </label>
+                </p>
                 <p className="text-sm text-gray-600">
                   {new Date(user.createdAt).toLocaleDateString("ja-JP")}
                 </p>
@@ -171,10 +175,14 @@ export function ProfileEditor({ user }: ProfileEditorProps) {
 
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+              <label
+                htmlFor="input-currentPassword"
+                className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+              >
                 現在のパスワード
               </label>
               <input
+                id="input-currentPassword"
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
@@ -184,10 +192,14 @@ export function ProfileEditor({ user }: ProfileEditorProps) {
             </div>
 
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+              <label
+                htmlFor="input-newPassword"
+                className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+              >
                 新しいパスワード
               </label>
               <input
+                id="input-newPassword"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -199,10 +211,14 @@ export function ProfileEditor({ user }: ProfileEditorProps) {
             </div>
 
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide mb-1 block">
+              <label
+                htmlFor="input-confirmPassword"
+                className="text-xs text-gray-400 uppercase tracking-wide mb-1 block"
+              >
                 新しいパスワード（確認）
               </label>
               <input
+                id="input-confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

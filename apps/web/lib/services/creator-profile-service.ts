@@ -288,7 +288,7 @@ export async function getActiveCreators(
 ): Promise<{ items: CreatorListItem[]; total: number }> {
   const offset = (page - 1) * limit;
 
-  let orderByClause;
+  let orderByClause: ReturnType<typeof desc>;
   switch (filters?.sortBy) {
     case "rating":
       orderByClause = desc(creatorStats.avgRating);

@@ -201,7 +201,9 @@ function CreatorCard({
             height="48"
             viewBox="0 0 100 100"
             className="shrink-0"
+            aria-hidden="true"
           >
+            <title>スキルレーダー</title>
             <polygon
               points="50,10 90,35 90,75 50,95 10,75 10,35"
               fill="none"
@@ -221,6 +223,7 @@ function CreatorCard({
               strokeWidth="1.5"
             />
             {radarPointsParsed.map(([cx, cy], i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static radar points
               <circle key={i} cx={cx} cy={cy} r="2" fill={radarColor} />
             ))}
           </svg>
@@ -251,7 +254,10 @@ function CreatorCard({
           </div>
         )}
 
-        <button className="btn-primary w-full py-1.5 text-[10px] opacity-0 group-hover:opacity-100 transition">
+        <button
+          type="button"
+          className="btn-primary w-full py-1.5 text-[10px] opacity-0 group-hover:opacity-100 transition"
+        >
           この人で調合する
         </button>
       </div>
@@ -336,7 +342,10 @@ export default async function CreatorsPage({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-gray-200 text-[11px] text-gray-500 hover:border-black hover:text-black transition">
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-gray-200 text-[11px] text-gray-500 hover:border-black hover:text-black transition"
+              >
                 <svg
                   width="12"
                   height="12"
@@ -344,13 +353,18 @@ export default async function CreatorsPage({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
+                  aria-hidden="true"
                 >
+                  <title>比較モード</title>
                   <rect x="3" y="3" width="7" height="18" rx="1" />
                   <rect x="14" y="3" width="7" height="18" rx="1" />
                 </svg>
                 比較モード
               </button>
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-gray-200 text-[11px] text-gray-500 hover:border-black hover:text-black transition">
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-gray-200 text-[11px] text-gray-500 hover:border-black hover:text-black transition"
+              >
                 <svg
                   width="12"
                   height="12"
@@ -358,7 +372,9 @@ export default async function CreatorsPage({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
+                  aria-hidden="true"
                 >
+                  <title>マップで探す</title>
                   <circle cx="12" cy="12" r="10" />
                   <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
                 </svg>
@@ -405,7 +421,9 @@ export default async function CreatorsPage({
                     height="10"
                     viewBox="0 0 24 24"
                     fill="currentColor"
+                    aria-hidden="true"
                   >
+                    <title>おすすめ</title>
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                   PICK UP — 今週のおすすめ
@@ -530,7 +548,9 @@ export default async function CreatorsPage({
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
+                  aria-hidden="true"
                 >
+                  <title>分布マップ</title>
                   <circle cx="12" cy="12" r="10" />
                   <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
                 </svg>
@@ -580,7 +600,10 @@ export default async function CreatorsPage({
                 <p className="text-[9px] text-gray-400 text-center">
                   得意エリアでクリエーターを探す
                 </p>
-                <button className="w-full mt-2 py-1.5 rounded border border-gray-200 text-[10px] text-gray-500 hover:border-black hover:text-black transition">
+                <button
+                  type="button"
+                  className="w-full mt-2 py-1.5 rounded border border-gray-200 text-[10px] text-gray-500 hover:border-black hover:text-black transition"
+                >
                   マップを拡大して探索 →
                 </button>
               </div>

@@ -26,6 +26,7 @@ export default function KeywordsFilter() {
       {FILTER_OPTIONS.map((opt) => (
         <button
           key={opt.key}
+          type="button"
           onClick={() => handleFilterClick(opt.key)}
           className={`px-3 py-1.5 text-xs transition ${
             currentFilter === opt.key

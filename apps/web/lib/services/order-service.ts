@@ -162,7 +162,7 @@ export async function createOrder(
   return {
     success: true,
     orderId: order.id,
-    stripeSessionUrl: session.url!,
+    stripeSessionUrl: session.url ?? "",
   };
 }
 
@@ -177,7 +177,7 @@ export async function handleStripeWebhook(
   const event = stripe.webhooks.constructEvent(
     payload,
     signature,
-    process.env.STRIPE_WEBHOOK_SECRET!,
+    process.env.STRIPE_WEBHOOK_SECRET ?? "",
   );
 
   switch (event.type) {

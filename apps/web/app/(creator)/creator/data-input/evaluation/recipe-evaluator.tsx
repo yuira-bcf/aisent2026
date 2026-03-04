@@ -197,12 +197,14 @@ export function RecipeEvaluator({ recipes }: { recipes: Recipe[] }) {
       {/* Actions */}
       <div className="flex items-center gap-3">
         <button
+          type="button"
           onClick={() => evaluate(true)}
           className="flex-1 px-4 py-3 text-sm bg-black text-white hover:bg-gray-800 transition"
         >
           採用
         </button>
         <button
+          type="button"
           onClick={() => evaluate(false)}
           className="flex-1 px-4 py-3 text-sm border border-gray-200 text-gray-600 hover:border-black transition"
         >

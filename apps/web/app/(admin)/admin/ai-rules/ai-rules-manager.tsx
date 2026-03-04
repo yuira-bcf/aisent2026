@@ -158,6 +158,7 @@ export function AiRulesManager({ initialRules }: { initialRules: AiRule[] }) {
           {(["ALL", ...RULE_TYPE_OPTIONS.map((o) => o.value)] as const).map(
             (rt) => (
               <button
+                type="button"
                 key={rt}
                 onClick={() => setTypeFilter(rt as RuleType | "ALL")}
                 className={`px-3 py-2 text-xs font-medium transition ${
@@ -175,6 +176,7 @@ export function AiRulesManager({ initialRules }: { initialRules: AiRule[] }) {
           )}
         </div>
         <button
+          type="button"
           onClick={openNewForm}
           className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm font-medium hover:bg-gray-800 transition"
         >
@@ -194,10 +196,14 @@ export function AiRulesManager({ initialRules }: { initialRules: AiRule[] }) {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-ruleName"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 ルール名
               </label>
               <input
+                id="input-ruleName"
                 type="text"
                 required
                 maxLength={100}
@@ -207,8 +213,14 @@ export function AiRulesManager({ initialRules }: { initialRules: AiRule[] }) {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">タイプ</label>
+              <label
+                htmlFor="input-ruleType"
+                className="block text-xs text-gray-500 mb-1"
+              >
+                タイプ
+              </label>
               <select
+                id="input-ruleType"
                 value={form.ruleType}
                 onChange={(e) =>
                   setForm({ ...form, ruleType: e.target.value as RuleType })
@@ -223,8 +235,14 @@ export function AiRulesManager({ initialRules }: { initialRules: AiRule[] }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">優先度</label>
+              <label
+                htmlFor="input-priority"
+                className="block text-xs text-gray-500 mb-1"
+              >
+                優先度
+              </label>
               <input
+                id="input-priority"
                 type="number"
                 value={form.priority}
                 onChange={(e) =>
@@ -251,8 +269,14 @@ export function AiRulesManager({ initialRules }: { initialRules: AiRule[] }) {
             </div>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">説明</label>
+            <label
+              htmlFor="input-ruleDescription"
+              className="block text-xs text-gray-500 mb-1"
+            >
+              説明
+            </label>
             <textarea
+              id="input-ruleDescription"
               maxLength={500}
               value={form.description}
               onChange={(e) =>
@@ -263,10 +287,14 @@ export function AiRulesManager({ initialRules }: { initialRules: AiRule[] }) {
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">
+            <label
+              htmlFor="input-ruleParameter"
+              className="block text-xs text-gray-500 mb-1"
+            >
               パラメータ (JSON)
             </label>
             <textarea
+              id="input-ruleParameter"
               value={form.parameter}
               onChange={(e) => setForm({ ...form, parameter: e.target.value })}
               rows={3}
@@ -327,6 +355,7 @@ export function AiRulesManager({ initialRules }: { initialRules: AiRule[] }) {
               <span className="text-xs text-gray-400">{rule.priority}</span>
               <span>
                 <button
+                  type="button"
                   onClick={() => handleToggleActive(rule)}
                   className={`text-xs px-2 py-0.5 font-medium cursor-pointer ${
                     rule.isActive
@@ -339,6 +368,7 @@ export function AiRulesManager({ initialRules }: { initialRules: AiRule[] }) {
               </span>
               <span className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => openEditForm(rule)}
                   className="text-gray-400 hover:text-black transition"
                   title="編集"
@@ -348,6 +378,7 @@ export function AiRulesManager({ initialRules }: { initialRules: AiRule[] }) {
                   </span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleDelete(rule.id)}
                   disabled={deleting === rule.id}
                   className="text-gray-400 hover:text-red-600 transition disabled:opacity-50"

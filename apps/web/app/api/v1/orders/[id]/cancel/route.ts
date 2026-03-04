@@ -20,7 +20,7 @@ export const POST = safeHandler(async (req: NextRequest, ctx) => {
   const result = await cancelOrder(id, authResult.userId, reason);
 
   if (!result.success) {
-    return VALIDATION_ERROR(result.error!);
+    return VALIDATION_ERROR(result.error ?? "不明なエラー");
   }
 
   return apiSuccess({ cancelled: true });

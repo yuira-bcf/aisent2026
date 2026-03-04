@@ -57,6 +57,7 @@ export function OrderDetailActions({
         ))}
       </select>
       <button
+        type="button"
         onClick={handleUpdate}
         disabled={updating || status === currentStatus}
         className="bg-black text-white px-4 py-2 text-sm font-medium hover:bg-gray-800 transition disabled:opacity-50"

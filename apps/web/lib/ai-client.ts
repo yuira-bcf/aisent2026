@@ -155,7 +155,7 @@ export async function suggestRules(
     return parsed
       .filter((item) => flavorMap.has(item.nameEn))
       .map((item) => ({
-        flavorId: flavorMap.get(item.nameEn)!,
+        flavorId: flavorMap.get(item.nameEn) ?? "",
         weight: Math.round(item.weight * 20) / 20, // Round to 0.05
         noteType: item.noteType,
       }));

@@ -163,8 +163,11 @@ export default function AddressForm({
 
       {/* Label */}
       <div>
-        <label className={labelClass}>ラベル</label>
+        <label htmlFor="input-addressLabel" className={labelClass}>
+          ラベル
+        </label>
         <input
+          id="input-addressLabel"
           type="text"
           value={form.label}
           onChange={(e) => updateField("label", e.target.value)}
@@ -176,8 +179,11 @@ export default function AddressForm({
 
       {/* Recipient name */}
       <div>
-        <label className={labelClass}>受取人氏名</label>
+        <label htmlFor="input-recipientName" className={labelClass}>
+          受取人氏名
+        </label>
         <input
+          id="input-recipientName"
           type="text"
           value={form.recipientName}
           onChange={(e) => updateField("recipientName", e.target.value)}
@@ -190,8 +196,11 @@ export default function AddressForm({
       {/* Postal code + Prefecture row */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>郵便番号</label>
+          <label htmlFor="input-postalCode" className={labelClass}>
+            郵便番号
+          </label>
           <input
+            id="input-postalCode"
             type="text"
             value={form.postalCode}
             onChange={(e) => updateField("postalCode", e.target.value)}
@@ -201,8 +210,11 @@ export default function AddressForm({
           />
         </div>
         <div>
-          <label className={labelClass}>都道府県</label>
+          <label htmlFor="input-prefecture" className={labelClass}>
+            都道府県
+          </label>
           <select
+            id="input-prefecture"
             value={form.prefecture}
             onChange={(e) => updateField("prefecture", e.target.value)}
             required
@@ -220,8 +232,11 @@ export default function AddressForm({
 
       {/* City */}
       <div>
-        <label className={labelClass}>市区町村</label>
+        <label htmlFor="input-city" className={labelClass}>
+          市区町村
+        </label>
         <input
+          id="input-city"
           type="text"
           value={form.city}
           onChange={(e) => updateField("city", e.target.value)}
@@ -233,8 +248,11 @@ export default function AddressForm({
 
       {/* Address line 1 */}
       <div>
-        <label className={labelClass}>番地</label>
+        <label htmlFor="input-addressLine1" className={labelClass}>
+          番地
+        </label>
         <input
+          id="input-addressLine1"
           type="text"
           value={form.addressLine1}
           onChange={(e) => updateField("addressLine1", e.target.value)}
@@ -246,11 +264,12 @@ export default function AddressForm({
 
       {/* Address line 2 */}
       <div>
-        <label className={labelClass}>
+        <label htmlFor="input-addressLine2" className={labelClass}>
           建物名・部屋番号
           <span className="text-gray-300 ml-1">（任意）</span>
         </label>
         <input
+          id="input-addressLine2"
           type="text"
           value={form.addressLine2}
           onChange={(e) => updateField("addressLine2", e.target.value)}
@@ -261,8 +280,11 @@ export default function AddressForm({
 
       {/* Phone */}
       <div>
-        <label className={labelClass}>電話番号</label>
+        <label htmlFor="input-phone" className={labelClass}>
+          電話番号
+        </label>
         <input
+          id="input-phone"
           type="tel"
           value={form.phone}
           onChange={(e) => updateField("phone", e.target.value)}

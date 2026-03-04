@@ -189,8 +189,14 @@ export default function RuleEditor({
                       </select>
 
                       <div className="flex items-center gap-1">
-                        <label className="text-xs text-gray-400">重み:</label>
+                        <label
+                          htmlFor={`input-ruleWeight-${rule.originalIndex}`}
+                          className="text-xs text-gray-400"
+                        >
+                          重み:
+                        </label>
                         <input
+                          id={`input-ruleWeight-${rule.originalIndex}`}
                           type="number"
                           min={0}
                           max={1}

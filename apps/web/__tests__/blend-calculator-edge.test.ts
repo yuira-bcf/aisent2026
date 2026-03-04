@@ -34,8 +34,8 @@ describe("calculateAutoBlend — extreme weights", () => {
 
     expect(sumRatios(result)).toBeCloseTo(100, 0);
     // f1 should dominate
-    const f1 = result.find((r) => r.flavorId === "f1")!;
-    expect(Number(f1.ratio)).toBeGreaterThan(99);
+    const f1 = result.find((r) => r.flavorId === "f1");
+    expect(Number(f1?.ratio)).toBeGreaterThan(99);
   });
 
   it("handles fractional keyword weights", () => {
@@ -184,9 +184,9 @@ describe("calculateAutoBlendGrouped — score accumulation edge cases", () => {
 
     // f-zero has weight 10*0=0, f-real has weight 1*5=5
     // Only f-real should effectively contribute
-    const fReal = result.find((r) => r.flavorId === "f-real")!;
+    const fReal = result.find((r) => r.flavorId === "f-real");
     expect(fReal).toBeDefined();
-    expect(Number(fReal.ratio)).toBeGreaterThan(0);
+    expect(Number(fReal?.ratio)).toBeGreaterThan(0);
     expect(sumRatios(result)).toBeCloseTo(100, 0);
   });
 });

@@ -54,6 +54,7 @@ export function UsersManager({ initialUsers }: { initialUsers: User[] }) {
         <div className="flex gap-1">
           {["ALL", ...ROLES].map((r) => (
             <button
+              type="button"
               key={r}
               onClick={() => setFilter(r)}
               className={`px-3 py-1 text-xs rounded-full border transition ${

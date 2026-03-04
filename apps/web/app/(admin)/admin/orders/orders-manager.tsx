@@ -82,6 +82,7 @@ export function OrderManager({ initialOrders }: { initialOrders: Order[] }) {
       <div className="flex gap-1 mb-6 flex-wrap">
         {STATUS_TABS.map((tab) => (
           <button
+            type="button"
             key={tab.value}
             onClick={() => setStatusFilter(tab.value)}
             className={`px-3 py-2 text-xs font-medium transition ${

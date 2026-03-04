@@ -38,6 +38,7 @@ export default async function HelpPage() {
 
       <div className="space-y-2 mb-10">
         {faqs.map((faq, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static FAQ list
           <details key={i} className="border border-gray-200 bg-white group">
             <summary className="flex items-center justify-between px-4 py-3 text-sm font-medium cursor-pointer select-none">
               <span>{faq.q}</span>

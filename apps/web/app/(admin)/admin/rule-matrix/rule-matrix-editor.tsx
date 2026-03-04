@@ -161,6 +161,7 @@ export function RuleMatrixEditor({
       <div className="flex items-center gap-1 mb-4">
         {CATEGORIES.map((cat) => (
           <button
+            type="button"
             key={cat}
             onClick={() => {
               setCategoryFilter(cat);
@@ -238,6 +239,11 @@ export function RuleMatrixEditor({
                         className="border-b border-r border-gray-100 px-1 py-1 text-center cursor-pointer hover:ring-1 hover:ring-black hover:ring-inset"
                         style={isEditing ? undefined : getWeightStyle(weight)}
                         onClick={() => !isEditing && openEdit(kw.id, f.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            !isEditing && openEdit(kw.id, f.id);
+                          }
+                        }}
                         title={`${kw.word} x ${f.nameJa}: ${weight}`}
                       >
                         {isEditing ? (
@@ -257,6 +263,7 @@ export function RuleMatrixEditor({
                             />
                             <div className="flex gap-1">
                               <button
+                                type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   saveWeight();
@@ -267,6 +274,7 @@ export function RuleMatrixEditor({
                                 OK
                               </button>
                               <button
+                                type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setEditingCell(null);
@@ -305,6 +313,7 @@ export function RuleMatrixEditor({
         <div className="flex items-center gap-2">
           <span>キーワード:</span>
           <button
+            type="button"
             onClick={() => setKeywordPage((p) => Math.max(0, p - 1))}
             disabled={keywordPage === 0}
             className="px-2 py-1 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-30"
@@ -315,6 +324,7 @@ export function RuleMatrixEditor({
             {keywordPage + 1} / {totalKeywordPages}
           </span>
           <button
+            type="button"
             onClick={() =>
               setKeywordPage((p) => Math.min(totalKeywordPages - 1, p + 1))
             }
@@ -327,6 +337,7 @@ export function RuleMatrixEditor({
         <div className="flex items-center gap-2">
           <span>香料:</span>
           <button
+            type="button"
             onClick={() => setFlavorPage((p) => Math.max(0, p - 1))}
             disabled={flavorPage === 0}
             className="px-2 py-1 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-30"
@@ -337,6 +348,7 @@ export function RuleMatrixEditor({
             {flavorPage + 1} / {totalFlavorPages}
           </span>
           <button
+            type="button"
             onClick={() =>
               setFlavorPage((p) => Math.min(totalFlavorPages - 1, p + 1))
             }

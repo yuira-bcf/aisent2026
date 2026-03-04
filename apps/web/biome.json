@@ -37,6 +37,8 @@
       "node_modules",
       ".next",
       "dist",
+      "test-results",
+      "playwright-report",
       "*.config.js",
       "*.config.ts",
       "*.config.mjs"

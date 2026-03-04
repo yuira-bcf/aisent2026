@@ -171,6 +171,7 @@ export function CompatibilitySwipe() {
           {/* Actions */}
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={handleConfirm}
               disabled={saving}
               className="flex-1 px-4 py-3 text-sm bg-black text-white hover:bg-gray-800 transition disabled:opacity-50"
@@ -178,6 +179,7 @@ export function CompatibilitySwipe() {
               {saving ? "保存中..." : "確定"}
             </button>
             <button
+              type="button"
               onClick={handleSkip}
               disabled={saving}
               className="px-4 py-3 text-sm text-gray-600 border border-gray-200 hover:border-black transition"

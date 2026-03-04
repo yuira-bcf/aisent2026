@@ -126,6 +126,7 @@ export function FlavorsManager({
         <div className="flex gap-1">
           {(["ALL", "TOP", "MIDDLE", "LAST"] as const).map((nt) => (
             <button
+              type="button"
               key={nt}
               onClick={() => setNoteFilter(nt)}
               className={`px-3 py-2 text-xs font-medium transition ${
@@ -139,6 +140,7 @@ export function FlavorsManager({
           ))}
         </div>
         <button
+          type="button"
           onClick={openNewForm}
           className="flex items-center gap-1 bg-black text-white px-4 py-2 text-sm font-medium hover:bg-gray-800 transition"
         >
@@ -158,10 +160,14 @@ export function FlavorsManager({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-flavorNameJa"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 名前（日本語）
               </label>
               <input
+                id="input-flavorNameJa"
                 type="text"
                 required
                 maxLength={100}
@@ -171,10 +177,14 @@ export function FlavorsManager({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-flavorNameEn"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 名前（英語）
               </label>
               <input
+                id="input-flavorNameEn"
                 type="text"
                 required
                 maxLength={100}
@@ -184,10 +194,14 @@ export function FlavorsManager({
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label
+                htmlFor="input-flavorNoteType"
+                className="block text-xs text-gray-500 mb-1"
+              >
                 ノートタイプ
               </label>
               <select
+                id="input-flavorNoteType"
                 value={form.noteType}
                 onChange={(e) =>
                   setForm({ ...form, noteType: e.target.value as NoteType })
@@ -202,8 +216,14 @@ export function FlavorsManager({
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">表示順</label>
+              <label
+                htmlFor="input-flavorSortOrder"
+                className="block text-xs text-gray-500 mb-1"
+              >
+                表示順
+              </label>
               <input
+                id="input-flavorSortOrder"
                 type="number"
                 value={form.sortOrder}
                 onChange={(e) =>
@@ -217,8 +237,14 @@ export function FlavorsManager({
             </div>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">説明</label>
+            <label
+              htmlFor="input-flavorDescription"
+              className="block text-xs text-gray-500 mb-1"
+            >
+              説明
+            </label>
             <textarea
+              id="input-flavorDescription"
               maxLength={500}
               value={form.description}
               onChange={(e) =>
@@ -285,6 +311,7 @@ export function FlavorsManager({
               </span>
               <span className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => openEditForm(flavor)}
                   className="text-gray-400 hover:text-black transition"
                   title="編集"
@@ -294,6 +321,7 @@ export function FlavorsManager({
                   </span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleDelete(flavor.id)}
                   disabled={deleting === flavor.id}
                   className="text-gray-400 hover:text-red-600 transition disabled:opacity-50"

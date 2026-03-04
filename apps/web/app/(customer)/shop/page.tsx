@@ -126,16 +126,28 @@ export default async function ShopPage() {
               容量
             </p>
             <div className="flex gap-1">
-              <button className="px-2.5 py-1 text-[10px] bg-black text-white rounded">
+              <button
+                type="button"
+                className="px-2.5 py-1 text-[10px] bg-black text-white rounded"
+              >
                 ALL
               </button>
-              <button className="px-2.5 py-1 text-[10px] border border-gray-200 text-gray-500 rounded hover:border-black">
+              <button
+                type="button"
+                className="px-2.5 py-1 text-[10px] border border-gray-200 text-gray-500 rounded hover:border-black"
+              >
                 30ml
               </button>
-              <button className="px-2.5 py-1 text-[10px] border border-gray-200 text-gray-500 rounded hover:border-black">
+              <button
+                type="button"
+                className="px-2.5 py-1 text-[10px] border border-gray-200 text-gray-500 rounded hover:border-black"
+              >
                 50ml
               </button>
-              <button className="px-2.5 py-1 text-[10px] border border-gray-200 text-gray-500 rounded hover:border-black">
+              <button
+                type="button"
+                className="px-2.5 py-1 text-[10px] border border-gray-200 text-gray-500 rounded hover:border-black"
+              >
                 100ml
               </button>
             </div>
@@ -198,16 +210,19 @@ export default async function ShopPage() {
 
           {/* Toggles */}
           <div className="space-y-2 pt-1">
-            <label className="flex items-center justify-between text-[11px] text-gray-600 cursor-pointer">
+            <div className="flex items-center justify-between text-[11px] text-gray-600 cursor-pointer">
               在庫ありのみ
               <div className="w-8 h-4 rounded-full bg-black relative">
                 <div className="w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 right-0.5 shadow-sm" />
               </div>
-            </label>
+            </div>
           </div>
 
           {/* Clear */}
-          <button className="w-full py-1.5 text-[10px] text-gray-400 hover:text-black border border-gray-200 rounded transition">
+          <button
+            type="button"
+            className="w-full py-1.5 text-[10px] text-gray-400 hover:text-black border border-gray-200 rounded transition"
+          >
             フィルターをクリア
           </button>
         </div>
@@ -232,12 +247,18 @@ export default async function ShopPage() {
                 <option>評価順</option>
               </select>
               <div className="flex border border-gray-200 rounded overflow-hidden">
-                <button className="px-2 py-1.5 bg-black text-white">
+                <button
+                  type="button"
+                  className="px-2 py-1.5 bg-black text-white"
+                >
                   <span className="material-symbols-outlined text-[14px]">
                     grid_view
                   </span>
                 </button>
-                <button className="px-2 py-1.5 text-gray-400 hover:text-black">
+                <button
+                  type="button"
+                  className="px-2 py-1.5 text-gray-400 hover:text-black"
+                >
                   <span className="material-symbols-outlined text-[14px]">
                     view_list
                   </span>
@@ -260,7 +281,10 @@ export default async function ShopPage() {
             <span className="text-[9px] text-gray-400">適用中:</span>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-[10px] text-gray-600 rounded">
               在庫あり{" "}
-              <button className="text-gray-400 hover:text-black ml-0.5">
+              <button
+                type="button"
+                className="text-gray-400 hover:text-black ml-0.5"
+              >
                 x
               </button>
             </span>

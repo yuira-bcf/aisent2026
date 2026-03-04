@@ -9,6 +9,7 @@ export default function StoryDisplay({ story }: { story: string }) {
           .split("\n")
           .filter(Boolean)
           .map((paragraph, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: split paragraphs have no stable ID
             <p key={i} className={i > 0 ? "mt-3" : ""}>
               {paragraph}
             </p>

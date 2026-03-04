@@ -334,7 +334,9 @@ export default async function HistoryPage({
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
+                    aria-hidden="true"
                   >
+                    <title>詳細を見る</title>
                     <path d="m9 18 6-6-6-6" />
                   </svg>
                 </div>
