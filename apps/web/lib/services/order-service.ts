@@ -7,6 +7,7 @@ import {
   applyCoupon as applyCouponUsage,
   validateCoupon,
 } from "@/lib/services/coupon-service";
+import { notifyOrderStatusChange } from "@/lib/services/notification-service";
 import { stripe } from "@/lib/stripe";
 import {
   cartItems,
@@ -185,7 +186,7 @@ export async function handleStripeWebhook(
       const orderId = session.metadata?.orderId;
       if (!orderId) break;
 
-      await db
+      const [confirmedOrder] = await db
         .update(orders)
         .set({
           status: "CONFIRMED",
@@ -195,7 +196,18 @@ export async function handleStripeWebhook(
               ? session.payment_intent
               : (session.payment_intent?.id ?? null),
         })
-        .where(eq(orders.id, orderId));
+        .where(eq(orders.id, orderId))
+        .returning({ userId: orders.userId });
+
+      if (confirmedOrder) {
+        notifyOrderStatusChange(
+          confirmedOrder.userId,
+          orderId,
+          "CONFIRMED",
+        ).catch((err) =>
+          console.error("[order-service] notification failed:", err),
+        );
+      }
       break;
     }
 
@@ -204,10 +216,21 @@ export async function handleStripeWebhook(
       const orderId = session.metadata?.orderId;
       if (!orderId) break;
 
-      await db
+      const [cancelledOrder] = await db
         .update(orders)
         .set({ status: "CANCELLED", updatedAt: new Date() })
-        .where(eq(orders.id, orderId));
+        .where(eq(orders.id, orderId))
+        .returning({ userId: orders.userId });
+
+      if (cancelledOrder) {
+        notifyOrderStatusChange(
+          cancelledOrder.userId,
+          orderId,
+          "CANCELLED",
+        ).catch((err) =>
+          console.error("[order-service] notification failed:", err),
+        );
+      }
       break;
     }
   }
@@ -276,7 +299,13 @@ export async function updateOrderStatus(
       ...(newStatus === "DELIVERED" ? { deliveredAt: new Date() } : {}),
     })
     .where(eq(orders.id, orderId))
-    .returning({ id: orders.id });
+    .returning({ id: orders.id, userId: orders.userId });
+
+  if (result.length > 0) {
+    notifyOrderStatusChange(result[0].userId, orderId, newStatus).catch((err) =>
+      console.error("[order-service] notification failed:", err),
+    );
+  }
 
   return result.length > 0;
 }

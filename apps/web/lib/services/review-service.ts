@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { notifyCreatorNewReview } from "@/lib/services/notification-service";
 import {
   orders,
   recipeReviews,
@@ -63,7 +64,11 @@ export async function submitReview(
 
   // 2. Verify recipe exists and is not by the same user (no self-review)
   const [recipe] = await db
-    .select({ id: signatureRecipes.id, creatorId: signatureRecipes.creatorId })
+    .select({
+      id: signatureRecipes.id,
+      name: signatureRecipes.name,
+      creatorId: signatureRecipes.creatorId,
+    })
     .from(signatureRecipes)
     .where(eq(signatureRecipes.id, input.recipeId));
 
@@ -103,6 +108,11 @@ export async function submitReview(
       isVerifiedPurchase: true,
     })
     .returning();
+
+  // Notify creator about new review
+  notifyCreatorNewReview(recipe.creatorId, recipe.name, input.rating).catch(
+    (err) => console.error("[review-service] notification failed:", err),
+  );
 
   return { reviewId: review.id };
 }

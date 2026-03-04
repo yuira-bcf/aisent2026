@@ -26,7 +26,11 @@ const SUGGESTIONS = [
   },
 ] as const;
 
-export default function ChatBlend() {
+export default function ChatBlend({
+  creatorId,
+}: {
+  creatorId?: string;
+}) {
   const [text, setText] = useState("");
   const initialState: BlendState = {};
   const [state, formAction, pending] = useActionState(
@@ -78,6 +82,7 @@ export default function ChatBlend() {
         <form
           action={(formData) => {
             formData.set("text", text);
+            if (creatorId) formData.set("creatorId", creatorId);
             formAction(formData);
           }}
         >

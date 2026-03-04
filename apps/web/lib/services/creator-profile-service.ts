@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { notifyCreatorApplicationResult } from "@/lib/services/notification-service";
 import type {
   CreatorApplicationInput,
   UpdateProfileInput,
@@ -9,11 +10,13 @@ import {
   creatorFavorites,
   creatorProfiles,
   creatorStats,
+  keywordFlavorRules,
+  keywords,
   signatureRecipes,
   users,
 } from "@kyarainnovate/db/schema";
 import type { ApplicationStatus, Tier } from "@kyarainnovate/db/schema";
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, countDistinct, desc, eq, sql } from "drizzle-orm";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -181,6 +184,17 @@ export async function updateCreatorStyle(
 // 3. Creator Listing (public)
 // ---------------------------------------------------------------------------
 
+// Subquery: keyword coverage ratio for a creator (preset keywords with at least 1 rule)
+const keywordCoverageSubquery = sql<number>`(
+	SELECT COUNT(DISTINCT ${keywordFlavorRules.keywordId})::float
+	FROM ${keywordFlavorRules}
+	INNER JOIN ${keywords} ON ${keywords.id} = ${keywordFlavorRules.keywordId}
+	WHERE ${keywordFlavorRules.creatorId} = ${creatorProfiles.userId}
+	AND ${keywords.isPreset} = true
+) / GREATEST((SELECT COUNT(*) FROM ${keywords} WHERE ${keywords.isPreset} = true), 1)`;
+
+const COVERAGE_THRESHOLD = 0.5;
+
 /** PICKUPクリエイター（avgRating DESC + favoriteCount DESC 上位3名） */
 export async function getPickupCreators(): Promise<
   (CreatorListItem & {
@@ -206,7 +220,12 @@ export async function getPickupCreators(): Promise<
     })
     .from(creatorProfiles)
     .innerJoin(creatorStats, eq(creatorProfiles.userId, creatorStats.userId))
-    .where(eq(creatorProfiles.isActive, true))
+    .where(
+      and(
+        eq(creatorProfiles.isActive, true),
+        sql`${keywordCoverageSubquery} >= ${COVERAGE_THRESHOLD}`,
+      ),
+    )
     .orderBy(desc(creatorStats.avgRating), desc(creatorStats.favoriteCount))
     .limit(3);
 
@@ -284,7 +303,10 @@ export async function getActiveCreators(
       orderByClause = desc(creatorStats.tierScore);
   }
 
-  const baseConditions = [eq(creatorProfiles.isActive, true)];
+  const baseConditions = [
+    eq(creatorProfiles.isActive, true),
+    sql`${keywordCoverageSubquery} >= ${COVERAGE_THRESHOLD}`,
+  ];
 
   if (filters?.specialty) {
     baseConditions.push(
@@ -627,6 +649,11 @@ export async function approveCreatorApplication(
     tierScore: "0.00",
   });
 
+  // Notify applicant
+  notifyCreatorApplicationResult(application.userId, true).catch((err) =>
+    console.error("[creator-profile-service] notification failed:", err),
+  );
+
   return true;
 }
 
@@ -659,6 +686,12 @@ export async function rejectCreatorApplication(
       updatedAt: new Date(),
     })
     .where(eq(creatorApplications.id, applicationId));
+
+  // Notify applicant
+  notifyCreatorApplicationResult(application.userId, false, reason).catch(
+    (err) =>
+      console.error("[creator-profile-service] notification failed:", err),
+  );
 
   return true;
 }

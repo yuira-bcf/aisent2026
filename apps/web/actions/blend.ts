@@ -106,6 +106,8 @@ export async function createChatBlend(
     return { error: "テキストを入力してください" };
   }
 
+  const creatorId = (formData.get("creatorId") as string) || undefined;
+
   const extracted = parseNaturalLanguage(text);
   if (extracted.length === 0) {
     return {
@@ -121,6 +123,7 @@ export async function createChatBlend(
     topRatio: 35,
     middleRatio: 55,
     lastRatio: 10,
+    creatorId,
   });
 
   redirect(`/result/${result.blendRequestId}`);

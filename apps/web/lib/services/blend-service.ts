@@ -7,7 +7,6 @@ import {
   blendResultFlavors,
   blendResults,
   creatorProfiles,
-  creatorStyles,
   flavors,
   keywordFlavorRules,
   keywords,
@@ -202,12 +201,19 @@ export async function executeBlend(params: {
   let adjustedLastRatio = lastRatio;
   let styleFlavorPreferences: Record<string, number> | null = null;
 
-  if (creatorId) {
-    const profile = await db.query.creatorProfiles.findFirst({
-      where: eq(creatorProfiles.userId, creatorId),
-      columns: { styleNoteBalance: true, styleFlavorPreferences: true },
-    });
-    if (profile?.styleNoteBalance) {
+  const profile = creatorId
+    ? await db.query.creatorProfiles.findFirst({
+        where: eq(creatorProfiles.userId, creatorId),
+        columns: {
+          styleNoteBalance: true,
+          styleFlavorPreferences: true,
+          styleDescription: true,
+        },
+      })
+    : null;
+
+  if (profile) {
+    if (profile.styleNoteBalance) {
       const balance = profile.styleNoteBalance;
       adjustedTopRatio = Math.max(
         0,
@@ -293,15 +299,8 @@ export async function executeBlend(params: {
 
   const flavorMap = new Map(flavorDetails.map((f) => [f.id, f]));
 
-  // Fetch creator style description if creatorId is set
-  let styleDescription: string | undefined;
-  if (creatorId) {
-    const style = await db.query.creatorStyles.findFirst({
-      where: eq(creatorStyles.creatorId, creatorId),
-      columns: { styleDescription: true },
-    });
-    styleDescription = style?.styleDescription ?? undefined;
-  }
+  // Use style description from profile fetched in step 5
+  const styleDescription = profile?.styleDescription ?? undefined;
 
   const story = await generateStory(
     kwInputs,
