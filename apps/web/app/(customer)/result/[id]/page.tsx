@@ -9,10 +9,11 @@ import {
   findSimilarFragrances,
 } from "@/lib/fragrance-map/similarity";
 import { getBlendVersions } from "@/lib/services/blend-service";
-import { blendRequests } from "@kyarainnovate/db/schema";
+import { blendRequests, products } from "@kyarainnovate/db/schema";
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import ProductizeButton from "./productize-button";
 import RefinementChat from "./refinement-chat";
 import VersionSelector from "./version-selector";
 
@@ -46,6 +47,14 @@ export default async function ResultPage({
   });
 
   if (!request || !request.result) notFound();
+
+  // Check if a product already exists for this blend result
+  const existingProduct = await db.query.products.findFirst({
+    where: and(
+      eq(products.blendResultId, request.result.id),
+      eq(products.isActive, true),
+    ),
+  });
 
   const versions = await getBlendVersions(id, session.user.id);
 
@@ -90,12 +99,24 @@ export default async function ResultPage({
             className="w-36 border border-gray-200 px-2 py-1 text-[11px] font-medium focus:border-black focus:outline-none"
           />
         </form>
-        <Link
-          href={`/result/${id}/order`}
-          className="btn-primary px-3 py-1.5 text-[10px]"
-        >
-          注文
-        </Link>
+        <div className="relative">
+          {existingProduct ? (
+            <Link
+              href={`/result/${id}/order`}
+              className="btn-primary px-3 py-1.5 text-[10px]"
+            >
+              注文
+            </Link>
+          ) : (
+            <ProductizeButton
+              blendResultId={result.id}
+              defaultName={request.name ?? "無題のフレグランス"}
+              defaultDescription={
+                result.story ? result.story.slice(0, 200) : ""
+              }
+            />
+          )}
+        </div>
         <Link href="/history" className="btn-secondary px-3 py-1.5 text-[10px]">
           履歴
         </Link>

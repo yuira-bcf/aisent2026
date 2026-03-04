@@ -69,6 +69,15 @@ export default async function AdminLayout({
                 レビュー
               </Link>
               <Link
+                href="/admin/royalties"
+                className="hover:text-white transition"
+              >
+                ロイヤリティ
+              </Link>
+              <Link href="/admin/sales" className="hover:text-white transition">
+                売上
+              </Link>
+              <Link
                 href="/admin/ec-settings"
                 className="hover:text-white transition"
               >

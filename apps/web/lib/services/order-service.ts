@@ -8,6 +8,7 @@ import {
   validateCoupon,
 } from "@/lib/services/coupon-service";
 import { notifyOrderStatusChange } from "@/lib/services/notification-service";
+import { calculateRoyalty } from "@/lib/services/royalty-service";
 import { stripe } from "@/lib/stripe";
 import {
   cartItems,
@@ -206,6 +207,9 @@ export async function handleStripeWebhook(
           "CONFIRMED",
         ).catch((err) =>
           console.error("[order-service] notification failed:", err),
+        );
+        calculateRoyalty(orderId).catch((err) =>
+          console.error("[order-service] royalty calculation failed:", err),
         );
       }
       break;

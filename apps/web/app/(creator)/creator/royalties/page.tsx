@@ -1,17 +1,9 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import {
-  creatorProfiles,
-  orderItems,
-  orders,
-  products,
-  signatureRecipes,
-} from "@kyarainnovate/db/schema";
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { creatorProfiles, royalties } from "@kyarainnovate/db/schema";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import RoyaltyView from "./royalty-view";
-
-const ROYALTY_RATE = 0.1;
 
 export default async function RoyaltiesPage() {
   const session = await auth();
@@ -35,113 +27,67 @@ export default async function RoyaltiesPage() {
     );
   }
 
-  // Recipe breakdown
-  const recipeBreakdown = await db
-    .select({
-      recipeId: signatureRecipes.id,
-      recipeName: signatureRecipes.name,
-      orderCount: sql<number>`COUNT(DISTINCT ${orders.id})`.as("order_count"),
-      totalSales:
-        sql<number>`COALESCE(SUM(${orderItems.priceYen} * ${orderItems.quantity}), 0)`.as(
-          "total_sales",
-        ),
-    })
-    .from(signatureRecipes)
-    .leftJoin(products, eq(products.blendResultId, signatureRecipes.id))
-    .leftJoin(orderItems, eq(orderItems.productId, products.id))
-    .leftJoin(
-      orders,
-      and(
-        eq(orderItems.orderId, orders.id),
-        sql`${orders.status} NOT IN ('CANCELLED', 'RETURNED')`,
-      ),
-    )
-    .where(eq(signatureRecipes.creatorId, session.user.id))
-    .groupBy(signatureRecipes.id, signatureRecipes.name)
-    .orderBy(desc(sql`total_sales`));
-
-  const totalRevenue = recipeBreakdown.reduce(
-    (sum, r) => sum + Number(r.totalSales),
-    0,
-  );
-
-  // Current month
+  // Current period string (YYYY-MM)
   const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const [currentMonthRow] = await db
+  // Aggregate summary from royalties table
+  const [summary] = await db
     .select({
-      revenue:
-        sql<number>`COALESCE(SUM(${orderItems.priceYen} * ${orderItems.quantity}), 0)`.as(
-          "revenue",
+      totalRoyalty: sql<number>`coalesce(sum(${royalties.amount}), 0)`.mapWith(
+        Number,
+      ),
+      pendingRoyalty:
+        sql<number>`coalesce(sum(case when ${royalties.status} = 'PENDING' then ${royalties.amount} else 0 end), 0)`.mapWith(
+          Number,
+        ),
+      paidRoyalty:
+        sql<number>`coalesce(sum(case when ${royalties.status} = 'PAID' then ${royalties.amount} else 0 end), 0)`.mapWith(
+          Number,
+        ),
+      currentMonthRoyalty:
+        sql<number>`coalesce(sum(case when ${royalties.period} = ${currentPeriod} then ${royalties.amount} else 0 end), 0)`.mapWith(
+          Number,
         ),
     })
-    .from(signatureRecipes)
-    .leftJoin(products, eq(products.blendResultId, signatureRecipes.id))
-    .leftJoin(orderItems, eq(orderItems.productId, products.id))
-    .leftJoin(
-      orders,
-      and(
-        eq(orderItems.orderId, orders.id),
-        sql`${orders.status} NOT IN ('CANCELLED', 'RETURNED')`,
-      ),
-    )
-    .where(
-      and(
-        eq(signatureRecipes.creatorId, session.user.id),
-        gte(orders.createdAt, monthStart),
-      ),
-    );
-
-  const currentMonthRevenue = Number(currentMonthRow?.revenue ?? 0);
+    .from(royalties)
+    .where(eq(royalties.creatorId, session.user.id));
 
   // Monthly breakdown (past 6 months)
   const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const sixMonthsPeriod = `${sixMonthsAgo.getFullYear()}-${String(sixMonthsAgo.getMonth() + 1).padStart(2, "0")}`;
 
   const monthlyBreakdown = await db
     .select({
-      month: sql<string>`TO_CHAR(${orders.createdAt}, 'YYYY-MM')`.as("month"),
-      revenue:
-        sql<number>`COALESCE(SUM(${orderItems.priceYen} * ${orderItems.quantity}), 0)`.as(
-          "revenue",
-        ),
-      orderCount: sql<number>`COUNT(DISTINCT ${orders.id})`.as("order_count"),
-    })
-    .from(signatureRecipes)
-    .innerJoin(products, eq(products.blendResultId, signatureRecipes.id))
-    .innerJoin(orderItems, eq(orderItems.productId, products.id))
-    .innerJoin(
-      orders,
-      and(
-        eq(orderItems.orderId, orders.id),
-        sql`${orders.status} NOT IN ('CANCELLED', 'RETURNED')`,
+      month: royalties.period,
+      revenue: sql<number>`coalesce(sum(${royalties.amount}), 0)`.mapWith(
+        Number,
       ),
-    )
+      orderCount: sql<number>`count(distinct ${royalties.orderId})`.mapWith(
+        Number,
+      ),
+      status: sql<string>`
+        case
+          when count(*) filter (where ${royalties.status} = 'PENDING') > 0 then 'PENDING'
+          else 'PAID'
+        end`.as("status"),
+    })
+    .from(royalties)
     .where(
       and(
-        eq(signatureRecipes.creatorId, session.user.id),
-        gte(orders.createdAt, sixMonthsAgo),
+        eq(royalties.creatorId, session.user.id),
+        sql`${royalties.period} >= ${sixMonthsPeriod}`,
       ),
     )
-    .groupBy(sql`TO_CHAR(${orders.createdAt}, 'YYYY-MM')`)
-    .orderBy(desc(sql`month`));
+    .groupBy(royalties.period)
+    .orderBy(desc(royalties.period));
 
   const data = {
-    totalRevenue: Math.floor(totalRevenue * ROYALTY_RATE),
-    currentMonthRevenue: Math.floor(currentMonthRevenue * ROYALTY_RATE),
-    recipeCount: recipeBreakdown.length,
-    recipeBreakdown: recipeBreakdown.map((r) => ({
-      recipeId: r.recipeId,
-      recipeName: r.recipeName,
-      orderCount: Number(r.orderCount),
-      totalSales: Number(r.totalSales),
-      royalty: Math.floor(Number(r.totalSales) * ROYALTY_RATE),
-    })),
-    monthlyBreakdown: monthlyBreakdown.map((m) => ({
-      month: m.month,
-      revenue: Math.floor(Number(m.revenue) * ROYALTY_RATE),
-      orderCount: Number(m.orderCount),
-    })),
+    totalRoyalty: summary.totalRoyalty,
+    pendingRoyalty: summary.pendingRoyalty,
+    paidRoyalty: summary.paidRoyalty,
+    currentMonthRoyalty: summary.currentMonthRoyalty,
+    monthlyBreakdown,
   };
 
   return (

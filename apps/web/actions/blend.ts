@@ -5,6 +5,7 @@ import {
   applyRefinement,
   parseNaturalLanguage,
 } from "@/lib/blend/parse-natural-language";
+import { db } from "@/lib/db";
 import {
   blendInputSchema,
   executeBlend,
@@ -12,6 +13,8 @@ import {
   getBlendResultDetail,
   updateBlendName as updateBlendNameService,
 } from "@/lib/services/blend-service";
+import { blendResults, products } from "@kyarainnovate/db/schema";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -167,4 +170,76 @@ export async function refineBlend(
   });
 
   redirect(`/result/${result.blendRequestId}`);
+}
+
+// ---------------------------------------------------------------------------
+// productizeBlend – Create a product from a blend result
+// ---------------------------------------------------------------------------
+
+const productizeSchema = z.object({
+  blendResultId: z.string().uuid(),
+  name: z.string().min(1, "商品名を入力してください").max(200),
+  description: z.string().max(2000).optional(),
+});
+
+export type ProductizeState = {
+  error?: string;
+};
+
+export async function productizeBlend(
+  _prevState: ProductizeState,
+  formData: FormData,
+): Promise<ProductizeState> {
+  const session = await auth();
+  if (!session) redirect("/login");
+
+  const parsed = productizeSchema.safeParse({
+    blendResultId: formData.get("blendResultId"),
+    name: formData.get("name"),
+    description: formData.get("description") || undefined,
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.errors[0].message };
+  }
+
+  const { blendResultId, name, description } = parsed.data;
+
+  // Verify the blend result exists and belongs to the user
+  const blendResult = await db.query.blendResults.findFirst({
+    where: eq(blendResults.id, blendResultId),
+    with: {
+      blendRequest: true,
+    },
+  });
+
+  if (!blendResult) {
+    return { error: "調合結果が見つかりません" };
+  }
+
+  if (blendResult.blendRequest.userId !== session.user.id) {
+    return { error: "この調合結果にアクセスする権限がありません" };
+  }
+
+  // Check if a product already exists for this blend result
+  const existingProduct = await db.query.products.findFirst({
+    where: eq(products.blendResultId, blendResultId),
+  });
+
+  if (existingProduct) {
+    return { error: "この調合結果は既に商品化されています" };
+  }
+
+  // Create the product
+  await db.insert(products).values({
+    name,
+    description: description ?? null,
+    priceYen: 4980,
+    blendResultId,
+    isActive: true,
+  });
+
+  const blendRequestId = blendResult.blendRequest.id;
+  revalidatePath(`/result/${blendRequestId}`);
+  redirect(`/result/${blendRequestId}/order`);
 }
