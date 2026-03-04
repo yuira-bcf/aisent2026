@@ -1,267 +1,1049 @@
 {
-  "reviewId": "KARF-2026-001",
-  "reviewDate": "2026-02-17",
-  "targetVersion": "v3.0",
-  "reviewerInfo": {
-    "type": "KARF Automated Architecture Reviewer",
-    "agentCount": 14,
-    "filesRead": 50,
-    "durationMinutes": 20
-  },
-  "c4Results": {
-    "L1": {
-      "label": "Context",
-      "pass": 3,
-      "warn": 2,
-      "fail": 0,
-      "items": [
-        { "id": "C1.1", "label": "外部システム一覧", "result": "W", "note": "7外部システム中、Sentryがコア設計書に未記載。Vercelは部分的のみ" },
-        { "id": "C1.2", "label": "通信プロトコル", "result": "W", "note": "AI Service/Stripeは明記済。Redis/PostgreSQL/Resend/Sentryは暗黙的" },
-        { "id": "C1.3", "label": "ユーザー種別", "result": "P", "note": "CUSTOMER/CREATOR/ADMIN — 要件定義書とコード一致" },
-        { "id": "C1.4", "label": "データフロー", "result": "P", "note": "調合・注文・認証・AIの全フロー文書化済" },
-        { "id": "C1.5", "label": "フォールバック", "result": "P", "note": "5障害シナリオ（App/DB/Region/Stripe/Redis）全てに対応策定義" }
-      ]
-    },
-    "L2": {
-      "label": "Container",
-      "pass": 1,
-      "warn": 4,
-      "fail": 0,
-      "items": [
-        { "id": "C2.1", "label": "コンテナ一覧", "result": "W", "note": "4コンテナ定義済だがPython AI Service廃止通知とdocker-composeが矛盾" },
-        { "id": "C2.2", "label": "コンテナ間通信", "result": "W", "note": "DB/AI接続は正常。REDIS_URLがwebサービスに未設定" },
-        { "id": "C2.3", "label": "スケーリング戦略", "result": "P", "note": "Vercel serverless + pgBouncer + Redis 3層キャッシュ、包括的" },
-        { "id": "C2.4", "label": "コンテナ間認証", "result": "W", "note": "INTERNAL_SERVICE_TOKENがenv.tsでoptional。Redis認証なし" },
-        { "id": "C2.5", "label": "環境別設定", "result": "W", "note": "preview/staging CI有。production deployジョブなし" }
-      ]
-    },
-    "L3": {
-      "label": "Component",
-      "pass": 2,
-      "warn": 2,
-      "fail": 2,
-      "items": [
-        { "id": "C3.1", "label": "サービス層責務分離", "result": "P", "note": "7サービスファイル、各1ドメイン、相互インポートゼロ" },
-        { "id": "C3.2", "label": "スキーマ→APIカバレッジ", "result": "F", "note": "recipe-service(8関数)とreview-service(4関数)がAPIルートゼロ。creator_profiles等3テーブルもサービス層なし" },
-        { "id": "C3.3", "label": "共有ユーティリティ重複", "result": "W", "note": "IP抽出ロジックが2ファイルで重複。ページネーション計算が8箇所で繰返し" },
-        { "id": "C3.4", "label": "画面→APIトレーサビリティ", "result": "F", "note": "16+モックアップ画面にAPIバッキングなし（creators, recipe-detail, write-review, admin-products等）" },
-        { "id": "C3.5", "label": "循環依存", "result": "P", "note": "全サービス・スキーマともDAG構造。循環なし" },
-        { "id": "C3.6", "label": "ミドルウェア適用", "result": "W", "note": "requireAuthは適切だがrate-limiter/audit-logger/security-headersは全てスタブ/未接続" }
-      ]
-    },
-    "L4": {
-      "label": "Code",
-      "pass": 3,
-      "warn": 3,
-      "fail": 0,
-      "items": [
-        { "id": "C4.1", "label": "型定義とDB整合", "result": "P", "note": "全サービスの型がDBスキーマと一致" },
-        { "id": "C4.2", "label": "Zodバリデーション", "result": "W", "note": "blend weight Zod max(10) vs DB decimal(3,0)不整合。review Zod max(1000) vs DB text制約なし" },
-        { "id": "C4.3", "label": "エクスポート完全性", "result": "W", "note": "index.ts再エクスポートは完全。users/flavors/keywordsに$inferSelect/Insert型なし" },
-        { "id": "C4.4", "label": "命名規則", "result": "P", "note": "snake_case(DB) / camelCase(TS) / 動詞+名詞(関数) 全て一貫" },
-        { "id": "C4.5", "label": "デッドコード", "result": "W", "note": "review-service.ts/recipe-service.ts/audit-logger.ts/rate-limiter.ts/security-headers.ts全体がデッドコード" },
-        { "id": "C4.6", "label": "エラーハンドリング", "result": "P", "note": "safeHandler + apiSuccess/apiErrorパターンが全26ルートで一貫" }
-      ]
-    }
-  },
-  "iso25010Results": {
-    "機能適合性": {
-      "result": "F",
-      "subcharacteristics": [
-        { "name": "完全性", "result": "W" },
-        { "name": "正確性", "result": "P" },
-        { "name": "適切性", "result": "P" }
-      ]
-    },
-    "性能効率性": {
-      "result": "W",
-      "subcharacteristics": [
-        { "name": "時間効率", "result": "W" },
-        { "name": "資源効率", "result": "P" },
-        { "name": "容量", "result": "P" }
-      ]
-    },
-    "互換性": {
-      "result": "W",
-      "subcharacteristics": [
-        { "name": "共存性", "result": "P" },
-        { "name": "相互運用性", "result": "W" }
-      ]
-    },
-    "使用性": {
-      "result": "W",
-      "subcharacteristics": [
-        { "name": "認識容易性", "result": "P" },
-        { "name": "学習容易性", "result": "P" },
-        { "name": "操作容易性", "result": "W" },
-        { "name": "アクセシビリティ", "result": "F" }
-      ]
-    },
-    "信頼性": {
-      "result": "W",
-      "subcharacteristics": [
-        { "name": "成熟度", "result": "W" },
-        { "name": "可用性", "result": "P" },
-        { "name": "障害許容", "result": "W" },
-        { "name": "回復性", "result": "P" }
-      ]
-    },
-    "セキュリティ": {
-      "result": "W",
-      "subcharacteristics": [
-        { "name": "機密性", "result": "W" },
-        { "name": "完全性", "result": "W" },
-        { "name": "否認防止", "result": "W" },
-        { "name": "認証", "result": "P" },
-        { "name": "認可", "result": "P" }
-      ]
-    },
-    "保守性": {
-      "result": "F",
-      "subcharacteristics": [
-        { "name": "モジュール性", "result": "P" },
-        { "name": "再利用性", "result": "P" },
-        { "name": "テスト容易性", "result": "F" },
-        { "name": "変更容易性", "result": "W" }
-      ]
-    },
-    "移植性": {
-      "result": "W",
-      "subcharacteristics": [
-        { "name": "適応性", "result": "P" },
-        { "name": "設置性", "result": "W" },
-        { "name": "置換容易性", "result": "W" }
-      ]
-    }
-  },
-  "fmeaItems": [
-    { "id": "FM-001", "description": "Sentryがコア設計書に未記載", "category": "ドキュメント", "S": 3, "O": 6, "D": 4, "RPN": 72, "severity": "Medium", "status": "design_documented", "docRef": "04_アーキテクチャ設計書.md §11" },
-    { "id": "FM-002", "description": "4外部システムの通信プロトコル未文書化", "category": "ドキュメント", "S": 4, "O": 5, "D": 5, "RPN": 100, "severity": "High", "status": "design_documented", "docRef": "04_アーキテクチャ設計書.md §11" },
-    { "id": "FM-003", "description": "AI設計書claude-sonnet-4.5 vsコードgpt-4", "category": "互換性", "S": 4, "O": 8, "D": 5, "RPN": 160, "severity": "High", "status": "design_documented", "docRef": "05_技術スタック設計書.md §11" },
-    { "id": "FM-004", "description": "REDIS_URL docker-compose web未設定", "category": "互換性", "S": 5, "O": 7, "D": 5, "RPN": 175, "severity": "High", "status": "design_documented", "docRef": "04_アーキテクチャ設計書.md §7.1" },
-    { "id": "FM-005", "description": "INTERNAL_SERVICE_TOKENがoptional", "category": "セキュリティ", "S": 8, "O": 5, "D": 7, "RPN": 280, "severity": "Critical", "status": "design_documented", "docRef": "auth-user-management.md §10" },
-    { "id": "FM-006", "description": "CIにproduction deployジョブなし", "category": "保守性", "S": 7, "O": 8, "D": 5, "RPN": 280, "severity": "Critical", "status": "design_documented", "docRef": "operations-infrastructure.md §10" },
-    { "id": "FM-007", "description": "recipe-service 8関数APIルート0", "category": "機能性", "S": 8, "O": 7, "D": 6, "RPN": 336, "severity": "Critical", "status": "design_documented", "docRef": "recipe-system.md §2" },
-    { "id": "FM-008", "description": "review-service 4関数APIルート0", "category": "機能性", "S": 7, "O": 7, "D": 6, "RPN": 294, "severity": "Critical", "status": "design_documented", "docRef": "review-system.md §13" },
-    { "id": "FM-009", "description": "creator_profiles/stylesサービス層なし", "category": "機能性", "S": 5, "O": 7, "D": 5, "RPN": 175, "severity": "High", "status": "design_documented", "docRef": "creator-system.md §10" },
-    { "id": "FM-010", "description": "password_reset_tokensサービス/APIなし", "category": "機能性", "S": 6, "O": 8, "D": 4, "RPN": 192, "severity": "High", "status": "design_documented", "docRef": "auth-user-management.md §12" },
-    { "id": "FM-011", "description": "16+画面にAPIバッキングなし", "category": "機能性", "S": 7, "O": 7, "D": 5, "RPN": 245, "severity": "Critical", "status": "design_documented", "docRef": "recipe-system.md §3" },
-    { "id": "FM-012", "description": "レート制限スタブ(always allows)", "category": "セキュリティ", "S": 9, "O": 10, "D": 9, "RPN": 810, "severity": "Critical", "status": "design_documented", "docRef": "auth-user-management.md §11" },
-    { "id": "FM-013", "description": "監査ログDB INSERT TODO", "category": "セキュリティ", "S": 8, "O": 10, "D": 8, "RPN": 640, "severity": "Critical", "status": "design_documented", "docRef": "auth-user-management.md §11" },
-    { "id": "FM-014", "description": "セキュリティヘッダー未接続", "category": "セキュリティ", "S": 9, "O": 10, "D": 7, "RPN": 630, "severity": "Critical", "status": "design_documented", "docRef": "auth-user-management.md §11" },
-    { "id": "FM-015", "description": "IP抽出ロジック2ファイル重複", "category": "保守性", "S": 2, "O": 6, "D": 3, "RPN": 36, "severity": "Low", "status": "design_documented", "docRef": "operations-infrastructure.md §15" },
-    { "id": "FM-016", "description": "recipe/reviewサービスが完全デッドコード", "category": "保守性", "S": 5, "O": 10, "D": 5, "RPN": 250, "severity": "Critical", "status": "design_documented", "docRef": "operations-infrastructure.md §12" },
-    { "id": "FM-017", "description": "Zod float vs DB integer不整合", "category": "信頼性", "S": 5, "O": 5, "D": 7, "RPN": 175, "severity": "High", "status": "design_documented", "docRef": "blend-system.md §12" },
-    { "id": "FM-018", "description": "order-service.ts未使用import inArray", "category": "保守性", "S": 1, "O": 8, "D": 2, "RPN": 16, "severity": "Low", "status": "design_documented", "docRef": "operations-infrastructure.md §16" },
-    { "id": "FM-019", "description": "5 DBテーブルにサービス層なし", "category": "機能性", "S": 6, "O": 7, "D": 6, "RPN": 252, "severity": "Critical", "status": "design_documented", "docRef": "creator-system.md §10, review-system.md §13" },
-    { "id": "FM-020", "description": "Products管理者CRUDなし", "category": "機能性", "S": 6, "O": 6, "D": 5, "RPN": 180, "severity": "High", "status": "design_documented", "docRef": "recipe-system.md §4" },
-    { "id": "FM-021", "description": "blend_request_flavorsテーブル未使用", "category": "保守性", "S": 4, "O": 7, "D": 5, "RPN": 140, "severity": "High", "status": "design_documented", "docRef": "blend-system.md §13" },
-    { "id": "FM-022", "description": "注文ステータス遷移バリデーションなし", "category": "信頼性", "S": 8, "O": 6, "D": 7, "RPN": 336, "severity": "Critical", "status": "design_documented", "docRef": "cart-checkout-orders.md §11" },
-    { "id": "FM-023", "description": "executeBlend() N+1キーワードループ", "category": "性能", "S": 5, "O": 7, "D": 6, "RPN": 210, "severity": "Critical", "status": "design_documented", "docRef": "blend-system.md §10" },
-    { "id": "FM-024", "description": "getRecipeDetail() 4直列クエリ", "category": "性能", "S": 4, "O": 7, "D": 5, "RPN": 140, "severity": "High", "status": "design_documented", "docRef": "recipe-system.md §5" },
-    { "id": "FM-025", "description": "レシピ一覧AVG(rating)相関サブクエリ", "category": "性能", "S": 5, "O": 6, "D": 7, "RPN": 210, "severity": "Critical", "status": "design_documented", "docRef": "review-system.md §14" },
-    { "id": "FM-026", "description": "3+ FKカラムにインデックスなし", "category": "性能", "S": 5, "O": 6, "D": 6, "RPN": 180, "severity": "High", "status": "design_documented", "docRef": "cart-checkout-orders.md §12, recipe-system.md §6" },
-    { "id": "FM-027", "description": "APIバージョン管理戦略未定義", "category": "互換性", "S": 5, "O": 5, "D": 6, "RPN": 150, "severity": "High", "status": "design_documented", "docRef": "04_アーキテクチャ設計書.md §12" },
-    { "id": "FM-028", "description": "全画面で空状態未定義", "category": "使用性", "S": 4, "O": 8, "D": 4, "RPN": 128, "severity": "High", "status": "design_documented", "docRef": "ux-patterns.md §2" },
-    { "id": "FM-029", "description": "ローディング状態未定義", "category": "使用性", "S": 3, "O": 8, "D": 4, "RPN": 96, "severity": "Medium", "status": "design_documented", "docRef": "ux-patterns.md §3" },
-    { "id": "FM-030", "description": "write-review-pro孤立画面", "category": "使用性", "S": 2, "O": 5, "D": 4, "RPN": 40, "severity": "Low", "status": "design_documented", "docRef": "review-system.md §15" },
-    { "id": "FM-031", "description": "executeBlend()トランザクションなし", "category": "信頼性", "S": 7, "O": 8, "D": 7, "RPN": 392, "severity": "Critical", "status": "design_documented", "docRef": "blend-system.md §9" },
-    { "id": "FM-032", "description": "saveRulesForKeyword()トランザクションなし", "category": "信頼性", "S": 7, "O": 5, "D": 8, "RPN": 280, "severity": "Critical", "status": "design_documented", "docRef": "blend-system.md §9" },
-    { "id": "FM-033", "description": "createOrder()トランザクションなし(10ステップ)", "category": "信頼性", "S": 9, "O": 8, "D": 6, "RPN": 432, "severity": "Critical", "status": "design_documented", "docRef": "cart-checkout-orders.md §9" },
-    { "id": "FM-034", "description": "Stripe Webhook冪等性チェックなし", "category": "信頼性", "S": 8, "O": 8, "D": 7, "RPN": 448, "severity": "Critical", "status": "design_documented", "docRef": "cart-checkout-orders.md §10" },
-    { "id": "FM-035", "description": "AI APIリトライ/タイムアウトなし", "category": "信頼性", "S": 5, "O": 6, "D": 7, "RPN": 210, "severity": "Critical", "status": "design_documented", "docRef": "blend-system.md §11" },
-    { "id": "FM-036", "description": "レート制限スタブ(always allowed)+未接続", "category": "セキュリティ", "S": 9, "O": 10, "D": 9, "RPN": 810, "severity": "Critical", "status": "design_documented", "docRef": "auth-user-management.md §11" },
-    { "id": "FM-037", "description": "セキュリティヘッダー未適用(CSP/HSTS/X-Frame)", "category": "セキュリティ", "S": 9, "O": 10, "D": 7, "RPN": 630, "severity": "Critical", "status": "design_documented", "docRef": "auth-user-management.md §11" },
-    { "id": "FM-038", "description": "監査ログDB INSERT TODO+未接続", "category": "セキュリティ", "S": 8, "O": 10, "D": 8, "RPN": 640, "severity": "Critical", "status": "design_documented", "docRef": "auth-user-management.md §11" },
-    { "id": "FM-039", "description": "脅威モデル文書なし(STRIDE/OWASP)", "category": "セキュリティ", "S": 6, "O": 10, "D": 7, "RPN": 420, "severity": "Critical", "status": "design_documented", "docRef": "threat-model.md" },
-    { "id": "FM-040", "description": "パスワードリセット未実装(スキーマのみ)", "category": "機能性", "S": 6, "O": 8, "D": 5, "RPN": 240, "severity": "Critical", "status": "design_documented", "docRef": "auth-user-management.md §12" },
-    { "id": "FM-041", "description": "DOMPurify未インストール/未使用", "category": "セキュリティ", "S": 8, "O": 5, "D": 7, "RPN": 280, "severity": "Critical", "status": "design_documented", "docRef": "auth-user-management.md §13" },
-    { "id": "FM-042", "description": "JWT maxAge 30日即時無効化なし", "category": "セキュリティ", "S": 8, "O": 4, "D": 8, "RPN": 256, "severity": "Critical", "status": "design_documented", "docRef": "auth-user-management.md §9" },
-    { "id": "FM-043", "description": "テストカバレッジ~5%(2ファイルのみ)", "category": "保守性", "S": 8, "O": 10, "D": 9, "RPN": 720, "severity": "Critical", "status": "design_documented", "docRef": "testing-strategy.md" },
-    { "id": "FM-044", "description": "設計書claude-sonnet-4.5 vsコードgpt-4(保守性観点)", "category": "保守性", "S": 4, "O": 8, "D": 5, "RPN": 160, "severity": "High", "status": "design_documented", "docRef": "05_技術スタック設計書.md §11" },
-    { "id": "FM-045", "description": "biome.json設定ファイルなし", "category": "保守性", "S": 3, "O": 8, "D": 3, "RPN": 72, "severity": "Medium", "status": "design_documented", "docRef": "operations-infrastructure.md §13" },
-    { "id": "FM-046", "description": "CI production deployジョブなし(保守性観点)", "category": "保守性", "S": 7, "O": 8, "D": 5, "RPN": 280, "severity": "Critical", "status": "design_documented", "docRef": "operations-infrastructure.md §10" },
-    { "id": "FM-047", "description": "env.tsバイパス(stripe.ts/dbがprocess.env直接)", "category": "移植性", "S": 6, "O": 7, "D": 5, "RPN": 210, "severity": "Critical", "status": "design_documented", "docRef": "operations-infrastructure.md §11" },
-    { "id": "FM-048", "description": "Stripe SDK密結合", "category": "移植性", "S": 4, "O": 7, "D": 5, "RPN": 140, "severity": "High", "status": "design_documented", "docRef": "cart-checkout-orders.md §13" },
-    { "id": "FM-049", "description": "AI client openai('gpt-4')ハードコード", "category": "移植性", "S": 4, "O": 7, "D": 5, "RPN": 140, "severity": "High", "status": "design_documented", "docRef": "05_技術スタック設計書.md §11" },
-    { "id": "FM-050", "description": "NEXT_PUBLIC_BASE_URL env.ts未登録", "category": "移植性", "S": 7, "O": 5, "D": 6, "RPN": 210, "severity": "Critical", "status": "design_documented", "docRef": "operations-infrastructure.md §14" }
-  ],
-  "atamResults": {
-    "scenarios": [
-      { "id": "AS-001", "description": "調合リアルタイム計算 vs キュー", "qualityAttributes": ["性能", "UX"], "evaluation": "要注意" },
-      { "id": "AS-002", "description": "セッション管理 JWT vs Server Session", "qualityAttributes": ["セキュリティ", "スケーラビリティ"], "evaluation": "要注意" },
-      { "id": "AS-003", "description": "レシピ配合 正規化 vs 非正規化", "qualityAttributes": ["整合性", "クエリ性能"], "evaluation": "適切" },
-      { "id": "AS-004", "description": "通知 ポーリング vs SSE/WebSocket", "qualityAttributes": ["UX", "実装複雑性"], "evaluation": "要注意" },
-      { "id": "AS-005", "description": "検索 PostgreSQL vs Elasticsearch", "qualityAttributes": ["検索性能", "運用コスト"], "evaluation": "適切" },
-      { "id": "AS-006", "description": "画像 Vercel Blob vs S3", "qualityAttributes": ["開発速度", "ベンダーロックイン"], "evaluation": "要注意" },
-      { "id": "AS-007", "description": "モノレポ構成の妥当性", "qualityAttributes": ["開発効率", "ビルド複雑性"], "evaluation": "適切" },
-      { "id": "AS-008", "description": "AI Service 分離の妥当性", "qualityAttributes": ["可用性", "実装複雑性"], "evaluation": "要注意" }
-    ],
-    "sensitivityPoints": [
-      { "id": "SP-1", "description": "AI API (claude-sonnet-4.5) のレスポンスタイム", "qualityAttributes": ["性能", "UX"] },
-      { "id": "SP-2", "description": "DB 接続プール最大数 (max: 10)", "qualityAttributes": ["性能", "可用性"] },
-      { "id": "SP-3", "description": "JWT maxAge (30日)", "qualityAttributes": ["セキュリティ"] },
-      { "id": "SP-4", "description": "レシピ数の増加速度", "qualityAttributes": ["検索性能"] },
-      { "id": "SP-5", "description": "Vercel Serverless Functionの同時実行数制限", "qualityAttributes": ["スケーラビリティ"] },
-      { "id": "SP-6", "description": "Redisの可用性", "qualityAttributes": ["レート制限", "キャッシュ", "分散ロック"] }
-    ],
-    "tradeoffPoints": [
-      { "id": "TP-1", "description": "リアルタイム計算 vs キュー", "qualityAttributeA": "UX (即時応答)", "qualityAttributeB": "スケーラビリティ" },
-      { "id": "TP-2", "description": "JWT vs Server Session", "qualityAttributeA": "スケーラビリティ", "qualityAttributeB": "セキュリティ (即時無効化)" },
-      { "id": "TP-3", "description": "Vercel Blob vs S3", "qualityAttributeA": "開発速度", "qualityAttributeB": "ベンダー非依存" },
-      { "id": "TP-4", "description": "ポーリング vs SSE", "qualityAttributeA": "実装複雑性", "qualityAttributeB": "UX (リアルタイム性)" },
-      { "id": "TP-5", "description": "PostgreSQL直接 vs Elasticsearch", "qualityAttributeA": "運用コスト", "qualityAttributeB": "検索品質" },
-      { "id": "TP-6", "description": "Vercel AI SDK統合 vs サービス分離", "qualityAttributeA": "運用単純性", "qualityAttributeB": "障害分離" }
-    ],
-    "nonRisks": [
-      { "id": "NR-1", "description": "配合計算の精度", "reason": "Decimal.js (precision:10, ROUND_HALF_UP) + Zod refine" },
-      { "id": "NR-2", "description": "決済セキュリティ", "reason": "Stripe Checkout Session委譲 + Webhook署名検証" },
-      { "id": "NR-3", "description": "パスワードセキュリティ", "reason": "bcryptjs (saltRounds:12) + SHA-256トークンハッシュ" },
-      { "id": "NR-4", "description": "Redis障害時継続", "reason": "cached()ユーティリティのグレースフルデグレード" },
-      { "id": "NR-5", "description": "ヘルスチェック", "reason": "Liveness/Readiness分離、DB必須/Redis・Stripeオプショナル" },
-      { "id": "NR-6", "description": "環境変数バリデーション", "reason": "Zod起動時検証 + Stripeキープレフィックス検証" },
-      { "id": "NR-7", "description": "CSP/XSS対策（設計面）", "reason": "CSPヘッダー設計済（ただし未適用 → FM-037）" }
-    ]
-  },
-  "summary": {
-    "totalFmeaItems": 50,
-    "bySeverity": {
-      "Critical": 29,
-      "High": 15,
-      "Medium": 3,
-      "Low": 3
-    },
-    "byCategory": {
-      "セキュリティ": { "count": 10, "avgRPN": 540 },
-      "信頼性": { "count": 7, "avgRPN": 325 },
-      "機能性": { "count": 8, "avgRPN": 239 },
-      "保守性": { "count": 9, "avgRPN": 217 },
-      "性能": { "count": 4, "avgRPN": 185 },
-      "移植性": { "count": 4, "avgRPN": 175 },
-      "互換性": { "count": 3, "avgRPN": 162 },
-      "使用性": { "count": 3, "avgRPN": 88 },
-      "ドキュメント": { "count": 2, "avgRPN": 86 }
-    },
-    "resolvedCount": 0,
-    "designDocumentedCount": 50,
-    "openCount": 0,
-    "c4Summary": {
-      "totalPass": 9,
-      "totalWarn": 11,
-      "totalFail": 2
-    },
-    "iso25010Summary": {
-      "pass": 0,
-      "warn": 6,
-      "fail": 2
-    },
-    "atamSummary": {
-      "appropriate": 3,
-      "needsAttention": 5,
-      "totalScenarios": 8,
-      "sensitivityPoints": 6,
-      "tradeoffPoints": 6,
-      "nonRisks": 7
-    }
-  }
+	"reviewId": "KARF-2026-001",
+	"reviewDate": "2026-02-17",
+	"targetVersion": "v3.0",
+	"reviewerInfo": {
+		"type": "KARF Automated Architecture Reviewer",
+		"agentCount": 14,
+		"filesRead": 50,
+		"durationMinutes": 20
+	},
+	"c4Results": {
+		"L1": {
+			"label": "Context",
+			"pass": 3,
+			"warn": 2,
+			"fail": 0,
+			"items": [
+				{
+					"id": "C1.1",
+					"label": "外部システム一覧",
+					"result": "W",
+					"note": "7外部システム中、Sentryがコア設計書に未記載。Vercelは部分的のみ"
+				},
+				{
+					"id": "C1.2",
+					"label": "通信プロトコル",
+					"result": "W",
+					"note": "AI Service/Stripeは明記済。Redis/PostgreSQL/Resend/Sentryは暗黙的"
+				},
+				{
+					"id": "C1.3",
+					"label": "ユーザー種別",
+					"result": "P",
+					"note": "CUSTOMER/CREATOR/ADMIN — 要件定義書とコード一致"
+				},
+				{
+					"id": "C1.4",
+					"label": "データフロー",
+					"result": "P",
+					"note": "調合・注文・認証・AIの全フロー文書化済"
+				},
+				{
+					"id": "C1.5",
+					"label": "フォールバック",
+					"result": "P",
+					"note": "5障害シナリオ（App/DB/Region/Stripe/Redis）全てに対応策定義"
+				}
+			]
+		},
+		"L2": {
+			"label": "Container",
+			"pass": 1,
+			"warn": 4,
+			"fail": 0,
+			"items": [
+				{
+					"id": "C2.1",
+					"label": "コンテナ一覧",
+					"result": "W",
+					"note": "4コンテナ定義済だがPython AI Service廃止通知とdocker-composeが矛盾"
+				},
+				{
+					"id": "C2.2",
+					"label": "コンテナ間通信",
+					"result": "W",
+					"note": "DB/AI接続は正常。REDIS_URLがwebサービスに未設定"
+				},
+				{
+					"id": "C2.3",
+					"label": "スケーリング戦略",
+					"result": "P",
+					"note": "Vercel serverless + pgBouncer + Redis 3層キャッシュ、包括的"
+				},
+				{
+					"id": "C2.4",
+					"label": "コンテナ間認証",
+					"result": "W",
+					"note": "INTERNAL_SERVICE_TOKENがenv.tsでoptional。Redis認証なし"
+				},
+				{
+					"id": "C2.5",
+					"label": "環境別設定",
+					"result": "W",
+					"note": "preview/staging CI有。production deployジョブなし"
+				}
+			]
+		},
+		"L3": {
+			"label": "Component",
+			"pass": 2,
+			"warn": 2,
+			"fail": 2,
+			"items": [
+				{
+					"id": "C3.1",
+					"label": "サービス層責務分離",
+					"result": "P",
+					"note": "7サービスファイル、各1ドメイン、相互インポートゼロ"
+				},
+				{
+					"id": "C3.2",
+					"label": "スキーマ→APIカバレッジ",
+					"result": "F",
+					"note": "recipe-service(8関数)とreview-service(4関数)がAPIルートゼロ。creator_profiles等3テーブルもサービス層なし"
+				},
+				{
+					"id": "C3.3",
+					"label": "共有ユーティリティ重複",
+					"result": "W",
+					"note": "IP抽出ロジックが2ファイルで重複。ページネーション計算が8箇所で繰返し"
+				},
+				{
+					"id": "C3.4",
+					"label": "画面→APIトレーサビリティ",
+					"result": "F",
+					"note": "16+モックアップ画面にAPIバッキングなし（creators, recipe-detail, write-review, admin-products等）"
+				},
+				{
+					"id": "C3.5",
+					"label": "循環依存",
+					"result": "P",
+					"note": "全サービス・スキーマともDAG構造。循環なし"
+				},
+				{
+					"id": "C3.6",
+					"label": "ミドルウェア適用",
+					"result": "W",
+					"note": "requireAuthは適切だがrate-limiter/audit-logger/security-headersは全てスタブ/未接続"
+				}
+			]
+		},
+		"L4": {
+			"label": "Code",
+			"pass": 3,
+			"warn": 3,
+			"fail": 0,
+			"items": [
+				{
+					"id": "C4.1",
+					"label": "型定義とDB整合",
+					"result": "P",
+					"note": "全サービスの型がDBスキーマと一致"
+				},
+				{
+					"id": "C4.2",
+					"label": "Zodバリデーション",
+					"result": "W",
+					"note": "blend weight Zod max(10) vs DB decimal(3,0)不整合。review Zod max(1000) vs DB text制約なし"
+				},
+				{
+					"id": "C4.3",
+					"label": "エクスポート完全性",
+					"result": "W",
+					"note": "index.ts再エクスポートは完全。users/flavors/keywordsに$inferSelect/Insert型なし"
+				},
+				{
+					"id": "C4.4",
+					"label": "命名規則",
+					"result": "P",
+					"note": "snake_case(DB) / camelCase(TS) / 動詞+名詞(関数) 全て一貫"
+				},
+				{
+					"id": "C4.5",
+					"label": "デッドコード",
+					"result": "W",
+					"note": "review-service.ts/recipe-service.ts/audit-logger.ts/rate-limiter.ts/security-headers.ts全体がデッドコード"
+				},
+				{
+					"id": "C4.6",
+					"label": "エラーハンドリング",
+					"result": "P",
+					"note": "safeHandler + apiSuccess/apiErrorパターンが全26ルートで一貫"
+				}
+			]
+		}
+	},
+	"iso25010Results": {
+		"機能適合性": {
+			"result": "F",
+			"subcharacteristics": [
+				{ "name": "完全性", "result": "W" },
+				{ "name": "正確性", "result": "P" },
+				{ "name": "適切性", "result": "P" }
+			]
+		},
+		"性能効率性": {
+			"result": "W",
+			"subcharacteristics": [
+				{ "name": "時間効率", "result": "W" },
+				{ "name": "資源効率", "result": "P" },
+				{ "name": "容量", "result": "P" }
+			]
+		},
+		"互換性": {
+			"result": "W",
+			"subcharacteristics": [
+				{ "name": "共存性", "result": "P" },
+				{ "name": "相互運用性", "result": "W" }
+			]
+		},
+		"使用性": {
+			"result": "W",
+			"subcharacteristics": [
+				{ "name": "認識容易性", "result": "P" },
+				{ "name": "学習容易性", "result": "P" },
+				{ "name": "操作容易性", "result": "W" },
+				{ "name": "アクセシビリティ", "result": "F" }
+			]
+		},
+		"信頼性": {
+			"result": "W",
+			"subcharacteristics": [
+				{ "name": "成熟度", "result": "W" },
+				{ "name": "可用性", "result": "P" },
+				{ "name": "障害許容", "result": "W" },
+				{ "name": "回復性", "result": "P" }
+			]
+		},
+		"セキュリティ": {
+			"result": "W",
+			"subcharacteristics": [
+				{ "name": "機密性", "result": "W" },
+				{ "name": "完全性", "result": "W" },
+				{ "name": "否認防止", "result": "W" },
+				{ "name": "認証", "result": "P" },
+				{ "name": "認可", "result": "P" }
+			]
+		},
+		"保守性": {
+			"result": "F",
+			"subcharacteristics": [
+				{ "name": "モジュール性", "result": "P" },
+				{ "name": "再利用性", "result": "P" },
+				{ "name": "テスト容易性", "result": "F" },
+				{ "name": "変更容易性", "result": "W" }
+			]
+		},
+		"移植性": {
+			"result": "W",
+			"subcharacteristics": [
+				{ "name": "適応性", "result": "P" },
+				{ "name": "設置性", "result": "W" },
+				{ "name": "置換容易性", "result": "W" }
+			]
+		}
+	},
+	"fmeaItems": [
+		{
+			"id": "FM-001",
+			"description": "Sentryがコア設計書に未記載",
+			"category": "ドキュメント",
+			"S": 3,
+			"O": 6,
+			"D": 4,
+			"RPN": 72,
+			"severity": "Medium",
+			"status": "design_documented",
+			"docRef": "04_アーキテクチャ設計書.md §11"
+		},
+		{
+			"id": "FM-002",
+			"description": "4外部システムの通信プロトコル未文書化",
+			"category": "ドキュメント",
+			"S": 4,
+			"O": 5,
+			"D": 5,
+			"RPN": 100,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "04_アーキテクチャ設計書.md §11"
+		},
+		{
+			"id": "FM-003",
+			"description": "AI設計書claude-sonnet-4.5 vsコードgpt-4",
+			"category": "互換性",
+			"S": 4,
+			"O": 8,
+			"D": 5,
+			"RPN": 160,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "05_技術スタック設計書.md §11"
+		},
+		{
+			"id": "FM-004",
+			"description": "REDIS_URL docker-compose web未設定",
+			"category": "互換性",
+			"S": 5,
+			"O": 7,
+			"D": 5,
+			"RPN": 175,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "04_アーキテクチャ設計書.md §7.1"
+		},
+		{
+			"id": "FM-005",
+			"description": "INTERNAL_SERVICE_TOKENがoptional",
+			"category": "セキュリティ",
+			"S": 8,
+			"O": 5,
+			"D": 7,
+			"RPN": 280,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "auth-user-management.md §10"
+		},
+		{
+			"id": "FM-006",
+			"description": "CIにproduction deployジョブなし",
+			"category": "保守性",
+			"S": 7,
+			"O": 8,
+			"D": 5,
+			"RPN": 280,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "operations-infrastructure.md §10"
+		},
+		{
+			"id": "FM-007",
+			"description": "recipe-service 8関数APIルート0",
+			"category": "機能性",
+			"S": 8,
+			"O": 7,
+			"D": 6,
+			"RPN": 336,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "recipe-system.md §2"
+		},
+		{
+			"id": "FM-008",
+			"description": "review-service 4関数APIルート0",
+			"category": "機能性",
+			"S": 7,
+			"O": 7,
+			"D": 6,
+			"RPN": 294,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "review-system.md §13"
+		},
+		{
+			"id": "FM-009",
+			"description": "creator_profiles/stylesサービス層なし",
+			"category": "機能性",
+			"S": 5,
+			"O": 7,
+			"D": 5,
+			"RPN": 175,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "creator-system.md §10"
+		},
+		{
+			"id": "FM-010",
+			"description": "password_reset_tokensサービス/APIなし",
+			"category": "機能性",
+			"S": 6,
+			"O": 8,
+			"D": 4,
+			"RPN": 192,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "auth-user-management.md §12"
+		},
+		{
+			"id": "FM-011",
+			"description": "16+画面にAPIバッキングなし",
+			"category": "機能性",
+			"S": 7,
+			"O": 7,
+			"D": 5,
+			"RPN": 245,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "recipe-system.md §3"
+		},
+		{
+			"id": "FM-012",
+			"description": "レート制限スタブ(always allows)",
+			"category": "セキュリティ",
+			"S": 9,
+			"O": 10,
+			"D": 9,
+			"RPN": 810,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "auth-user-management.md §11"
+		},
+		{
+			"id": "FM-013",
+			"description": "監査ログDB INSERT TODO",
+			"category": "セキュリティ",
+			"S": 8,
+			"O": 10,
+			"D": 8,
+			"RPN": 640,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "auth-user-management.md §11"
+		},
+		{
+			"id": "FM-014",
+			"description": "セキュリティヘッダー未接続",
+			"category": "セキュリティ",
+			"S": 9,
+			"O": 10,
+			"D": 7,
+			"RPN": 630,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "auth-user-management.md §11"
+		},
+		{
+			"id": "FM-015",
+			"description": "IP抽出ロジック2ファイル重複",
+			"category": "保守性",
+			"S": 2,
+			"O": 6,
+			"D": 3,
+			"RPN": 36,
+			"severity": "Low",
+			"status": "design_documented",
+			"docRef": "operations-infrastructure.md §15"
+		},
+		{
+			"id": "FM-016",
+			"description": "recipe/reviewサービスが完全デッドコード",
+			"category": "保守性",
+			"S": 5,
+			"O": 10,
+			"D": 5,
+			"RPN": 250,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "operations-infrastructure.md §12"
+		},
+		{
+			"id": "FM-017",
+			"description": "Zod float vs DB integer不整合",
+			"category": "信頼性",
+			"S": 5,
+			"O": 5,
+			"D": 7,
+			"RPN": 175,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "blend-system.md §12"
+		},
+		{
+			"id": "FM-018",
+			"description": "order-service.ts未使用import inArray",
+			"category": "保守性",
+			"S": 1,
+			"O": 8,
+			"D": 2,
+			"RPN": 16,
+			"severity": "Low",
+			"status": "design_documented",
+			"docRef": "operations-infrastructure.md §16"
+		},
+		{
+			"id": "FM-019",
+			"description": "5 DBテーブルにサービス層なし",
+			"category": "機能性",
+			"S": 6,
+			"O": 7,
+			"D": 6,
+			"RPN": 252,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "creator-system.md §10, review-system.md §13"
+		},
+		{
+			"id": "FM-020",
+			"description": "Products管理者CRUDなし",
+			"category": "機能性",
+			"S": 6,
+			"O": 6,
+			"D": 5,
+			"RPN": 180,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "recipe-system.md §4"
+		},
+		{
+			"id": "FM-021",
+			"description": "blend_request_flavorsテーブル未使用",
+			"category": "保守性",
+			"S": 4,
+			"O": 7,
+			"D": 5,
+			"RPN": 140,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "blend-system.md §13"
+		},
+		{
+			"id": "FM-022",
+			"description": "注文ステータス遷移バリデーションなし",
+			"category": "信頼性",
+			"S": 8,
+			"O": 6,
+			"D": 7,
+			"RPN": 336,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "cart-checkout-orders.md §11"
+		},
+		{
+			"id": "FM-023",
+			"description": "executeBlend() N+1キーワードループ",
+			"category": "性能",
+			"S": 5,
+			"O": 7,
+			"D": 6,
+			"RPN": 210,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "blend-system.md §10"
+		},
+		{
+			"id": "FM-024",
+			"description": "getRecipeDetail() 4直列クエリ",
+			"category": "性能",
+			"S": 4,
+			"O": 7,
+			"D": 5,
+			"RPN": 140,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "recipe-system.md §5"
+		},
+		{
+			"id": "FM-025",
+			"description": "レシピ一覧AVG(rating)相関サブクエリ",
+			"category": "性能",
+			"S": 5,
+			"O": 6,
+			"D": 7,
+			"RPN": 210,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "review-system.md §14"
+		},
+		{
+			"id": "FM-026",
+			"description": "3+ FKカラムにインデックスなし",
+			"category": "性能",
+			"S": 5,
+			"O": 6,
+			"D": 6,
+			"RPN": 180,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "cart-checkout-orders.md §12, recipe-system.md §6"
+		},
+		{
+			"id": "FM-027",
+			"description": "APIバージョン管理戦略未定義",
+			"category": "互換性",
+			"S": 5,
+			"O": 5,
+			"D": 6,
+			"RPN": 150,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "04_アーキテクチャ設計書.md §12"
+		},
+		{
+			"id": "FM-028",
+			"description": "全画面で空状態未定義",
+			"category": "使用性",
+			"S": 4,
+			"O": 8,
+			"D": 4,
+			"RPN": 128,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "ux-patterns.md §2"
+		},
+		{
+			"id": "FM-029",
+			"description": "ローディング状態未定義",
+			"category": "使用性",
+			"S": 3,
+			"O": 8,
+			"D": 4,
+			"RPN": 96,
+			"severity": "Medium",
+			"status": "design_documented",
+			"docRef": "ux-patterns.md §3"
+		},
+		{
+			"id": "FM-030",
+			"description": "write-review-pro孤立画面",
+			"category": "使用性",
+			"S": 2,
+			"O": 5,
+			"D": 4,
+			"RPN": 40,
+			"severity": "Low",
+			"status": "design_documented",
+			"docRef": "review-system.md §15"
+		},
+		{
+			"id": "FM-031",
+			"description": "executeBlend()トランザクションなし",
+			"category": "信頼性",
+			"S": 7,
+			"O": 8,
+			"D": 7,
+			"RPN": 392,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "blend-system.md §9"
+		},
+		{
+			"id": "FM-032",
+			"description": "saveRulesForKeyword()トランザクションなし",
+			"category": "信頼性",
+			"S": 7,
+			"O": 5,
+			"D": 8,
+			"RPN": 280,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "blend-system.md §9"
+		},
+		{
+			"id": "FM-033",
+			"description": "createOrder()トランザクションなし(10ステップ)",
+			"category": "信頼性",
+			"S": 9,
+			"O": 8,
+			"D": 6,
+			"RPN": 432,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "cart-checkout-orders.md §9"
+		},
+		{
+			"id": "FM-034",
+			"description": "Stripe Webhook冪等性チェックなし",
+			"category": "信頼性",
+			"S": 8,
+			"O": 8,
+			"D": 7,
+			"RPN": 448,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "cart-checkout-orders.md §10"
+		},
+		{
+			"id": "FM-035",
+			"description": "AI APIリトライ/タイムアウトなし",
+			"category": "信頼性",
+			"S": 5,
+			"O": 6,
+			"D": 7,
+			"RPN": 210,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "blend-system.md §11"
+		},
+		{
+			"id": "FM-036",
+			"description": "レート制限スタブ(always allowed)+未接続",
+			"category": "セキュリティ",
+			"S": 9,
+			"O": 10,
+			"D": 9,
+			"RPN": 810,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "auth-user-management.md §11"
+		},
+		{
+			"id": "FM-037",
+			"description": "セキュリティヘッダー未適用(CSP/HSTS/X-Frame)",
+			"category": "セキュリティ",
+			"S": 9,
+			"O": 10,
+			"D": 7,
+			"RPN": 630,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "auth-user-management.md §11"
+		},
+		{
+			"id": "FM-038",
+			"description": "監査ログDB INSERT TODO+未接続",
+			"category": "セキュリティ",
+			"S": 8,
+			"O": 10,
+			"D": 8,
+			"RPN": 640,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "auth-user-management.md §11"
+		},
+		{
+			"id": "FM-039",
+			"description": "脅威モデル文書なし(STRIDE/OWASP)",
+			"category": "セキュリティ",
+			"S": 6,
+			"O": 10,
+			"D": 7,
+			"RPN": 420,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "threat-model.md"
+		},
+		{
+			"id": "FM-040",
+			"description": "パスワードリセット未実装(スキーマのみ)",
+			"category": "機能性",
+			"S": 6,
+			"O": 8,
+			"D": 5,
+			"RPN": 240,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "auth-user-management.md §12"
+		},
+		{
+			"id": "FM-041",
+			"description": "DOMPurify未インストール/未使用",
+			"category": "セキュリティ",
+			"S": 8,
+			"O": 5,
+			"D": 7,
+			"RPN": 280,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "auth-user-management.md §13"
+		},
+		{
+			"id": "FM-042",
+			"description": "JWT maxAge 30日即時無効化なし",
+			"category": "セキュリティ",
+			"S": 8,
+			"O": 4,
+			"D": 8,
+			"RPN": 256,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "auth-user-management.md §9"
+		},
+		{
+			"id": "FM-043",
+			"description": "テストカバレッジ~5%(2ファイルのみ)",
+			"category": "保守性",
+			"S": 8,
+			"O": 10,
+			"D": 9,
+			"RPN": 720,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "testing-strategy.md"
+		},
+		{
+			"id": "FM-044",
+			"description": "設計書claude-sonnet-4.5 vsコードgpt-4(保守性観点)",
+			"category": "保守性",
+			"S": 4,
+			"O": 8,
+			"D": 5,
+			"RPN": 160,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "05_技術スタック設計書.md §11"
+		},
+		{
+			"id": "FM-045",
+			"description": "biome.json設定ファイルなし",
+			"category": "保守性",
+			"S": 3,
+			"O": 8,
+			"D": 3,
+			"RPN": 72,
+			"severity": "Medium",
+			"status": "design_documented",
+			"docRef": "operations-infrastructure.md §13"
+		},
+		{
+			"id": "FM-046",
+			"description": "CI production deployジョブなし(保守性観点)",
+			"category": "保守性",
+			"S": 7,
+			"O": 8,
+			"D": 5,
+			"RPN": 280,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "operations-infrastructure.md §10"
+		},
+		{
+			"id": "FM-047",
+			"description": "env.tsバイパス(stripe.ts/dbがprocess.env直接)",
+			"category": "移植性",
+			"S": 6,
+			"O": 7,
+			"D": 5,
+			"RPN": 210,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "operations-infrastructure.md §11"
+		},
+		{
+			"id": "FM-048",
+			"description": "Stripe SDK密結合",
+			"category": "移植性",
+			"S": 4,
+			"O": 7,
+			"D": 5,
+			"RPN": 140,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "cart-checkout-orders.md §13"
+		},
+		{
+			"id": "FM-049",
+			"description": "AI client openai('gpt-4')ハードコード",
+			"category": "移植性",
+			"S": 4,
+			"O": 7,
+			"D": 5,
+			"RPN": 140,
+			"severity": "High",
+			"status": "design_documented",
+			"docRef": "05_技術スタック設計書.md §11"
+		},
+		{
+			"id": "FM-050",
+			"description": "NEXT_PUBLIC_BASE_URL env.ts未登録",
+			"category": "移植性",
+			"S": 7,
+			"O": 5,
+			"D": 6,
+			"RPN": 210,
+			"severity": "Critical",
+			"status": "design_documented",
+			"docRef": "operations-infrastructure.md §14"
+		}
+	],
+	"atamResults": {
+		"scenarios": [
+			{
+				"id": "AS-001",
+				"description": "調合リアルタイム計算 vs キュー",
+				"qualityAttributes": ["性能", "UX"],
+				"evaluation": "要注意"
+			},
+			{
+				"id": "AS-002",
+				"description": "セッション管理 JWT vs Server Session",
+				"qualityAttributes": ["セキュリティ", "スケーラビリティ"],
+				"evaluation": "要注意"
+			},
+			{
+				"id": "AS-003",
+				"description": "レシピ配合 正規化 vs 非正規化",
+				"qualityAttributes": ["整合性", "クエリ性能"],
+				"evaluation": "適切"
+			},
+			{
+				"id": "AS-004",
+				"description": "通知 ポーリング vs SSE/WebSocket",
+				"qualityAttributes": ["UX", "実装複雑性"],
+				"evaluation": "要注意"
+			},
+			{
+				"id": "AS-005",
+				"description": "検索 PostgreSQL vs Elasticsearch",
+				"qualityAttributes": ["検索性能", "運用コスト"],
+				"evaluation": "適切"
+			},
+			{
+				"id": "AS-006",
+				"description": "画像 Vercel Blob vs S3",
+				"qualityAttributes": ["開発速度", "ベンダーロックイン"],
+				"evaluation": "要注意"
+			},
+			{
+				"id": "AS-007",
+				"description": "モノレポ構成の妥当性",
+				"qualityAttributes": ["開発効率", "ビルド複雑性"],
+				"evaluation": "適切"
+			},
+			{
+				"id": "AS-008",
+				"description": "AI Service 分離の妥当性",
+				"qualityAttributes": ["可用性", "実装複雑性"],
+				"evaluation": "要注意"
+			}
+		],
+		"sensitivityPoints": [
+			{
+				"id": "SP-1",
+				"description": "AI API (claude-sonnet-4.5) のレスポンスタイム",
+				"qualityAttributes": ["性能", "UX"]
+			},
+			{
+				"id": "SP-2",
+				"description": "DB 接続プール最大数 (max: 10)",
+				"qualityAttributes": ["性能", "可用性"]
+			},
+			{
+				"id": "SP-3",
+				"description": "JWT maxAge (30日)",
+				"qualityAttributes": ["セキュリティ"]
+			},
+			{
+				"id": "SP-4",
+				"description": "レシピ数の増加速度",
+				"qualityAttributes": ["検索性能"]
+			},
+			{
+				"id": "SP-5",
+				"description": "Vercel Serverless Functionの同時実行数制限",
+				"qualityAttributes": ["スケーラビリティ"]
+			},
+			{
+				"id": "SP-6",
+				"description": "Redisの可用性",
+				"qualityAttributes": ["レート制限", "キャッシュ", "分散ロック"]
+			}
+		],
+		"tradeoffPoints": [
+			{
+				"id": "TP-1",
+				"description": "リアルタイム計算 vs キュー",
+				"qualityAttributeA": "UX (即時応答)",
+				"qualityAttributeB": "スケーラビリティ"
+			},
+			{
+				"id": "TP-2",
+				"description": "JWT vs Server Session",
+				"qualityAttributeA": "スケーラビリティ",
+				"qualityAttributeB": "セキュリティ (即時無効化)"
+			},
+			{
+				"id": "TP-3",
+				"description": "Vercel Blob vs S3",
+				"qualityAttributeA": "開発速度",
+				"qualityAttributeB": "ベンダー非依存"
+			},
+			{
+				"id": "TP-4",
+				"description": "ポーリング vs SSE",
+				"qualityAttributeA": "実装複雑性",
+				"qualityAttributeB": "UX (リアルタイム性)"
+			},
+			{
+				"id": "TP-5",
+				"description": "PostgreSQL直接 vs Elasticsearch",
+				"qualityAttributeA": "運用コスト",
+				"qualityAttributeB": "検索品質"
+			},
+			{
+				"id": "TP-6",
+				"description": "Vercel AI SDK統合 vs サービス分離",
+				"qualityAttributeA": "運用単純性",
+				"qualityAttributeB": "障害分離"
+			}
+		],
+		"nonRisks": [
+			{
+				"id": "NR-1",
+				"description": "配合計算の精度",
+				"reason": "Decimal.js (precision:10, ROUND_HALF_UP) + Zod refine"
+			},
+			{
+				"id": "NR-2",
+				"description": "決済セキュリティ",
+				"reason": "Stripe Checkout Session委譲 + Webhook署名検証"
+			},
+			{
+				"id": "NR-3",
+				"description": "パスワードセキュリティ",
+				"reason": "bcryptjs (saltRounds:12) + SHA-256トークンハッシュ"
+			},
+			{
+				"id": "NR-4",
+				"description": "Redis障害時継続",
+				"reason": "cached()ユーティリティのグレースフルデグレード"
+			},
+			{
+				"id": "NR-5",
+				"description": "ヘルスチェック",
+				"reason": "Liveness/Readiness分離、DB必須/Redis・Stripeオプショナル"
+			},
+			{
+				"id": "NR-6",
+				"description": "環境変数バリデーション",
+				"reason": "Zod起動時検証 + Stripeキープレフィックス検証"
+			},
+			{
+				"id": "NR-7",
+				"description": "CSP/XSS対策（設計面）",
+				"reason": "CSPヘッダー設計済（ただし未適用 → FM-037）"
+			}
+		]
+	},
+	"summary": {
+		"totalFmeaItems": 50,
+		"bySeverity": {
+			"Critical": 29,
+			"High": 15,
+			"Medium": 3,
+			"Low": 3
+		},
+		"byCategory": {
+			"セキュリティ": { "count": 10, "avgRPN": 540 },
+			"信頼性": { "count": 7, "avgRPN": 325 },
+			"機能性": { "count": 8, "avgRPN": 239 },
+			"保守性": { "count": 9, "avgRPN": 217 },
+			"性能": { "count": 4, "avgRPN": 185 },
+			"移植性": { "count": 4, "avgRPN": 175 },
+			"互換性": { "count": 3, "avgRPN": 162 },
+			"使用性": { "count": 3, "avgRPN": 88 },
+			"ドキュメント": { "count": 2, "avgRPN": 86 }
+		},
+		"resolvedCount": 0,
+		"designDocumentedCount": 50,
+		"openCount": 0,
+		"c4Summary": {
+			"totalPass": 9,
+			"totalWarn": 11,
+			"totalFail": 2
+		},
+		"iso25010Summary": {
+			"pass": 0,
+			"warn": 6,
+			"fail": 2
+		},
+		"atamSummary": {
+			"appropriate": 3,
+			"needsAttention": 5,
+			"totalScenarios": 8,
+			"sensitivityPoints": 6,
+			"tradeoffPoints": 6,
+			"nonRisks": 7
+		}
+	}
 }

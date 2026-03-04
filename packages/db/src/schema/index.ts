@@ -132,3 +132,7 @@ export {
 	platformSettings,
 	royaltiesRelations,
 } from "./royalties";
+export {
+	flavorPreferences,
+	flavorPreferencesRelations,
+} from "./preference-data";

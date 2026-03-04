@@ -1,22 +1,19 @@
 {
-  "name": "kyarainnovate",
-  "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "lint": "turbo lint",
-    "check": "turbo check",
-    "db:generate": "turbo db:generate",
-    "db:push": "turbo db:push",
-    "db:seed": "turbo db:seed",
-    "test": "turbo test"
-  },
-  "devDependencies": {
-    "turbo": "^2"
-  },
-  "packageManager": "npm@11.3.0"
+	"name": "kyarainnovate",
+	"private": true,
+	"workspaces": ["apps/*", "packages/*"],
+	"scripts": {
+		"dev": "turbo dev",
+		"build": "turbo build",
+		"lint": "turbo lint",
+		"check": "turbo check",
+		"db:generate": "turbo db:generate",
+		"db:push": "turbo db:push",
+		"db:seed": "turbo db:seed",
+		"test": "turbo test"
+	},
+	"devDependencies": {
+		"turbo": "^2"
+	},
+	"packageManager": "npm@11.3.0"
 }

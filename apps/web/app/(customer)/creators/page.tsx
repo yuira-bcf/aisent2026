@@ -1,9 +1,11 @@
+import { auth } from "@/lib/auth";
 import {
   type CreatorListItem,
   getActiveCreators,
   getLatestRecipeForCreators,
   getPickupCreators,
 } from "@/lib/services/creator-profile-service";
+import { getRecommendedCreators } from "@/lib/services/personalization-service";
 import type { Tier } from "@kyarainnovate/db/schema";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -301,17 +303,24 @@ export default async function CreatorsPage({
     rating: "rating",
   };
 
-  const [{ items, total }, pickupCreators] = await Promise.all([
-    getActiveCreators(page, limit, {
-      sortBy: sortByMap[sortParam],
-      search: search || undefined,
-      specialty: specialty || undefined,
-      tier: tier || undefined,
-    }),
-    page === 1 && !search && !specialty && !tier
-      ? getPickupCreators()
-      : Promise.resolve([]),
-  ]);
+  // Fetch session for personalized recommendations
+  const session = await auth();
+
+  const [{ items, total }, pickupCreators, recommendedCreators] =
+    await Promise.all([
+      getActiveCreators(page, limit, {
+        sortBy: sortByMap[sortParam],
+        search: search || undefined,
+        specialty: specialty || undefined,
+        tier: tier || undefined,
+      }),
+      page === 1 && !search && !specialty && !tier
+        ? getPickupCreators()
+        : Promise.resolve([]),
+      session && page === 1 && !search && !specialty && !tier
+        ? getRecommendedCreators(session.user.id)
+        : Promise.resolve([]),
+    ]);
 
   const creatorUserIds = items.map((c) => c.userId);
   const latestRecipeMap = await getLatestRecipeForCreators(creatorUserIds);
@@ -612,6 +621,74 @@ export default async function CreatorsPage({
 
           {/* Right: Creator Card Grid */}
           <div className="flex-1 overflow-y-auto min-h-0">
+            {/* Recommended Creators Section */}
+            {recommendedCreators.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="material-symbols-outlined text-sm text-gray-400">
+                    recommend
+                  </span>
+                  <h2 className="text-sm font-bold text-black">
+                    おすすめクリエーター
+                  </h2>
+                  <span className="text-[10px] text-gray-400">
+                    あなたの調合履歴に基づくおすすめ
+                  </span>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-3">
+                  {recommendedCreators.map((rc) => {
+                    const rcTier = (rc.tier ?? "APPRENTICE") as Tier;
+                    const rcTc = tierConfig[rcTier];
+                    const rcDiamond = tierDiamondColor[rcTier];
+                    const rcRating = Number(rc.avgRating);
+                    return (
+                      <Link
+                        key={rc.userId}
+                        href={`/creators/${rc.creatorIdSlug}`}
+                        className="min-w-[180px] border border-gray-200 rounded p-3 hover:border-black transition flex-shrink-0 bg-white"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <div
+                            className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-sm font-medium"
+                            style={{ border: `2px solid ${rcDiamond}` }}
+                          >
+                            {rc.displayName.slice(0, 1)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-black truncate">
+                              {rc.displayName}
+                            </p>
+                            <span
+                              className="inline-flex items-center gap-0.5 text-[8px] font-bold"
+                              style={{ color: rcTc.color }}
+                            >
+                              <span
+                                style={{
+                                  color: rcDiamond,
+                                  fontSize: "9px",
+                                }}
+                              >
+                                {rcTier === "APPRENTICE" ? "\u25C7" : "\u25C6"}
+                              </span>
+                              {rcTc.short}
+                            </span>
+                          </div>
+                        </div>
+                        {rcRating > 0 && (
+                          <div className="text-[10px] text-gray-500">
+                            &#9733;{" "}
+                            <b className="text-amber-500">
+                              {rcRating.toFixed(1)}
+                            </b>
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {items.length === 0 ? (
               <div className="card p-12 text-center">
                 <span className="material-symbols-outlined text-4xl text-gray-300 mb-3 block">
