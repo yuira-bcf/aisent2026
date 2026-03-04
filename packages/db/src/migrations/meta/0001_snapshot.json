@@ -1,6 +1,6 @@
 {
-	"id": "cf41f563-2845-4953-bf21-3a13b1f1d46d",
-	"prevId": "00000000-0000-0000-0000-000000000000",
+	"id": "3077ff85-902f-4002-9444-b40a6a322d96",
+	"prevId": "cf41f563-2845-4953-bf21-3a13b1f1d46d",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
@@ -2976,6 +2976,51 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
+		"public.platform_settings": {
+			"name": "platform_settings",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"key": {
+					"name": "key",
+					"type": "varchar(50)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"value": {
+					"name": "value",
+					"type": "varchar(500)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {
+				"platform_settings_key_unique": {
+					"name": "platform_settings_key_unique",
+					"nullsNotDistinct": false,
+					"columns": ["key"]
+				}
+			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
 		"public.product_favorites": {
 			"name": "product_favorites",
 			"schema": "",
@@ -3684,6 +3729,156 @@
 					"columns": ["recipe_id"]
 				}
 			},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.royalties": {
+			"name": "royalties",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"creator_id": {
+					"name": "creator_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"order_id": {
+					"name": "order_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"amount": {
+					"name": "amount",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"rate": {
+					"name": "rate",
+					"type": "numeric(5, 4)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"status": {
+					"name": "status",
+					"type": "varchar(20)",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'PENDING'"
+				},
+				"period": {
+					"name": "period",
+					"type": "varchar(7)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"paid_at": {
+					"name": "paid_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"idx_royalties_creator": {
+					"name": "idx_royalties_creator",
+					"columns": [
+						{
+							"expression": "creator_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"idx_royalties_order": {
+					"name": "idx_royalties_order",
+					"columns": [
+						{
+							"expression": "order_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"idx_royalties_period": {
+					"name": "idx_royalties_period",
+					"columns": [
+						{
+							"expression": "period",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"idx_royalties_status": {
+					"name": "idx_royalties_status",
+					"columns": [
+						{
+							"expression": "status",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"royalties_creator_id_users_id_fk": {
+					"name": "royalties_creator_id_users_id_fk",
+					"tableFrom": "royalties",
+					"tableTo": "users",
+					"columnsFrom": ["creator_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				},
+				"royalties_order_id_orders_id_fk": {
+					"name": "royalties_order_id_orders_id_fk",
+					"tableFrom": "royalties",
+					"tableTo": "orders",
+					"columnsFrom": ["order_id"],
+					"columnsTo": ["id"],
+					"onDelete": "no action",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
 			"policies": {},
 			"checkConstraints": {},
 			"isRLSEnabled": false

@@ -273,6 +273,7 @@ const notificationTypeToPreferenceKey: Partial<
   ORDER_SHIPPED: "emailOrderUpdates",
   ORDER_DELIVERED: "emailOrderUpdates",
   ORDER_CANCELLED: "emailOrderUpdates",
+  RECIPE_ORDERED: "emailOrderUpdates",
   REVIEW_RECEIVED: "emailReviews",
   ROYALTY_PAID: "emailRoyalty",
   TIER_CHANGED: "emailSystem",
@@ -285,10 +286,13 @@ const notificationTypeToPreferenceKey: Partial<
 const emailEnabledTypes: Set<NotificationType> = new Set([
   "ORDER_CONFIRMED",
   "ORDER_SHIPPED",
+  "ORDER_DELIVERED",
   "ORDER_CANCELLED",
   "REVIEW_RECEIVED",
+  "RECIPE_ORDERED",
   "ROYALTY_PAID",
   "TIER_CHANGED",
+  "SYSTEM_ANNOUNCEMENT",
   "CREATOR_APPROVED",
   "CREATOR_REJECTED",
 ]);
@@ -386,7 +390,7 @@ export async function notifyOrderStatusChange(
   const mapping = orderStatusNotificationMap[newStatus];
   if (!mapping) return;
 
-  await createNotification({
+  await sendNotification({
     userId,
     type: mapping.type,
     title: mapping.title,
@@ -400,7 +404,7 @@ export async function notifyCreatorNewOrder(
   orderId: string,
   recipeName: string,
 ): Promise<void> {
-  await createNotification({
+  await sendNotification({
     userId: creatorUserId,
     type: "RECIPE_ORDERED",
     title: "新しい注文が入りました",
@@ -414,7 +418,7 @@ export async function notifyCreatorNewReview(
   recipeName: string,
   rating: number,
 ): Promise<void> {
-  await createNotification({
+  await sendNotification({
     userId: creatorUserId,
     type: "REVIEW_RECEIVED",
     title: "新しいレビューが投稿されました",
@@ -429,14 +433,14 @@ export async function notifyCreatorApplicationResult(
   rejectionReason?: string,
 ): Promise<void> {
   if (approved) {
-    await createNotification({
+    await sendNotification({
       userId,
       type: "CREATOR_APPROVED",
       title: "クリエイター申請が承認されました",
       body: "おめでとうございます！クリエイターとしての活動を開始できます。",
     });
   } else {
-    await createNotification({
+    await sendNotification({
       userId,
       type: "CREATOR_REJECTED",
       title: "クリエイター申請が却下されました",

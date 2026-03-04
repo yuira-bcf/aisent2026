@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { sendNotification } from "@/lib/services/notification-service";
 import {
   creatorProfiles,
   orderItems,
@@ -187,7 +188,34 @@ export async function markAsPaid(royaltyIds: string[]): Promise<number> {
     .where(
       and(inArray(royalties.id, royaltyIds), eq(royalties.status, "PENDING")),
     )
-    .returning({ id: royalties.id });
+    .returning({
+      id: royalties.id,
+      creatorId: royalties.creatorId,
+      amount: royalties.amount,
+      period: royalties.period,
+    });
+
+  // Notify each affected creator
+  const creatorPayments = new Map<string, { amount: number; period: string }>();
+  for (const row of result) {
+    const prev = creatorPayments.get(row.creatorId);
+    creatorPayments.set(row.creatorId, {
+      amount: (prev?.amount ?? 0) + row.amount,
+      period: row.period,
+    });
+  }
+
+  for (const [creatorId, payment] of creatorPayments) {
+    sendNotification({
+      userId: creatorId,
+      type: "ROYALTY_PAID",
+      title: "ロイヤリティが支払われました",
+      body: `ロイヤリティの支払い（${payment.amount.toLocaleString()}円）が完了しました。`,
+      data: { amount: payment.amount, period: payment.period },
+    }).catch((err) =>
+      console.error("[royalty-service] notification failed:", err),
+    );
+  }
 
   return result.length;
 }
@@ -213,7 +241,20 @@ export async function markPeriodAsPaid(
         eq(royalties.status, "PENDING"),
       ),
     )
-    .returning({ id: royalties.id });
+    .returning({ id: royalties.id, amount: royalties.amount });
+
+  if (result.length > 0) {
+    const totalAmount = result.reduce((sum, row) => sum + row.amount, 0);
+    sendNotification({
+      userId: creatorId,
+      type: "ROYALTY_PAID",
+      title: "ロイヤリティが支払われました",
+      body: `${period} のロイヤリティの支払い（${totalAmount.toLocaleString()}円）が完了しました。`,
+      data: { amount: totalAmount, period },
+    }).catch((err) =>
+      console.error("[royalty-service] notification failed:", err),
+    );
+  }
 
   return result.length;
 }

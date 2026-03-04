@@ -7,7 +7,10 @@ import {
   applyCoupon as applyCouponUsage,
   validateCoupon,
 } from "@/lib/services/coupon-service";
-import { notifyOrderStatusChange } from "@/lib/services/notification-service";
+import {
+  notifyCreatorNewOrder,
+  notifyOrderStatusChange,
+} from "@/lib/services/notification-service";
 import { calculateRoyalty } from "@/lib/services/royalty-service";
 import { stripe } from "@/lib/stripe";
 import {
@@ -16,6 +19,7 @@ import {
   orders,
   products,
   shippingAddresses,
+  signatureRecipes,
 } from "@kyarainnovate/db/schema";
 import type { OrderStatus } from "@kyarainnovate/db/schema";
 import { and, count, desc, eq, inArray } from "drizzle-orm";
@@ -211,6 +215,40 @@ export async function handleStripeWebhook(
         calculateRoyalty(orderId).catch((err) =>
           console.error("[order-service] royalty calculation failed:", err),
         );
+
+        // Notify creators whose recipes are included in this order
+        db.select({
+          creatorId: signatureRecipes.creatorId,
+          recipeName: signatureRecipes.name,
+        })
+          .from(orderItems)
+          .innerJoin(products, eq(orderItems.productId, products.id))
+          .innerJoin(
+            signatureRecipes,
+            eq(products.recipeId, signatureRecipes.id),
+          )
+          .where(eq(orderItems.orderId, orderId))
+          .then((rows) => {
+            const seen = new Set<string>();
+            for (const row of rows) {
+              const key = `${row.creatorId}:${row.recipeName}`;
+              if (seen.has(key)) continue;
+              seen.add(key);
+              notifyCreatorNewOrder(
+                row.creatorId,
+                orderId,
+                row.recipeName,
+              ).catch((err) =>
+                console.error(
+                  "[order-service] creator notification failed:",
+                  err,
+                ),
+              );
+            }
+          })
+          .catch((err) =>
+            console.error("[order-service] creator order query failed:", err),
+          );
       }
       break;
     }

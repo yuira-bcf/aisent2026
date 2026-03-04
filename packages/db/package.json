@@ -1,26 +1,26 @@
 {
-  "name": "@kyarainnovate/db",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./src/schema/index.ts",
-    "./schema": "./src/schema/index.ts",
-    "./client": "./src/client.ts"
-  },
-  "scripts": {
-    "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push",
-    "db:seed": "tsx src/seed.ts",
-    "db:studio": "drizzle-kit studio"
-  },
-  "dependencies": {
-    "drizzle-orm": "^0.38",
-    "postgres": "^3.4"
-  },
-  "devDependencies": {
-    "drizzle-kit": "^0.30",
-    "tsx": "^4",
-    "typescript": "^5.7"
-  }
+	"name": "@kyarainnovate/db",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/schema/index.ts",
+		"./schema": "./src/schema/index.ts",
+		"./client": "./src/client.ts"
+	},
+	"scripts": {
+		"db:generate": "drizzle-kit generate",
+		"db:push": "drizzle-kit push",
+		"db:seed": "tsx src/seed.ts",
+		"db:studio": "drizzle-kit studio"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.38",
+		"postgres": "^3.4"
+	},
+	"devDependencies": {
+		"drizzle-kit": "^0.30",
+		"tsx": "^4",
+		"typescript": "^5.7"
+	}
 }

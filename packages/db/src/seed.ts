@@ -1,10 +1,17 @@
 import bcryptjs from "bcryptjs";
+import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 const { hash } = bcryptjs;
-import { flavors } from "./schema/flavors.js";
-import { keywords } from "./schema/keywords.js";
-import { users } from "./schema/users.js";
+import {
+	creatorProfiles,
+	flavors,
+	keywords,
+	platformSettings,
+	products,
+	signatureRecipes,
+	users,
+} from "./schema/index.js";
 
 const connectionString = process.env.DATABASE_URL!;
 const client = postgres(connectionString);
@@ -249,6 +256,175 @@ async function seed() {
 			role: "ADMIN",
 		})
 		.onConflictDoNothing();
+
+	// ------------------------------------------------------------------
+	// Platform Settings
+	// ------------------------------------------------------------------
+	console.log("Seeding platform settings...");
+
+	await db
+		.insert(platformSettings)
+		.values({
+			key: "royalty_rate_default",
+			value: "0.1000",
+		})
+		.onConflictDoNothing();
+
+	// ------------------------------------------------------------------
+	// Test Creator Users
+	// ------------------------------------------------------------------
+	console.log("Seeding test creator users...");
+
+	const creatorPasswordHash = await hash("creator123", 12);
+
+	await db
+		.insert(users)
+		.values([
+			{
+				email: "hanaka@test.com",
+				passwordHash: creatorPasswordHash,
+				name: "香月 花",
+				role: "CREATOR",
+			},
+			{
+				email: "kaoru@test.com",
+				passwordHash: creatorPasswordHash,
+				name: "森田 薫",
+				role: "CREATOR",
+			},
+		])
+		.onConflictDoNothing();
+
+	// Fetch creator user rows (whether just inserted or already existing)
+	const [creator1] = await db
+		.select()
+		.from(users)
+		.where(eq(users.email, "hanaka@test.com"));
+	const [creator2] = await db
+		.select()
+		.from(users)
+		.where(eq(users.email, "kaoru@test.com"));
+
+	// ------------------------------------------------------------------
+	// Creator Profiles
+	// ------------------------------------------------------------------
+	console.log("Seeding creator profiles...");
+
+	await db
+		.insert(creatorProfiles)
+		.values([
+			{
+				userId: creator1.id,
+				displayName: "香月 花",
+				creatorIdSlug: "hanaka",
+				bio: "花と果実をテーマにした香りを創作",
+				styleDescription:
+					"フローラル系を得意とし、トップノートに華やかさを加える",
+			},
+			{
+				userId: creator2.id,
+				displayName: "森田 薫",
+				creatorIdSlug: "kaoru",
+				bio: "ウッディ・スパイシー系の調香師",
+				styleDescription: "落ち着いた大人の香りを追求",
+			},
+		])
+		.onConflictDoNothing();
+
+	// ------------------------------------------------------------------
+	// Signature Recipes
+	// ------------------------------------------------------------------
+	console.log("Seeding signature recipes...");
+
+	// Check if recipes already exist to keep seed idempotent
+	const existingRecipe1 = await db
+		.select()
+		.from(signatureRecipes)
+		.where(
+			and(
+				eq(signatureRecipes.creatorId, creator1.id),
+				eq(signatureRecipes.name, "春の花束"),
+			),
+		);
+	const existingRecipe2 = await db
+		.select()
+		.from(signatureRecipes)
+		.where(
+			and(
+				eq(signatureRecipes.creatorId, creator2.id),
+				eq(signatureRecipes.name, "夜の森林"),
+			),
+		);
+
+	let recipe1Id: string;
+	let recipe2Id: string;
+
+	if (existingRecipe1.length > 0) {
+		recipe1Id = existingRecipe1[0].id;
+	} else {
+		const [inserted] = await db
+			.insert(signatureRecipes)
+			.values({
+				creatorId: creator1.id,
+				name: "春の花束",
+				description: "桜と薔薇を基調とした華やかなフレグランス",
+				status: "PUBLISHED",
+				topRatio: "30.00",
+				middleRatio: "50.00",
+				lastRatio: "20.00",
+				publishedAt: new Date(),
+			})
+			.returning();
+		recipe1Id = inserted.id;
+	}
+
+	if (existingRecipe2.length > 0) {
+		recipe2Id = existingRecipe2[0].id;
+	} else {
+		const [inserted] = await db
+			.insert(signatureRecipes)
+			.values({
+				creatorId: creator2.id,
+				name: "夜の森林",
+				description: "ヒノキとサンダルウッドの深い香り",
+				status: "PUBLISHED",
+				topRatio: "20.00",
+				middleRatio: "30.00",
+				lastRatio: "50.00",
+				publishedAt: new Date(),
+			})
+			.returning();
+		recipe2Id = inserted.id;
+	}
+
+	// ------------------------------------------------------------------
+	// Products (linked to recipes)
+	// ------------------------------------------------------------------
+	console.log("Seeding products...");
+
+	const existingProduct1 = await db
+		.select()
+		.from(products)
+		.where(eq(products.name, "春の花束 30ml"));
+	if (existingProduct1.length === 0) {
+		await db.insert(products).values({
+			name: "春の花束 30ml",
+			priceYen: 4980,
+			recipeId: recipe1Id,
+		});
+	}
+
+	const existingProduct2 = await db
+		.select()
+		.from(products)
+		.where(eq(products.name, "夜の森林 30ml"));
+	if (existingProduct2.length === 0) {
+		await db.insert(products).values({
+			name: "夜の森林 30ml",
+			priceYen: 5480,
+			recipeId: recipe2Id,
+		});
+	}
 
 	console.log("Seed complete!");
 	await client.end();
