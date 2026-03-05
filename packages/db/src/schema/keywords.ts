@@ -1,11 +1,11 @@
 import {
+	boolean,
+	index,
+	integer,
 	pgTable,
+	timestamp,
 	uuid,
 	varchar,
-	boolean,
-	integer,
-	timestamp,
-	index,
 } from "drizzle-orm/pg-core";
 
 export const categoryEnum = ["SEASON", "PLACE", "MOOD", "FREE"] as const;

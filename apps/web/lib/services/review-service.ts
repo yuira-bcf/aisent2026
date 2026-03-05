@@ -4,6 +4,7 @@ import { notifyCreatorNewReview } from "@/lib/services/notification-service";
 import {
   orders,
   recipeReviews,
+  reviewVotes,
   signatureRecipes,
   users,
 } from "@kyarainnovate/db/schema";
@@ -240,4 +241,38 @@ export async function moderateReview(
     .returning({ id: recipeReviews.id });
 
   return result.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// toggleReviewVote – Toggle helpful vote on a review
+// ---------------------------------------------------------------------------
+
+export async function toggleReviewVote(
+  reviewId: string,
+  userId: string,
+): Promise<{ voted: boolean; helpfulCount: number }> {
+  const [existing] = await db
+    .select({ id: reviewVotes.id })
+    .from(reviewVotes)
+    .where(
+      and(eq(reviewVotes.reviewId, reviewId), eq(reviewVotes.userId, userId)),
+    );
+
+  if (existing) {
+    await db.delete(reviewVotes).where(eq(reviewVotes.id, existing.id));
+  } else {
+    await db.insert(reviewVotes).values({ reviewId, userId });
+  }
+
+  const [{ value: helpfulCount }] = await db
+    .select({ value: count() })
+    .from(reviewVotes)
+    .where(eq(reviewVotes.reviewId, reviewId));
+
+  await db
+    .update(recipeReviews)
+    .set({ helpfulCount, updatedAt: new Date() })
+    .where(eq(recipeReviews.id, reviewId));
+
+  return { voted: !existing, helpfulCount };
 }

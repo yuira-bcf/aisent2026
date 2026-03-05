@@ -31,6 +31,16 @@ export {
 	orderItemsRelations,
 	productFavorites,
 	productFavoritesRelations,
+	productVariants,
+	productVariantsRelations,
+	productTags,
+	productTagsRelations,
+	tagTypeEnum,
+	type TagType,
+	productImages,
+	productImagesRelations,
+	reviewVotes,
+	reviewVotesRelations,
 } from "./commerce";
 export {
 	coupons,

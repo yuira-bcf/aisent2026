@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, integer } from "drizzle-orm/pg-core";
+import { integer, pgTable, text, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const noteTypeEnum = ["TOP", "MIDDLE", "LAST"] as const;
 export type NoteType = (typeof noteTypeEnum)[number];

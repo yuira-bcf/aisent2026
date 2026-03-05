@@ -1,16 +1,16 @@
+import { relations } from "drizzle-orm";
 import {
+	decimal,
+	index,
 	pgTable,
+	timestamp,
 	uuid,
 	varchar,
-	decimal,
-	timestamp,
-	index,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { keywords } from "./keywords";
 import { flavors } from "./flavors";
-import { users } from "./users";
 import type { NoteType } from "./flavors";
+import { keywords } from "./keywords";
+import { users } from "./users";
 
 export const keywordFlavorRules = pgTable(
 	"keyword_flavor_rules",

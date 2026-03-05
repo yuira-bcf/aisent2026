@@ -1,18 +1,18 @@
+import { relations } from "drizzle-orm";
 import {
-	pgTable,
-	uuid,
-	varchar,
-	decimal,
 	boolean,
+	decimal,
+	index,
+	pgTable,
 	text,
 	timestamp,
-	index,
+	uuid,
+	varchar,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { users } from "./users";
-import { keywords } from "./keywords";
 import { flavors } from "./flavors";
 import type { NoteType } from "./flavors";
+import { keywords } from "./keywords";
+import { users } from "./users";
 
 export const blendStatusEnum = [
 	"PENDING",

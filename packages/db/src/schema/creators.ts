@@ -1,17 +1,17 @@
+import { relations } from "drizzle-orm";
 import {
-	pgTable,
-	uuid,
-	varchar,
-	decimal,
 	boolean,
+	decimal,
+	index,
+	integer,
+	pgTable,
 	text,
 	timestamp,
-	integer,
-	index,
+	uuid,
+	varchar,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { users } from "./users";
 import { flavors } from "./flavors";
+import { users } from "./users";
 
 // ---------------------------------------------------------------------------
 // Creator Profiles (クリエーターの拡張プロフィール)

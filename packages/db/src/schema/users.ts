@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const roleEnum = ["CUSTOMER", "CREATOR", "ADMIN"] as const;
 export type Role = (typeof roleEnum)[number];

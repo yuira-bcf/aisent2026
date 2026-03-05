@@ -1,16 +1,16 @@
+import { relations } from "drizzle-orm";
 import {
+	boolean,
+	index,
+	integer,
 	pgTable,
+	timestamp,
+	uniqueIndex,
 	uuid,
 	varchar,
-	integer,
-	boolean,
-	timestamp,
-	index,
-	uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { users } from "./users";
 import { orders } from "./commerce";
+import { users } from "./users";
 
 export const discountTypeEnum = ["FIXED", "PERCENT"] as const;
 export type DiscountType = (typeof discountTypeEnum)[number];

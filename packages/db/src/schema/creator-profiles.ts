@@ -1,17 +1,17 @@
+import { relations } from "drizzle-orm";
 import {
+	boolean,
+	decimal,
+	index,
+	integer,
+	jsonb,
 	pgTable,
+	text,
+	timestamp,
+	uniqueIndex,
 	uuid,
 	varchar,
-	text,
-	decimal,
-	integer,
-	boolean,
-	timestamp,
-	jsonb,
-	index,
-	uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { users } from "./users";
 
 // ---------------------------------------------------------------------------

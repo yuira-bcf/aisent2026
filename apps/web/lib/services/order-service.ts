@@ -17,12 +17,13 @@ import {
   cartItems,
   orderItems,
   orders,
+  productVariants,
   products,
   shippingAddresses,
   signatureRecipes,
 } from "@kyarainnovate/db/schema";
 import type { OrderStatus } from "@kyarainnovate/db/schema";
-import { and, count, desc, eq, inArray } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,6 +32,32 @@ import { and, count, desc, eq, inArray } from "drizzle-orm";
 type CreateOrderResult =
   | { success: true; orderId: string; stripeSessionUrl: string }
   | { success: false; error: string };
+
+// ---------------------------------------------------------------------------
+// Helper – resolve effective variant price considering sale period
+// ---------------------------------------------------------------------------
+
+function resolveVariantPrice(row: {
+  variantPrice: number | null;
+  variantSalePrice: number | null;
+  variantSaleStartAt: Date | null;
+  variantSaleEndAt: Date | null;
+  productPriceYen: number;
+}): number {
+  if (row.variantPrice == null) return row.productPriceYen;
+
+  const now = new Date();
+  if (
+    row.variantSalePrice != null &&
+    row.variantSaleStartAt != null &&
+    row.variantSaleEndAt != null &&
+    row.variantSaleStartAt <= now &&
+    now <= row.variantSaleEndAt
+  ) {
+    return row.variantSalePrice;
+  }
+  return row.variantPrice;
+}
 
 // ---------------------------------------------------------------------------
 // createOrder – Build an order from the user's cart & start Stripe Checkout
@@ -56,17 +83,25 @@ export async function createOrder(
     return { success: false, error: "配送先住所が見つかりません" };
   }
 
-  // 2. Get cart items with product details (only active products)
+  // 2. Get cart items with product + variant details (only active products)
   const cartRows = await db
     .select({
       cartItemId: cartItems.id,
       productId: cartItems.productId,
+      variantId: cartItems.variantId,
       quantity: cartItems.quantity,
       productName: products.name,
-      priceYen: products.priceYen,
+      productPriceYen: products.priceYen,
+      variantPrice: productVariants.price,
+      variantSalePrice: productVariants.salePrice,
+      variantSaleStartAt: productVariants.saleStartAt,
+      variantSaleEndAt: productVariants.saleEndAt,
+      volume: productVariants.volume,
+      sku: productVariants.sku,
     })
     .from(cartItems)
     .innerJoin(products, eq(cartItems.productId, products.id))
+    .leftJoin(productVariants, eq(cartItems.variantId, productVariants.id))
     .where(and(eq(cartItems.userId, userId), eq(products.isActive, true)));
 
   // 3. Validate cart is not empty
@@ -74,8 +109,18 @@ export async function createOrder(
     return { success: false, error: "カートが空です" };
   }
 
-  // 4. Calculate total
-  const subtotalYen = cartRows.reduce(
+  // 4. Build items with resolved prices
+  const items = cartRows.map((row) => ({
+    productId: row.productId,
+    productName: row.productName,
+    priceYen: resolveVariantPrice(row),
+    quantity: row.quantity,
+    variantId: row.variantId,
+    volume: row.volume,
+    sku: row.sku,
+  }));
+
+  const subtotalYen = items.reduce(
     (sum, item) => sum + item.priceYen * item.quantity,
     0,
   );
@@ -97,13 +142,6 @@ export async function createOrder(
   const totalYen = subtotalYen - discountYen;
 
   // 5. Create order + items + clear cart in a single transaction
-  const items = cartRows.map((row) => ({
-    productId: row.productId,
-    productName: row.productName,
-    priceYen: row.priceYen,
-    quantity: row.quantity,
-  }));
-
   const order = await db.transaction(async (tx) => {
     const [ord] = await tx
       .insert(orders)
@@ -122,9 +160,18 @@ export async function createOrder(
       })
       .returning();
 
-    await tx
-      .insert(orderItems)
-      .values(items.map((item) => ({ ...item, orderId: ord.id })));
+    await tx.insert(orderItems).values(
+      items.map((item) => ({
+        orderId: ord.id,
+        productId: item.productId,
+        productName: item.productName,
+        priceYen: item.priceYen,
+        quantity: item.quantity,
+        variantId: item.variantId,
+        volume: item.volume,
+        sku: item.sku,
+      })),
+    );
 
     await tx.delete(cartItems).where(eq(cartItems.userId, userId));
 
@@ -137,7 +184,11 @@ export async function createOrder(
     line_items: items.map((item) => ({
       price_data: {
         currency: "jpy",
-        product_data: { name: item.productName },
+        product_data: {
+          name: item.volume
+            ? `${item.productName} (${item.volume}ml)`
+            : item.productName,
+        },
         unit_amount: item.priceYen,
       },
       quantity: item.quantity,
@@ -205,6 +256,32 @@ export async function handleStripeWebhook(
         .returning({ userId: orders.userId });
 
       if (confirmedOrder) {
+        // Decrement variant stock for items with variantId
+        const variantItems = await db
+          .select({
+            variantId: orderItems.variantId,
+            quantity: orderItems.quantity,
+          })
+          .from(orderItems)
+          .where(
+            and(
+              eq(orderItems.orderId, orderId),
+              isNotNull(orderItems.variantId),
+            ),
+          );
+
+        for (const vi of variantItems) {
+          if (vi.variantId) {
+            await db
+              .update(productVariants)
+              .set({
+                stock: sql`${productVariants.stock} - ${vi.quantity}`,
+                updatedAt: new Date(),
+              })
+              .where(eq(productVariants.id, vi.variantId));
+          }
+        }
+
         notifyOrderStatusChange(
           confirmedOrder.userId,
           orderId,
@@ -372,15 +449,42 @@ export async function cancelOrder(
     return { success: false, error: "この注文はキャンセルできません" };
   }
 
-  await db
-    .update(orders)
-    .set({
-      status: "CANCELLED",
-      cancelledAt: new Date(),
-      updatedAt: new Date(),
-      cancelReason: reason ?? "USER_CANCEL",
+  // Restore variant stock for items with variantId
+  const variantItems = await db
+    .select({
+      variantId: orderItems.variantId,
+      quantity: orderItems.quantity,
     })
-    .where(eq(orders.id, orderId));
+    .from(orderItems)
+    .where(
+      and(eq(orderItems.orderId, orderId), isNotNull(orderItems.variantId)),
+    );
+
+  await db.transaction(async (tx) => {
+    // Restore stock
+    for (const vi of variantItems) {
+      if (vi.variantId) {
+        await tx
+          .update(productVariants)
+          .set({
+            stock: sql`${productVariants.stock} + ${vi.quantity}`,
+            updatedAt: new Date(),
+          })
+          .where(eq(productVariants.id, vi.variantId));
+      }
+    }
+
+    // Update order status
+    await tx
+      .update(orders)
+      .set({
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        updatedAt: new Date(),
+        cancelReason: reason ?? "USER_CANCEL",
+      })
+      .where(eq(orders.id, orderId));
+  });
 
   return { success: true };
 }

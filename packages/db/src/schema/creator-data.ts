@@ -1,16 +1,16 @@
+import { relations } from "drizzle-orm";
 import {
-	pgTable,
-	uuid,
-	varchar,
 	decimal,
+	index,
+	pgTable,
 	text,
 	timestamp,
-	index,
 	unique,
+	uuid,
+	varchar,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { users } from "./users";
 import { flavors } from "./flavors";
+import { users } from "./users";
 
 // ---------------------------------------------------------------------------
 // Weight / Temperature enums

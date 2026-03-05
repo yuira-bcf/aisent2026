@@ -8,6 +8,7 @@ import { z } from "zod";
 const addItemSchema = z.object({
   productId: z.string().uuid(),
   quantity: z.number().int().min(1).optional().default(1),
+  variantId: z.string().uuid().optional(),
 });
 
 /**
@@ -30,6 +31,7 @@ export const POST = safeHandler(async (req: NextRequest) => {
     authResult.userId,
     parsed.data.productId,
     parsed.data.quantity,
+    parsed.data.variantId,
   );
 
   return apiSuccess({ cart });
