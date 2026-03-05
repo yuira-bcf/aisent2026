@@ -1,6 +1,21 @@
-import { openai } from "@ai-sdk/openai";
+import { getModel } from "@/lib/ai/models";
+import {
+  type CreatorRecommendation,
+  type ModerationResult,
+  type RecipeDescription,
+  type RecipeRecommendation,
+  creatorRecommendationSchema,
+  moderationSchema,
+  recipeDescriptionSchema,
+  recipeRecommendationSchema,
+  ruleSuggestionSchema,
+} from "@/lib/ai/schemas";
+import { withFallbackObject, withFallbackText } from "@/lib/ai/with-fallback";
 import type { NoteType } from "@kyarainnovate/db/schema";
-import { generateText } from "ai";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 type FlavorInfo = {
   nameJa: string;
@@ -19,45 +34,41 @@ type RatioInfo = {
   lastRatio: number;
 };
 
-/**
- * Generate a story for a blend result.
- * Phase 1: Uses Vercel AI SDK directly
- * Phase 1.5: Will switch to Python AI Service call
- */
+// ---------------------------------------------------------------------------
+// AI-01: generateStory — Generate a story for a blend result
+// ---------------------------------------------------------------------------
+
 export async function generateStory(
   keywords: KeywordInfo[],
   flavors: FlavorInfo[],
   ratios: RatioInfo,
   options?: { styleDescription?: string },
 ): Promise<string> {
-  if (!process.env.OPENAI_API_KEY) {
+  const modelConfig = getModel("story");
+  if (!modelConfig) {
     return generateFallbackStory(keywords, ratios);
   }
 
-  try {
-    const prompt = buildStoryPrompt(
-      keywords,
-      flavors,
-      ratios,
-      options?.styleDescription,
-    );
+  const systemPrompt = options?.styleDescription
+    ? `あなたは香りの専門家で、香料の配合から美しいストーリーを紡ぐ詩人です。以下のクリエイターのスタイルを反映してください: ${options.styleDescription}`
+    : "あなたは香りの専門家で、香料の配合から美しいストーリーを紡ぐ詩人です。";
 
-    const systemPrompt = options?.styleDescription
-      ? `あなたは香りの専門家で、香料の配合から美しいストーリーを紡ぐ詩人です。以下のクリエイターのスタイルを反映してください: ${options.styleDescription}`
-      : "あなたは香りの専門家で、香料の配合から美しいストーリーを紡ぐ詩人です。";
-
-    const { text } = await generateText({
-      model: openai("gpt-4"),
+  return withFallbackText(
+    modelConfig,
+    {
       system: systemPrompt,
-      prompt,
+      prompt: buildStoryPrompt(
+        keywords,
+        flavors,
+        ratios,
+        options?.styleDescription,
+      ),
       maxTokens: 500,
       temperature: 0.8,
-    });
-
-    return text;
-  } catch {
-    return generateFallbackStory(keywords, ratios);
-  }
+    },
+    () => generateFallbackStory(keywords, ratios),
+    "story",
+  );
 }
 
 function buildStoryPrompt(
@@ -113,55 +124,54 @@ function generateFallbackStory(
   return `この香りは、${kwText}をイメージした調合です。トップノートが${ratios.topRatio}%、ミドルノートが${ratios.middleRatio}%、ラストノートが${ratios.lastRatio}%の構成で、時間とともに移り変わる香りのハーモニーをお楽しみください。`;
 }
 
-/**
- * Suggest rules for a keyword using AI.
- * Phase 1: Uses Vercel AI SDK directly
- * Phase 1.5: Will switch to Python AI Service call
- */
+// ---------------------------------------------------------------------------
+// AI-02: suggestRules — Suggest rules for a keyword using AI
+// ---------------------------------------------------------------------------
+
 export async function suggestRules(
   keyword: string,
   flavors: { id: string; nameEn: string; noteType: NoteType }[],
   options?: { aiInstruction?: string },
 ): Promise<{ flavorId: string; weight: number; noteType: NoteType }[]> {
-  if (!process.env.OPENAI_API_KEY) {
+  const modelConfig = getModel("structuredJson");
+  if (!modelConfig) {
     return generateFallbackSuggestion(flavors);
   }
 
-  try {
-    const flavorList = flavors
-      .map((f) => `${f.nameEn} (${f.noteType})`)
-      .join(", ");
+  const flavorList = flavors
+    .map((f) => `${f.nameEn} (${f.noteType})`)
+    .join(", ");
 
-    const systemPrompt = options?.aiInstruction
-      ? `あなたは香水の調香師です。指定されたJSON形式のみで回答してください。\n\n以下のクリエイターの調合指示に従ってください:\n${options.aiInstruction}`
-      : "あなたは香水の調香師です。指定されたJSON形式のみで回答してください。";
+  const systemPrompt = options?.aiInstruction
+    ? `あなたは香水の調香師です。\n\n以下のクリエイターの調合指示に従ってください:\n${options.aiInstruction}`
+    : "あなたは香水の調香師です。";
 
-    const { text } = await generateText({
-      model: openai("gpt-4"),
+  const result = await withFallbackObject(
+    modelConfig,
+    {
       system: systemPrompt,
-      prompt: `キーワード「${keyword}」に関連する香料を以下のリストから選び、各ノートから2〜4種を選んでください。\n\n香料リスト: ${flavorList}\n\nJSON配列で回答（例）:\n[{"nameEn": "Lime", "noteType": "TOP", "weight": 0.8}]`,
-      maxTokens: 800,
+      prompt: `キーワード「${keyword}」に関連する香料を以下のリストから選び、各ノートから2〜4種を選んでweight(0.0〜1.0)を設定してください。\n\n香料リスト: ${flavorList}`,
+      schema: ruleSuggestionSchema,
       temperature: 0.5,
-    });
+    },
+    () =>
+      generateFallbackSuggestion(flavors).map((f) => ({
+        nameEn: flavors.find((fl) => fl.id === f.flavorId)?.nameEn ?? "",
+        noteType: f.noteType,
+        weight: f.weight,
+      })),
+    "structuredJson",
+  );
 
-    const parsed = JSON.parse(text) as {
-      nameEn: string;
-      noteType: NoteType;
-      weight: number;
-    }[];
+  const flavorMap = new Map(flavors.map((f) => [f.nameEn, f.id]));
 
-    const flavorMap = new Map(flavors.map((f) => [f.nameEn, f.id]));
-
-    return parsed
-      .filter((item) => flavorMap.has(item.nameEn))
-      .map((item) => ({
-        flavorId: flavorMap.get(item.nameEn) ?? "",
-        weight: Math.round(item.weight * 20) / 20, // Round to 0.05
-        noteType: item.noteType,
-      }));
-  } catch {
-    return generateFallbackSuggestion(flavors);
-  }
+  return result
+    .filter((item) => flavorMap.has(item.nameEn))
+    .map((item) => ({
+      flavorId: flavorMap.get(item.nameEn) ?? "",
+      weight: Math.round(item.weight * 20) / 20,
+      noteType: item.noteType,
+    }));
 }
 
 function generateFallbackSuggestion(
@@ -177,4 +187,188 @@ function generateFallbackSuggestion(
   }
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// generateRecipeDescription — AI-generated recipe description
+// ---------------------------------------------------------------------------
+
+export async function generateRecipeDescription(params: {
+  recipeName: string;
+  scene: string;
+  mood: string;
+  flavors: { nameJa: string; ratio: number; noteType: string }[];
+}): Promise<RecipeDescription> {
+  const modelConfig = getModel("recipeDescription");
+  const fallback = (): RecipeDescription => ({
+    shortDescription: `${params.scene}の${params.mood}な香り`,
+    fullDescription: `${params.recipeName}は、${params.scene}をテーマにした${params.mood}な香りです。`,
+    targetScene: params.scene,
+    keywords: [params.scene, params.mood],
+  });
+
+  if (!modelConfig) return fallback();
+
+  return withFallbackObject(
+    modelConfig,
+    {
+      system:
+        "あなたは香水のコピーライターです。配合データから魅力的な説明文を作成します。shortDescriptionは50文字以内、fullDescriptionは200文字以内で作成してください。",
+      prompt: `レシピ「${params.recipeName}」の説明文を作成してください。\nテーマ: ${params.scene} × ${params.mood}\n配合: ${params.flavors.map((f) => `${f.nameJa}(${f.noteType}) ${f.ratio}%`).join(", ")}`,
+      schema: recipeDescriptionSchema,
+      temperature: 0.7,
+    },
+    fallback,
+    "recipeDescription",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// recommendCreatorsAI — AI-powered creator recommendation
+// ---------------------------------------------------------------------------
+
+export async function recommendCreatorsAI(params: {
+  userPreferences: { nameJa: string; affinity: number }[];
+  creators: {
+    id: string;
+    name: string;
+    styleDescription: string;
+    topRecipes: string[];
+  }[];
+  limit: number;
+}): Promise<CreatorRecommendation> {
+  const modelConfig = getModel("recommendation");
+  const fallback = (): CreatorRecommendation =>
+    params.creators.slice(0, params.limit).map((c) => ({
+      creatorId: c.id,
+      matchScore: 50,
+      reason: "人気のクリエーターです",
+    }));
+
+  if (!modelConfig) return fallback();
+
+  return withFallbackObject(
+    modelConfig,
+    {
+      system:
+        "あなたはフレグランスのコンシェルジュです。ユーザーの好みに合うクリエーターを推薦します。matchScoreは0-100で評価し、reasonは日本語で簡潔に理由を述べてください。",
+      prompt: `ユーザーの好みの香料: ${params.userPreferences
+        .filter((f) => f.affinity > 0)
+        .map((f) => f.nameJa)
+        .join(
+          ", ",
+        )}\n\nクリエーター一覧:\n${params.creators.map((c) => `- ${c.name}(ID: ${c.id}): ${c.styleDescription} (代表作: ${c.topRecipes.join(", ")})`).join("\n")}\n\n上位${params.limit}名を推薦してください。`,
+      schema: creatorRecommendationSchema,
+      temperature: 0.3,
+    },
+    fallback,
+    "recommendation",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// recommendRecipesAI — AI-powered recipe recommendation
+// ---------------------------------------------------------------------------
+
+export async function recommendRecipesAI(params: {
+  userPreferences: { nameJa: string; affinity: number }[];
+  recipes: {
+    id: string;
+    name: string;
+    concept: string;
+    topFlavors: string[];
+  }[];
+  limit: number;
+}): Promise<RecipeRecommendation> {
+  const modelConfig = getModel("recommendation");
+  const fallback = (): RecipeRecommendation =>
+    params.recipes.slice(0, params.limit).map((r) => ({
+      recipeId: r.id,
+      matchScore: 50,
+      reason: "人気のレシピです",
+      highlightFlavor: r.topFlavors[0] ?? "",
+    }));
+
+  if (!modelConfig) return fallback();
+
+  return withFallbackObject(
+    modelConfig,
+    {
+      system:
+        "あなたはフレグランスのコンシェルジュです。ユーザーの好みに合うレシピを推薦します。matchScoreは0-100で評価し、reasonは日本語で簡潔に理由を述べてください。",
+      prompt: `ユーザーの好みの香料: ${params.userPreferences
+        .filter((f) => f.affinity > 0)
+        .map((f) => f.nameJa)
+        .join(
+          ", ",
+        )}\n\nレシピ一覧:\n${params.recipes.map((r) => `- ${r.name}(ID: ${r.id}): ${r.concept} (主要香料: ${r.topFlavors.join(", ")})`).join("\n")}\n\n上位${params.limit}件を推薦してください。`,
+      schema: recipeRecommendationSchema,
+      temperature: 0.3,
+    },
+    fallback,
+    "recommendation",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// moderateReviewAI — AI-powered review moderation
+// ---------------------------------------------------------------------------
+
+export async function moderateReviewAI(params: {
+  reviewText: string;
+  rating: number;
+  recipeName: string;
+}): Promise<ModerationResult> {
+  const modelConfig = getModel("moderation");
+  const fallback = (): ModerationResult => ({
+    isApproved: true,
+    flags: [],
+    confidence: 0,
+    reason: "AI モデレーション未実行",
+  });
+
+  if (!modelConfig) return fallback();
+
+  return withFallbackObject(
+    modelConfig,
+    {
+      system:
+        "あなたはレビューモデレーターです。レビューの内容を分析し、不適切な内容がないか確認します。スパム、嫌がらせ、不適切な表現、ステマ（やらせ）、個人情報の暴露、宣伝的な内容をチェックしてください。",
+      prompt: `以下のレビューをモデレーションしてください。\n\n対象レシピ: ${params.recipeName}\n評価: ${params.rating}/5\nレビュー本文:\n${params.reviewText}`,
+      schema: moderationSchema,
+      temperature: 0.1,
+    },
+    fallback,
+    "moderation",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// generateProductDescription — AI-generated product description
+// ---------------------------------------------------------------------------
+
+export async function generateProductDescription(params: {
+  productName: string;
+  recipeName: string;
+  concept: string;
+  topFlavors: string[];
+}): Promise<string> {
+  const modelConfig = getModel("productCopy");
+  const fallback = () =>
+    `${params.productName}は、${params.concept}をテーマにした香水です。${params.topFlavors.join("、")}を中心とした調合で、あなただけの特別な香りをお届けします。`;
+
+  if (!modelConfig) return fallback();
+
+  return withFallbackText(
+    modelConfig,
+    {
+      system:
+        "あなたは香水ブランドのコピーライターです。商品の魅力を伝える説明文を150文字程度の日本語で作成してください。",
+      prompt: `商品名: ${params.productName}\nレシピ: ${params.recipeName}\nコンセプト: ${params.concept}\n主要香料: ${params.topFlavors.join(", ")}`,
+      maxTokens: 300,
+      temperature: 0.7,
+    },
+    fallback,
+    "productCopy",
+  );
 }

@@ -1,3 +1,4 @@
+import { recommendCreatorsAI, recommendRecipesAI } from "@/lib/ai-client";
 import { db } from "@/lib/db";
 import {
   blendRequests,
@@ -283,4 +284,119 @@ export async function getRecommendedCreators(userId: string, limit = 4) {
     .limit(limit);
 
   return creators;
+}
+
+/** AI-powered creator recommendation based on flavor preferences */
+export async function getAIRecommendedCreators(userId: string, limit = 4) {
+  // 1. Get user's flavor preferences
+  const prefs = await getFlavorPreferences(userId);
+  const userPreferences = prefs.map((p) => ({
+    nameJa: p.nameJa,
+    affinity: p.totalWeight,
+  }));
+
+  // 2. Get active creators with profile info
+  const activeCreators = await db
+    .select({
+      userId: creatorProfiles.userId,
+      displayName: creatorProfiles.displayName,
+      styleDescription: creatorProfiles.styleDescription,
+    })
+    .from(creatorProfiles)
+    .where(eq(creatorProfiles.isActive, true));
+
+  if (activeCreators.length === 0) return [];
+
+  // 3. Get top recipes for each creator
+  const creatorUserIds = activeCreators.map((c) => c.userId);
+  const topRecipes = await db
+    .select({
+      creatorId: signatureRecipes.creatorId,
+      name: signatureRecipes.name,
+    })
+    .from(signatureRecipes)
+    .where(
+      and(
+        inArray(signatureRecipes.creatorId, creatorUserIds),
+        eq(signatureRecipes.status, "PUBLISHED" as RecipeStatus),
+      ),
+    )
+    .orderBy(desc(signatureRecipes.orderCount));
+
+  // Group recipes by creator
+  const recipesByCreator = new Map<string, string[]>();
+  for (const r of topRecipes) {
+    const existing = recipesByCreator.get(r.creatorId) ?? [];
+    if (existing.length < 3) {
+      existing.push(r.name);
+      recipesByCreator.set(r.creatorId, existing);
+    }
+  }
+
+  // 4. Build creator list for AI
+  const creators = activeCreators.map((c) => ({
+    id: c.userId,
+    name: c.displayName,
+    styleDescription: c.styleDescription ?? "",
+    topRecipes: recipesByCreator.get(c.userId) ?? [],
+  }));
+
+  // 5. Call AI recommendation
+  return recommendCreatorsAI({ userPreferences, creators, limit });
+}
+
+/** AI-powered recipe recommendation based on flavor preferences */
+export async function getAIRecommendedRecipes(userId: string, limit = 4) {
+  // 1. Get user's flavor preferences
+  const prefs = await getFlavorPreferences(userId);
+  const userPreferences = prefs.map((p) => ({
+    nameJa: p.nameJa,
+    affinity: p.totalWeight,
+  }));
+
+  // 2. Get published recipes
+  const publishedRecipes = await db
+    .select({
+      id: signatureRecipes.id,
+      name: signatureRecipes.name,
+      concept: signatureRecipes.concept,
+    })
+    .from(signatureRecipes)
+    .where(eq(signatureRecipes.status, "PUBLISHED" as RecipeStatus));
+
+  if (publishedRecipes.length === 0) return [];
+
+  // 3. Get top flavors for each recipe
+  const recipeIds = publishedRecipes.map((r) => r.id);
+  const flavorRows = await db
+    .select({
+      recipeId: recipeFlavors.recipeId,
+      nameJa: flavors.nameJa,
+      ratio: recipeFlavors.ratio,
+    })
+    .from(recipeFlavors)
+    .innerJoin(flavors, eq(recipeFlavors.flavorId, flavors.id))
+    .where(inArray(recipeFlavors.recipeId, recipeIds))
+    .orderBy(desc(recipeFlavors.ratio));
+
+  // Group flavors by recipe (top 3)
+  const flavorsByRecipe = new Map<string, string[]>();
+  for (const f of flavorRows) {
+    const existing = flavorsByRecipe.get(f.recipeId) ?? [];
+    if (existing.length < 3) {
+      existing.push(f.nameJa);
+      flavorsByRecipe.set(f.recipeId, existing);
+    }
+  }
+
+  // 4. Build recipe list for AI
+  const recipes = publishedRecipes.map((r) => ({
+    id: r.id,
+    name: r.name,
+    concept: r.concept ?? "",
+    topFlavors: flavorsByRecipe.get(r.id) ?? [],
+  }));
+
+  // 5. Call AI recommendation
+  return recommendRecipesAI({ userPreferences, recipes, limit });
 }

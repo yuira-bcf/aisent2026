@@ -1,6 +1,7 @@
 import { suggestRules as suggestRulesAI } from "@/lib/ai-client";
 import { db } from "@/lib/db";
 import {
+  creatorProfiles,
   flavors,
   keywordFlavorRules,
   keywords,
@@ -94,6 +95,12 @@ export async function suggestRulesForKeyword(
 
   const allFlavors = await db.select().from(flavors);
 
+  // AI-04: Fetch creator's stylePrompt for personalized suggestions
+  const profile = await db.query.creatorProfiles.findFirst({
+    where: eq(creatorProfiles.userId, creatorId),
+    columns: { stylePrompt: true },
+  });
+
   return suggestRulesAI(
     keyword.word,
     allFlavors.map((f) => ({
@@ -101,6 +108,7 @@ export async function suggestRulesForKeyword(
       nameEn: f.nameEn,
       noteType: f.noteType,
     })),
+    profile?.stylePrompt ? { aiInstruction: profile.stylePrompt } : undefined,
   );
 }
 

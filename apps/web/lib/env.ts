@@ -70,8 +70,9 @@ const serverEnvSchema = z.object({
   // ─── Optional: Resend ──────────────────────────────────
   RESEND_API_KEY: z.string().optional(),
 
-  // ─── Optional: OpenAI / AI Service ─────────────────────
+  // ─── Optional: AI Providers ────────────────────────────
   OPENAI_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
   AI_SERVICE_URL: z.string().url().optional().default("http://localhost:8081"),
   INTERNAL_SERVICE_TOKEN: z.string().optional(),
 });

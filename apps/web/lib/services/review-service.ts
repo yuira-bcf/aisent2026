@@ -1,3 +1,4 @@
+import { moderateReviewAI } from "@/lib/ai-client";
 import { db } from "@/lib/db";
 import { notifyCreatorNewReview } from "@/lib/services/notification-service";
 import {
@@ -113,6 +114,24 @@ export async function submitReview(
   notifyCreatorNewReview(recipe.creatorId, recipe.name, input.rating).catch(
     (err) => console.error("[review-service] notification failed:", err),
   );
+
+  // AI moderation (fire-and-forget)
+  moderateReviewAI({
+    reviewText: `${input.title ?? ""} ${input.comment ?? ""}`.trim(),
+    rating: input.rating,
+    recipeName: recipe.name,
+  })
+    .then(async (result) => {
+      if (!result.isApproved && result.confidence >= 0.8) {
+        await db
+          .update(recipeReviews)
+          .set({ isVisible: false, updatedAt: new Date() })
+          .where(eq(recipeReviews.id, review.id));
+      }
+    })
+    .catch((err) => {
+      console.error("[review-service] AI moderation failed:", err);
+    });
 
   return { reviewId: review.id };
 }

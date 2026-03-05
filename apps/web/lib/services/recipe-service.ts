@@ -1,3 +1,4 @@
+import { generateRecipeDescription } from "@/lib/ai-client";
 import { db } from "@/lib/db";
 import {
   flavors,
@@ -499,4 +500,46 @@ export async function getPublishedRecipes(
     })),
     total,
   };
+}
+
+// ---------------------------------------------------------------------------
+// generateDescriptionForRecipe – AI-generated description for a recipe
+// ---------------------------------------------------------------------------
+
+export async function generateDescriptionForRecipe(recipeId: string) {
+  // Get recipe basic info (scene, mood)
+  const [recipe] = await db
+    .select({
+      name: signatureRecipes.name,
+      scene: signatureRecipes.scene,
+      mood: signatureRecipes.mood,
+    })
+    .from(signatureRecipes)
+    .where(eq(signatureRecipes.id, recipeId));
+
+  if (!recipe) {
+    throw new Error(`Recipe not found: ${recipeId}`);
+  }
+
+  // Get flavor details
+  const flavorRows = await db
+    .select({
+      nameJa: flavors.nameJa,
+      ratio: recipeFlavors.ratio,
+      noteType: recipeFlavors.noteType,
+    })
+    .from(recipeFlavors)
+    .innerJoin(flavors, eq(recipeFlavors.flavorId, flavors.id))
+    .where(eq(recipeFlavors.recipeId, recipeId));
+
+  return generateRecipeDescription({
+    recipeName: recipe.name,
+    scene: recipe.scene ?? "日常",
+    mood: recipe.mood ?? "リラックス",
+    flavors: flavorRows.map((f) => ({
+      nameJa: f.nameJa,
+      ratio: Number(f.ratio),
+      noteType: f.noteType,
+    })),
+  });
 }
